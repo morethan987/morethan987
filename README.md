@@ -18,7 +18,8 @@ cd morethan987
 ```
 
 ### 🔗 其他仓库
-想看看我更正式的项目？那就去看看我的其他仓库吧：[更多项目](https://github.com/morethan987)
+- 想看看我更正式的项目？那就去看看我的其他仓库吧：请往下翻👇
+- 不想看代码？我的博客主页拥有更加丰富的内容：[Morethan小站](https://morethan987.github.io/)
 
 ### 📢 提交建议 & 贡献
 如果你有任何建议或者小功能想提出来，欢迎提交 Issues 或者 Pull Requests，我会尽量回复的！💬
@@ -47,7 +48,8 @@ cd morethan987
 ```
 
 ### 🔗 Check out my other repositories
-Want to see more serious projects? You can check out my other repositories here: [More Projects](https://github.com/morethan987)
+- Want to see more serious projects? You can check out my other repositories here: Please scroll down.👇
+- Bored to see code? The homepage of my blog has much more content waiting for you：[More's awesome website](https://morethan987.github.io/)
 
 ### 📢 Suggestions & Contributions
 If you have any suggestions or would like to contribute with a small feature, feel free to open Issues or submit Pull Requests. I'll try to respond as soon as I can! 💬
