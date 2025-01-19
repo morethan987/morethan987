@@ -159,10 +159,27 @@ class DataExtractorGUI:
             return
             
         merged_data = self.workflow.get_merged_data()
-        preview = f"数据形状: {merged_data.shape}\n"
-        preview += f"非空值数量: {np.count_nonzero(~np.isnan(merged_data))}\n"
-        preview += "\n预览前10行10列:\n"
-        preview += str(pd.DataFrame(merged_data[:10, :10]))
+        df = pd.DataFrame(merged_data)
+        
+        # 获取所有非空值的索引
+        non_null_mask = ~df.isna()
+        rows_with_data = non_null_mask.any(axis=1)
+        cols_with_data = non_null_mask.any(axis=0)
+        
+        # 只选择包含数据的行和列
+        filtered_df = df.loc[rows_with_data, cols_with_data]
+        
+        preview = f"原始数据形状: {merged_data.shape}\n"
+        preview += f"有效数据形状: {filtered_df.shape}\n"
+        preview += f"有效数据点数量: {filtered_df.count().sum()}\n\n"
+        
+        # 显示所有有效数据（如果数据量太大，只显示前20行）
+        if len(filtered_df) > 20:
+            preview += "预览前20行有效数据:\n"
+            preview += str(filtered_df.head(20))
+        else:
+            preview += "所有有效数据:\n"
+            preview += str(filtered_df)
         
         self.preview_text.delete(1.0, tk.END)
         self.preview_text.insert(1.0, preview)
