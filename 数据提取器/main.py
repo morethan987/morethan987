@@ -5,8 +5,11 @@ import os
 
 def load_mat_file(filename):
     """加载.mat文件"""
-    file_path = os.path.join("./data", filename)
-    return loadmat(file_path)
+    if os.path.isabs(filename):  # 如果是绝对路径
+        return loadmat(filename)
+    else:  # 如果是相对路径
+        file_path = os.path.join("./data", filename)
+        return loadmat(file_path)
 
 class SelectionRule:
     """选择规则类，用于定义数据选择的方式"""
@@ -161,34 +164,58 @@ def save_to_excel(data, output_filename):
         print(f"保存文件时发生错误: {str(e)}")
         raise
 
+class UserInterface:
+    """用户界面处理类"""
+    
+    @staticmethod
+    def print_rules_help():
+        print("\n=== 规则输入说明 ===")
+        print("1. 单个索引: 输入一个数字，如 '5' 或 '-1'")
+        print("2. 索引列表: 输入以逗号分隔的数字，如 '1,3,5'")
+        print("3. 范围规则: 输入三个以冒号分隔的数字(起始:结束:步长)，如 '0:-1:60'")
+        print("输入 'q' 结束添加规则\n")
+
+    @staticmethod
+    def parse_rule(rule_str):
+        """解析用户输入的规则"""
+        if not rule_str or rule_str.lower() == 'q':
+            return None
+            
+        try:
+            if ',' in rule_str:  # 索引列表
+                return SelectionRule.by_indices([int(x.strip()) for x in rule_str.split(',')])
+            elif ':' in rule_str:  # 范围规则
+                start, end, step = [int(x.strip()) if x.strip() != '' else None 
+                                  for x in rule_str.split(':')]
+                return SelectionRule.by_range(start, end, step)
+            else:  # 单个索引
+                return SelectionRule.by_single(int(rule_str))
+        except ValueError as e:
+            print(f"输入格式错误: {e}")
+            return None
+
+    @staticmethod
+    def get_rule_input(prompt_text):
+        """获取用户输入的规则"""
+        while True:
+            rule_str = input(prompt_text).strip()
+            if rule_str.lower() == 'q':
+                return None
+            
+            rule = UserInterface.parse_rule(rule_str)
+            if rule is not None:
+                return rule
+            print("请按照格式重新输入，或输入 'h' 查看帮助，输入 'q' 结束")
+            if input().lower() == 'h':
+                UserInterface.print_rules_help()
+
+# ...existing code...
+
 def main():
-    filename = "x.mat" # 数据的文件名
-    mat_data = load_mat_file(filename)
-    data = mat_data['x'] # 数据内存储的变量名，一般都与文件名相同；不确定先在MATLAB中查看
-    
-    workflow = Workflow(data)
-    
-    # 示例
-    workflow.add_extraction(
-        row_rule=SelectionRule.by_indices([0]), # 使用列表进行选中，这里可以选择多行，也可以只选一行
-        col_rule=SelectionRule.by_range(0, -1, 60) # 支持负数索引，从第0列到最后一列，间隔为60
-    ).add_extraction(
-        row_rule=SelectionRule.by_range(1, -1, 50),
-        col_rule=SelectionRule.by_range(0, -1, 60)
-    ).add_extraction(
-        row_rule=SelectionRule.by_single(-1), # 选中单行（只能选一行），最后一行
-        col_rule=SelectionRule.by_range(0, -1, 60)
-    )
-    
-    merged_data = workflow.get_merged_data()
-    
-    # 检查数据是否为空
-    if np.all(np.isnan(merged_data)):
-        print("错误: 生成的数据全为NaN")
-    else:
-        print("数据提取成功")
-        
-    save_to_excel(merged_data, "merged_output.xlsx")
+    """命令行界面入口"""
+    from gui import DataExtractorGUI
+    app = DataExtractorGUI()
+    app.run()
 
 if __name__ == "__main__":
     main()
