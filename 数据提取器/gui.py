@@ -11,6 +11,18 @@ class DataExtractorGUI:
         self.root.title("数据提取器")
         self.root.geometry("800x600")
         
+        # 设置全局字体
+        self.default_font = ('Microsoft YaHei UI', 10)  # 使用微软雅黑作为默认字体
+        self.title_font = ('Microsoft YaHei UI', 11, 'bold')  # 用于标题的字体
+        
+        # 配置ttk样式
+        self.style = ttk.Style()
+        self.style.configure('TLabel', font=self.default_font)
+        self.style.configure('TButton', font=self.default_font)
+        self.style.configure('TEntry', font=self.default_font)
+        self.style.configure('TLabelframe', font=self.title_font)
+        self.style.configure('TLabelframe.Label', font=self.title_font)
+        
         self.workflow = None
         self.current_rules = []
         
@@ -21,7 +33,7 @@ class DataExtractorGUI:
         # 文件选择部分
         self.file_frame = ttk.LabelFrame(self.root, text="文件选择", padding=10)
         self.file_path = tk.StringVar()
-        self.file_entry = ttk.Entry(self.file_frame, textvariable=self.file_path)
+        self.file_entry = ttk.Entry(self.file_frame, textvariable=self.file_path, font=self.default_font)
         self.browse_btn = ttk.Button(self.file_frame, text="浏览", command=self._browse_file)
         self.var_name = tk.StringVar()
         self.var_entry = ttk.Entry(self.file_frame, textvariable=self.var_name)
@@ -36,13 +48,15 @@ class DataExtractorGUI:
         self.add_rule_btn = ttk.Button(self.rule_frame, text="添加规则", command=self._add_rule)
         self.help_btn = ttk.Button(self.rule_frame, text="规则说明", command=self._show_help)
         
-        # 规则列表
-        self.rules_list = tk.Listbox(self.rule_frame, height=5)
+        # 规则列表 - 为Listbox设置字体
+        self.rules_list = tk.Listbox(self.rule_frame, height=5, font=self.default_font)
         self.remove_rule_btn = ttk.Button(self.rule_frame, text="删除规则", command=self._remove_rule)
         
         # 预览和导出部分
         self.preview_frame = ttk.LabelFrame(self.root, text="预览和导出", padding=10)
-        self.preview_text = tk.Text(self.preview_frame, height=10)
+        # 预览文本框 - 设置等宽字体以便于数据对齐
+        self.preview_text = tk.Text(self.preview_frame, height=10, 
+                                  font=('Consolas', 10))  # 使用等宽字体
         self.export_btn = ttk.Button(self.preview_frame, text="导出到Excel", command=self._export_data)
         
     def _layout_widgets(self):
@@ -55,9 +69,10 @@ class DataExtractorGUI:
         
         # 规则配置布局
         self.rule_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        ttk.Label(self.rule_frame, text="行规则:").pack(anchor=tk.W)
+        # 为标签设置字体
+        ttk.Label(self.rule_frame, text="行规则:", font=self.default_font).pack(anchor=tk.W)
         self.row_entry.pack(fill=tk.X, padx=5)
-        ttk.Label(self.rule_frame, text="列规则:").pack(anchor=tk.W)
+        ttk.Label(self.rule_frame, text="列规则:", font=self.default_font).pack(anchor=tk.W)
         self.col_entry.pack(fill=tk.X, padx=5)
         
         btn_frame = ttk.Frame(self.rule_frame)
