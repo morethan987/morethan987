@@ -17,11 +17,77 @@ class DataExtractorGUI:
         
         # 配置ttk样式
         self.style = ttk.Style()
-        self.style.configure('TLabel', font=self.default_font)
-        self.style.configure('TButton', font=self.default_font)
-        self.style.configure('TEntry', font=self.default_font)
-        self.style.configure('TLabelframe', font=self.title_font)
-        self.style.configure('TLabelframe.Label', font=self.title_font)
+        
+        # 现代主题颜色
+        self.style.theme_create('modern', parent='alt', settings={
+            'TFrame': {
+                'configure': {
+                    'background': '#F5F5F5',
+                    'relief': 'flat'
+                }
+            },
+            'TLabel': {
+                'configure': {
+                    'font': self.default_font,
+                    'background': '#F5F5F5',
+                    'foreground': '#333333'
+                }
+            },
+            'TButton': {
+                'configure': {
+                    'font': self.default_font,
+                    'background': '#4CAF50',
+                    'foreground': 'white',
+                    'padding': 5,
+                    'relief': 'flat',
+                    'borderwidth': 0
+                },
+                'map': {
+                    'background': [('active', '#45a049')]
+                }
+            },
+            'TEntry': {
+                'configure': {
+                    'font': self.default_font,
+                    'fieldbackground': 'white',
+                    'foreground': '#333333',
+                    'padding': 5,
+                    'relief': 'flat',
+                    'borderwidth': 1
+                }
+            },
+            'TLabelframe': {
+                'configure': {
+                    'font': self.title_font,
+                    'background': '#F5F5F5',
+                    'relief': 'flat',
+                    'borderwidth': 0
+                }
+            },
+            'TLabelframe.Label': {
+                'configure': {
+                    'font': self.title_font,
+                    'background': '#F5F5F5',
+                    'foreground': '#333333'
+                }
+            },
+            'TListbox': {
+                'configure': {
+                    'background': 'white',
+                    'foreground': '#333333',
+                    'selectbackground': '#4CAF50',
+                    'selectforeground': 'white',
+                    'relief': 'flat',
+                    'borderwidth': 1
+                }
+            }
+        })
+        self.style.theme_use('modern')
+        
+        # 设置圆角边框
+        self.style.configure('TFrame', borderwidth=0, relief='flat')
+        self.style.configure('TLabelframe', borderwidth=0, relief='flat')
+        self.style.configure('TButton', borderwidth=0, relief='flat')
         
         self.workflow = None
         self.current_rules = []
@@ -61,32 +127,33 @@ class DataExtractorGUI:
         
     def _layout_widgets(self):
         # 文件选择布局
-        self.file_frame.pack(fill=tk.X, padx=5, pady=5)
-        self.file_entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=5)
-        self.browse_btn.pack(side=tk.LEFT, padx=5)
-        self.var_entry.pack(side=tk.LEFT, padx=5)
-        self.load_btn.pack(side=tk.LEFT, padx=5)
+        self.file_frame.pack(fill=tk.X, padx=10, pady=(10, 5), ipady=5)
+        self.file_entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 5))
+        self.browse_btn.pack(side=tk.LEFT, padx=(0, 5))
+        self.var_entry.pack(side=tk.LEFT, padx=(0, 5), fill=tk.X)
+        self.var_entry.configure(width=20)
+        self.load_btn.pack(side=tk.LEFT)
         
         # 规则配置布局
-        self.rule_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.rule_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5, ipady=5)
         # 为标签设置字体
-        ttk.Label(self.rule_frame, text="行规则:", font=self.default_font).pack(anchor=tk.W)
-        self.row_entry.pack(fill=tk.X, padx=5)
-        ttk.Label(self.rule_frame, text="列规则:", font=self.default_font).pack(anchor=tk.W)
-        self.col_entry.pack(fill=tk.X, padx=5)
+        ttk.Label(self.rule_frame, text="行规则:", font=self.default_font).pack(anchor=tk.W, pady=(5, 0))
+        self.row_entry.pack(fill=tk.X, padx=5, pady=(0, 5))
+        ttk.Label(self.rule_frame, text="列规则:", font=self.default_font).pack(anchor=tk.W, pady=(5, 0))
+        self.col_entry.pack(fill=tk.X, padx=5, pady=(0, 10))
         
         btn_frame = ttk.Frame(self.rule_frame)
-        btn_frame.pack(fill=tk.X, pady=5)
-        self.add_rule_btn.pack(side=tk.LEFT, padx=5)
-        self.help_btn.pack(side=tk.LEFT, padx=5)
-        self.remove_rule_btn.pack(side=tk.LEFT, padx=5)
+        btn_frame.pack(fill=tk.X, pady=(0, 5))
+        self.add_rule_btn.pack(side=tk.LEFT, padx=(0, 5))
+        self.help_btn.pack(side=tk.LEFT, padx=(0, 5))
+        self.remove_rule_btn.pack(side=tk.LEFT)
         
-        self.rules_list.pack(fill=tk.BOTH, expand=True, padx=5)
+        self.rules_list.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
         
         # 预览和导出布局
-        self.preview_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.preview_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(5, 10), ipady=5)
         self.preview_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        self.export_btn.pack(pady=5)
+        self.export_btn.pack(pady=(0, 5))
         
     def _browse_file(self):
         filename = filedialog.askopenfilename(
