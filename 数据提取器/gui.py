@@ -121,8 +121,8 @@ class DataExtractorGUI:
         # 预览和导出部分
         self.preview_frame = ttk.LabelFrame(self.root, text="预览和导出", padding=10)
         # 预览文本框 - 设置等宽字体以便于数据对齐
-        self.preview_text = tk.Text(self.preview_frame, height=10, 
-                                  font=('Consolas', 10))  # 使用等宽字体
+        self.preview_text = tk.Text(self.preview_frame, height=10,
+                                  font=('Consolas Light', 11) or ('Consolas Thin', 11) or ('Courier New', 11))  # 使用更细的等宽字体
         self.export_btn = ttk.Button(self.preview_frame, text="导出到Excel", command=self._export_data)
         
     def _layout_widgets(self):
