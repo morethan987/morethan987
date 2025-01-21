@@ -9,7 +9,7 @@ class DataExtractorGUI:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("数据提取器")
-        self.root.geometry("800x600")
+        self.root.geometry("800x700")
         
         # 设置全局字体
         self.default_font = ('Microsoft YaHei UI', 10)  # 使用微软雅黑作为默认字体
