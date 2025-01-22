@@ -30,10 +30,11 @@
 3. 范围规则: 输入三个以冒号分隔的数字(起始:结束:步长)，如 '0:-1:60'
 
 ## 相关依赖
-- numpy：最新版即可
-- scipy：最新版即可
-- pandas：最新版即可
-- tkinter：最新版即可
+功能简单，不挑版本😉
+- numpy
+- scipy
+- pandas
+- tkinter
 
 ---
 
@@ -69,7 +70,8 @@ This project uses a Python script to load .mat files, extract data, and save the
 3. Range rule: Enter three colon-separated numbers (start:end:step), e.g. '0:-1:60'
 
 ## Dependencies
-- numpy: Latest version
-- scipy: Latest version
-- pandas: Latest version
-- tkinter: Latest version
+Too simple to have a version limitation.😉
+- numpy
+- scipy
+- pandas
+- tkinter
