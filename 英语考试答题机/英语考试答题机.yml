@@ -1,0 +1,291 @@
+app:
+  description: ''
+  icon: the_horns
+  icon_background: '#D1E9FF'
+  mode: workflow
+  name: 英语考试答题机
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.5@fd6efd37c2a931911de8ab9ca3ba2da303bef146d45ee87ad896b04b36d09403
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/siliconflow:0.0.7@8b9d2f57d314120744c245b6fe4f8701e1a7490a500d9fb74e9e9dceeaea5f70
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/tongyi:0.0.7@e711a1130dd201552dd6493c59a7b7800f6df46963d98c534ce8a2b33c087b53
+kind: app
+version: 0.1.5
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions: []
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      enabled: true
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 10
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        sourceType: llm
+        targetType: end
+      id: 1741447678595-source-1741447628161-target
+      source: '1741447678595'
+      sourceHandle: source
+      target: '1741447628161'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: start
+        targetType: llm
+      id: 1741447588470-source-1741448331809-target
+      source: '1741447588470'
+      sourceHandle: source
+      target: '1741448331809'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: llm
+        targetType: knowledge-retrieval
+      id: 1741448331809-source-1741448468566-target
+      source: '1741448331809'
+      sourceHandle: source
+      target: '1741448468566'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1741448468566-source-1741447678595-target
+      source: '1741448468566'
+      sourceHandle: source
+      target: '1741447678595'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 开始
+        type: start
+        variables: []
+      height: 54
+      id: '1741447588470'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        outputs:
+        - value_selector:
+          - '1741447678595'
+          - text
+          variable: output
+        selected: false
+        title: 结束
+        type: end
+      height: 90
+      id: '1741447628161'
+      position:
+        x: 1619.028710047844
+        y: 169.21846263753434
+      positionAbsolute:
+        x: 1619.028710047844
+        y: 169.21846263753434
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1741448468566'
+          - result
+        desc: ''
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: deepseek-chat
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: 6333d8ad-0f6d-4552-a499-f66eeffe3b6d
+          role: system
+          text: 你是一个答题能手，你能够快速理解题意，并给出精准的答案。
+        - edition_type: basic
+          id: 4d17672f-818f-4eb1-91f4-e14bef48057b
+          role: user
+          text: '请你根据相关知识来解决题目，你的回复需要简洁明了，直接给出题号和答案而不是解释原因。
+
+            回复例子：第1题，A.选项名
+
+            相关知识：{{#context#}}
+
+            题目描述：{{#1741448331809.text#}}'
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 1000
+        selected: false
+        title: 题目解答
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 115
+      id: '1741447678595'
+      position:
+        x: 1114.796155577884
+        y: 235
+      positionAbsolute:
+        x: 1114.796155577884
+        y: 235
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: qwen-vl-plus
+          provider: langgenius/tongyi/tongyi
+        prompt_template:
+        - id: c26d0a0c-b581-4417-b346-73b30fae7bad
+          role: system
+          text: 你是一个题目识别专家，能够快速准确识别图片中的文字，并生成符合用户要求的文字
+        - id: efeeaa96-76d2-4604-a1af-f9d0d454b91e
+          role: user
+          text: '请你从我发送的图片中提取题目的相关信息，你需要：
+
+            1. 先判断这是第几题
+
+            2. 指明题目是单选题还是多选题
+
+            3. 精准提取出题目的题干和选项，不要做任何改动
+
+            下面是题目图片，请你根据上述要求进行提取：
+
+            {{#sys.files#}}'
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 1000
+        selected: false
+        title: 图片识别
+        type: llm
+        variables: []
+        vision:
+          configs:
+            detail: low
+            variable_selector:
+            - sys
+            - files
+          enabled: true
+      height: 115
+      id: '1741448331809'
+      position:
+        x: 426
+        y: 235
+      positionAbsolute:
+        x: 426
+        y: 235
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        dataset_ids:
+        - 85bf6b67-4c36-4ba0-a928-4ecac0b4ca56
+        desc: ''
+        multiple_retrieval_config:
+          reranking_enable: true
+          reranking_mode: reranking_model
+          reranking_model:
+            model: netease-youdao/bce-reranker-base_v1
+            provider: langgenius/siliconflow/siliconflow
+          top_k: 4
+        query_variable_selector:
+        - '1741448331809'
+        - text
+        retrieval_mode: multiple
+        selected: false
+        title: 知识检索
+        type: knowledge-retrieval
+      height: 92
+      id: '1741448468566'
+      position:
+        x: 802.1969455231244
+        y: 218.62102692881206
+      positionAbsolute:
+        x: 802.1969455231244
+        y: 218.62102692881206
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: -750.9111961340523
+      y: -120.27642129002834
+      zoom: 1.1486983792956502
