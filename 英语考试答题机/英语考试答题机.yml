@@ -193,7 +193,7 @@ workflow:
       positionAbsolute:
         x: 1114.796155577884
         y: 235
-      selected: true
+      selected: false
       sourcePosition: right
       targetPosition: left
       type: custom
@@ -207,7 +207,7 @@ workflow:
           completion_params:
             temperature: 0.7
           mode: chat
-          name: qwen-vl-plus
+          name: qwen-vl-max-2025-01-25
           provider: langgenius/tongyi/tongyi
         prompt_template:
         - id: c26d0a0c-b581-4417-b346-73b30fae7bad
@@ -230,7 +230,7 @@ workflow:
           max_retries: 3
           retry_enabled: true
           retry_interval: 1000
-        selected: false
+        selected: true
         title: 图片识别
         type: llm
         variables: []
@@ -249,14 +249,15 @@ workflow:
       positionAbsolute:
         x: 426
         y: 235
-      selected: false
+      selected: true
       sourcePosition: right
       targetPosition: left
       type: custom
       width: 244
     - data:
         dataset_ids:
-        - 85bf6b67-4c36-4ba0-a928-4ecac0b4ca56
+        - a13746fa-3937-47af-a9fe-6490f86d6415
+        - 166b2880-b74b-4758-be7a-de40bb0b0b62
         desc: ''
         multiple_retrieval_config:
           reranking_enable: true
@@ -272,7 +273,7 @@ workflow:
         selected: false
         title: 知识检索
         type: knowledge-retrieval
-      height: 92
+      height: 120
       id: '1741448468566'
       position:
         x: 802.1969455231244
@@ -286,6 +287,6 @@ workflow:
       type: custom
       width: 244
     viewport:
-      x: -750.9111961340523
-      y: -120.27642129002834
-      zoom: 1.1486983792956502
+      x: -87.23821269287214
+      y: -82.64688415763419
+      zoom: 0.9548416308409898
