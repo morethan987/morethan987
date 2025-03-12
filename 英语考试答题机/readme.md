@@ -30,7 +30,7 @@
 
 1. 部署[Dify](https://github.com/langgenius/dify)
 2. 导入答题机`.yml`配置文件
-3. 配置课堂录音知识库
+3. 配置课堂录音知识库(在线视频拉取使用[学无止下载器](https://www.xuewuzhi.cn/downloader)；视频转字幕使用[video-subtitle-master](https://github.com/buxuku/video-subtitle-master/releases)；字幕转纯文本使用[sub2txt](https://zm.i8k.tv/sub2txt))
 4. 根据知识库名称调整工作流
 5. 在`访问API`页面生成api_key
 6. 修改main.py中的配置：
