@@ -1,0 +1,10 @@
+{
+	"id": "hugo-blowfish-exporter",
+	"name": "Hugo Blowfish Exporter",
+	"version": "2.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Export and translate your notes to Hugo Blowfish format.",
+	"author": "Morethan",
+	"authorUrl": "https://github.com/morethan987",
+	"isDesktopOnly": true
+}

@@ -1,0 +1,62 @@
+/*
+
+This CSS file will be included with your plugin, and
+available in the app when your plugin is enabled.
+
+If your plugin does not need CSS, delete this file.
+
+*/
+
+.hugo-blowfish-exporter-ribbon-class {
+    color: var(--text-accent);
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+.hugo-blowfish-exporter-ribbon-class:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.hugo-blowfish-settings .setting-item {
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.hugo-blowfish-settings .setting-item:hover {
+    background-color: var(--background-secondary);
+}
+
+.hugo-blowfish-settings .setting-item-control input {
+    border-radius: 4px;
+    padding: 4px 8px;
+    background-color: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    width: 100%;
+}
+
+.hugo-blowfish-settings .setting-item-control input:focus {
+    border-color: var(--text-accent);
+    box-shadow: 0 0 0 2px var(--text-accent-hover);
+}
+
+/* 设置页面样式 */
+.hugo-blowfish-settings .export-path-setting, 
+.hugo-blowfish-settings .translated-export-path-setting,
+.hugo-blowfish-settings .image-path-setting, 
+.hugo-blowfish-settings .blog-path-setting, 
+.hugo-blowfish-settings .default-name-toggle-setting, 
+.hugo-blowfish-settings .default-name-setting, 
+.hugo-blowfish-settings .default-disp-name-toggle-setting, 
+.hugo-blowfish-settings .default-disp-name-setting,
+.hugo-blowfish-settings .baseurl-setting,
+.hugo-blowfish-settings .api-key-setting,
+.hugo-blowfish-settings .model-name-setting,
+.hugo-blowfish-settings .direct-export-setting {
+    padding: 12px;
+    border-radius: 8px;
+    background-color: var(--background-secondary);
+    margin-bottom: 12px;
+}
