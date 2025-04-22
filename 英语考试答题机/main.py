@@ -25,9 +25,15 @@ def upload_file(file_path, user):
     
     try:
         with open(file_path, 'rb') as file:
+            # 获取文件名并清理特殊字符
+            file_name = os.path.basename(file_path)
+            # 将空格替换为下划线，移除其他特殊字符
+            clean_name = re.sub(r'[^\w.-]', '_', file_name)
+            # 确保文件扩展名正确
             mime_type = 'image/png' if file_path.endswith('.png') else 'image/jpeg'
+            
             files = {
-                'file': (file_path, file, mime_type)
+                'file': (clean_name, file, mime_type)
             }
             data = {
                 "user": user,
