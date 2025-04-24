@@ -11,7 +11,7 @@ data = pd.read_csv('./Homework/ch3/3_3/watermelon3_0a.csv',encoding = 'utf-8')
 categorical_columns = ['色泽','根蒂','敲声','纹理','脐部','触感']
 data = pd.get_dummies(data,columns =categorical_columns)
 #目标变量编码
-data['好瓜'] = data['好瓜'].map({'是':1,'否':0})
+data['好瓜'] = data['好瓜'].replace({'是':1,'否':0})
 #选择特征和目标变量
 X = data.drop(columns=['好瓜','编号']).values
 y = data['好瓜'].values
@@ -40,7 +40,7 @@ print(conf_matrix)
 
 # 绘制混淆矩阵热力图
 plt.figure(figsize=(8, 6))
-sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', 
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues',
             xticklabels=['坏瓜', '好瓜'], yticklabels=['坏瓜', '好瓜'])
 plt.xlabel('预测类别')
 plt.ylabel('真实类别')
@@ -66,4 +66,3 @@ plt.ylabel("特征2（标准化后）")
 plt.legend()
 plt.title("逻辑回归分类结果")
 plt.show()
-

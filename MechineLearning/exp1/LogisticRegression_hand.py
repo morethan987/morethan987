@@ -5,12 +5,12 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 import seaborn as sns
 
 #导入数据，处理数据
-data = pd.read_csv('./data/', encoding='utf-8')
+data = pd.read_csv('./data/3.0.csv', encoding='utf-8')
 #数据有非数值属性，我们需要对其进行编码,这里使用one_hot 编码，以避免奇怪的数值关系
 categorical_columns = ['色泽', '根蒂', '敲声', '纹理', '脐部', '触感']
 data = pd.get_dummies(data, columns=categorical_columns)
 #目标变量编码
-data['好瓜'] = data['好瓜'].map({'是': 1, '否': 0})
+data['好瓜'] = data['好瓜'].replace({'是': 1, '否': 0})
 #选择特征和目标变量
 X = data.drop(columns=['好瓜', '编号']).values
 y = data['好瓜'].values
