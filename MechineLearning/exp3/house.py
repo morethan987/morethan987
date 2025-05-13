@@ -1,0 +1,24 @@
+import pandas as pd
+import numpy as np
+from DecisionTree import CART_clf
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split    #随机划分样本集
+
+#读取房价数据集
+f=pd.read_excel(r'housing_data.xlsx')
+X=f.iloc[:,:5].values               #属性值,numpy数组
+y=f.iloc[:,5].values                #标签值,numpy数组
+feature_name=f.columns.tolist()[:5] #特征的列表
+#按7:3划分训练集和测试集(numpy数组)
+X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.3)
+
+#训练模型并计算R^2
+cart=CART_clf(list(X_train),list(y_train),feature_name,7)
+cart.Train()
+R_square,y_pred=cart.Test(list(X_test),list(y_test))
+print('R_square of regression: %.2f'%R_square)
+print('Visualization of Decision Tree:')
+print(cart.LevelOrder(cart.root))
+
+#绘制回归结果
+cart.Plt(y_test,y_pred)
