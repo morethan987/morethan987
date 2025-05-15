@@ -7,12 +7,10 @@
 '''
 import pandas as pd
 from DecisionTree import CART_reg
-import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split    #随机划分样本集
 
-#读取房价数据集
-f=pd.read_excel(r'icecream_data.xlsx')
+#读取冰淇淋数据集
+f=pd.read_excel(r'exp3/data/icecream_data.xlsx')
 X=f.iloc[:,:1].values               #属性值,numpy数组
 y=f.iloc[:,1].values                #标签值,numpy数组
 feature_name=f.columns.tolist()[:1] #特征的列表
@@ -27,5 +25,4 @@ print('R_square of regression: %.2f'%R_square)
 print('Visualization of Decision Tree:')
 print(cart.LevelOrder(cart.root))
 
-#绘制回归结果
-cart.Plt(y_test,y_pred)
+cart.plot_tree()

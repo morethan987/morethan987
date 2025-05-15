@@ -5,13 +5,12 @@
     构建决策树分类并测试准确率
     呈现训练过程,绘制分类结果,评估模型准确性
 '''
-import numpy as np
 from DecisionTree import CART_clf
 import pandas as pd
 from sklearn.model_selection import train_test_split#随机划分样本集
 
 #读取红酒品质数据集
-f=pd.read_excel(r'winequality_data.xlsx')
+f=pd.read_excel(r'exp3/data/winequality_data.xlsx')
 X=f.iloc[:,:11].values              #属性值,numpy数组
 y=f.iloc[:,11].values               #标签值,numpy数组
 feature_name=f.columns.tolist()[:11]#特征的列表
@@ -43,11 +42,4 @@ tmp4.append('Pred_label')
 data_real=pd.DataFrame(data_real,columns=tmp3)
 data_pred=pd.DataFrame(data_pred,columns=tmp4)
 
-#绘制多维数据的平行坐标
-cart.ParallelCoordinates(data_real,data_pred)
-
-#绘制RadViz雷达图
-cart.Radviz(data_real,data_pred)
-
-#绘制相关系数热力图
-cart.Heatmap(data_real,data_pred)
+cart.plot_tree()

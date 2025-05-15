@@ -1,9 +1,6 @@
 import numpy as np
 import queue
-import matplotlib.pyplot as plt      
-from pandas.plotting import parallel_coordinates    #绘制多维数据的平行坐标
-from pandas.plotting import radviz                  #绘制RadViz雷达图
-import seaborn as sns                               #绘制多维数据的矩阵图和相关系数热力图
+import matplotlib.pyplot as plt
 
 
 class Node:
@@ -11,12 +8,13 @@ class Node:
         由于属性都是连续值,连续属性离散化采用的是二分思想,因此决策树是二叉树,节点只有左右子树
         为了存储当前节点的最优划分属性及其对应的最优划分点,Node类加入了feature和value属性
         当Node为中间节点时,feature和value存储最优划分属性和值,left和right分别存储feature取值小于等于value和大于value的样本构成的Node
-        当Node为叶节点时,feature存储分类标签,value无意义
+        当Node为叶节点时,feature存储输出值(分类标签或回归值),value无意义
     '''
     def __init__(self,feature,value,level=0,left=None,right=None):
         '''args:
-            feature:最优划分属性(str)
+            feature:最优划分属性或叶节点的输出值
             value:连续属性的最优划分点(float)
+            level:节点的层级(int)
             left:左子树(Node)
             right:右子树(Node)
         '''
@@ -32,20 +30,18 @@ class Node:
         return infm
 
 
-'''决策树分类模型
-    先定义树节点类Node,再定义决策树类DecisionTree
-'''
-class CART_clf:
-    '''CART决策树类
-        决策树类在初始化时只需要提供样本的基本数据,即属性值、属性名称、分类值
-        为了方便建树时节点分割,D、Dv中均只存储各结点在整个类的训练集X中的索引
+class BaseCART:
+    '''CART决策树基类
+        包含分类树和回归树的共同属性和方法
+        决策树类在初始化时只需要提供样本的基本数据,即属性值、属性名称、输出值
+        为了方便建树时节点分割,样本索引列表中均只存储各结点在整个类的训练集X中的索引
         为了防止过拟合,可以指定树的最大深度
-        为了便于对测试集进行分类,建立属性值->索引的映射
+        为了便于对测试集进行预测,建立属性值->索引的映射
     '''
     def __init__(self,X,y,feature_name,MaxLevel=10):
         '''args:
             X:训练样本的属性(list)
-            y:训练样本的标签(list)
+            y:训练样本的输出值(分类标签或回归值)(list)
             feature_name:属性名称(list)
             MaxLevel:最大深度(int)
             feature_index:属性对应的索引
@@ -57,7 +53,159 @@ class CART_clf:
         self.MaxLevel=MaxLevel
         self.feature_index=self.getFeatureIndex()
         self.root=None
+        
+    def getFeatureIndex(self):
+        '''建立属性值->索引的映射,返回字典'''
+        feature_dict={}
+        for i in range(len(self.feature_name)):
+            feature_dict[self.feature_name[i]]=i
+        return feature_dict
 
+    def Continuity2Discrete(self,Da):
+        '''连续属性离散化:排序->计算相邻点中点
+            args:
+                Da:当前数据集在属性a上的[索引,属性值]列表(list)
+            return:
+                Da_sort:对属性值进行排序的[索引,属性值]列表(list)
+                T:候选划分点(list)
+        '''
+        Da_sort=sorted(Da,key=lambda x:x[1])        #对第1列(属性值)进行排序
+        index=[x[0] for x in Da_sort]               #按属性值升序排列的数据在self.X中索引值
+        A=[x[1] for x in Da_sort]                   #升序排列的属性值
+        T=[(A[i]+A[i+1])/2 for i in range(len(A)-1)]#候选划分点
+        return Da_sort,T
+        
+    def Train(self):
+        '''构建决策树,将根节点赋给self.root'''
+        print('Start building CART.')
+        D=[i for i in range(len(self.y))]
+        self.root=self.BuildTree(D,0)
+        print('Finish building CART.')
+        return
+
+    def preOrder(self,root):
+        '''前序遍历决策树'''
+        if root==None:
+            return
+        print(root.Infm())
+        self.preOrder(root.left)
+        self.preOrder(root.right)
+        return
+
+    def LevelOrder(self,root):
+        '''层序遍历决策树'''
+        q=queue.Queue()
+        q.put(root)
+        while(q.qsize()>0):
+            node=q.get()
+            print(node.Infm())
+            if node.left is not None:
+                q.put(node.left)
+                q.put(node.right)
+        return
+
+    def Pred(self,x):
+        '''对单一测试样本进行预测
+            args:
+                x:一个测试样本的属性(list)
+            return:
+                输出值:分类标签或回归值
+        '''
+        ptr=self.root
+        while ptr is not None:
+            if ptr.left is None and ptr.right is None:  #ptr为叶节点
+                return ptr.feature
+            fi=self.feature_index[ptr.feature]
+            if x[fi]<=ptr.value:
+                ptr=ptr.left
+            else:
+                ptr=ptr.right
+
+    def getBestSplit(self,D):
+        '''寻找最优划分(属性及其对应二分边界)的抽象方法
+           需要在子类中实现具体的划分准则
+        '''
+        raise NotImplementedError
+
+    def BuildTree(self,D,level):
+        '''构建决策树的抽象方法
+           需要在子类中实现具体的建树规则
+        '''
+        raise NotImplementedError
+
+    def Test(self,X_test,y_test):
+        '''测试模型的抽象方法
+           需要在子类中实现具体的评估指标
+        '''
+        raise NotImplementedError
+
+    def plot_tree(self, figsize=(12, 8)):
+        '''绘制决策树的可视化图
+        args:
+            figsize: 图像大小元组 (width, height)
+        '''
+        if self.root is None:
+            print("决策树还未训练，请先调用Train()方法")
+            return
+        
+        plt.figure(figsize=figsize)
+        
+        def get_tree_depth(node):
+            if node is None:
+                return 0
+            return max(get_tree_depth(node.left), get_tree_depth(node.right)) + 1
+        
+        def get_tree_width(node, level, width_dict):
+            if node is None:
+                return
+            width_dict[level] = width_dict.get(level, 0) + 1
+            get_tree_width(node.left, level + 1, width_dict)
+            get_tree_width(node.right, level + 1, width_dict)
+        
+        total_depth = get_tree_depth(self.root)
+        width_dict = {}
+        get_tree_width(self.root, 0, width_dict)
+        
+        def plot_node(node, x, y, dx, dy, level):
+            if node is None:
+                return
+                
+            # 绘制节点
+            if node.left is None and node.right is None:  # 叶节点
+                color = 'lightgreen'
+                text = f'{node.feature}'
+            else:  # 决策节点
+                color = 'lightblue'
+                text = f'{node.feature}\n≤ {node.value:.2f}'
+                
+            plt.plot(x, y, 'o', markersize=30, color=color)
+            plt.text(x, y, text, ha='center', va='center', fontsize=8)
+            
+            # 绘制到子节点的连接线
+            if node.left:
+                plt.plot([x, x-dx], [y, y-dy], '-', color='gray')
+                plot_node(node.left, x-dx, y-dy, dx/2, dy, level+1)
+            if node.right:
+                plt.plot([x, x+dx], [y, y-dy], '-', color='gray')
+                plot_node(node.right, x+dx, y-dy, dx/2, dy, level+1)
+        
+        # 计算初始间距
+        dx = 1
+        dy = 1 / (total_depth)
+        
+        # 绘制树
+        plot_node(self.root, 0.5, 1-dy/2, dx/2, dy, 0)
+        
+        plt.axis('off')
+        plt.title('Decision Tree Visualization')
+        plt.show()
+
+
+class CART_clf(BaseCART):
+    '''CART分类树
+       采用基尼指数作为分裂准则
+       叶节点的输出为该节点中样本最多的类别
+    '''
     def Gini(self,Dv):
         '''Gini(Dv)=1-Σpk^2,k遍历不同的分类属性
             计算样本集Dv的纯度,即随机抽取的两个样本不属于一类的概率
@@ -88,20 +236,6 @@ class CART_clf:
         D1=[x for x in D if self.X[x][a]<=t]
         D2=[x for x in D if self.X[x][a]>t]
         return D1,D2,(self.Gini(D1)*len(D1)+self.Gini(D2)*len(D2))/len(D)
-
-    def Continuity2Discrete(self,Da):
-        '''连续属性离散化:排序->计算相邻点中点
-            args:
-                Da:当前数据集D在属性a上的[索引,属性值]列表(list)
-            return:
-                Da_sort:对属性值进行排序的[索引,属性值]列表(list)
-                T:候选划分点(list)
-        '''
-        Da_sort=sorted(Da,key=lambda x:x[1])        #对第1列(属性值)进行排序
-        index=[x[0] for x in Da_sort]               #按属性值升序排列的数据在self.X中索引值
-        A=[x[1] for x in Da_sort]                   #升序排列的属性值
-        T=[(A[i]+A[i+1])/2 for i in range(len(A)-1)]#候选划分点
-        return Da_sort,T
 
     def getBestSplit(self,D):
         '''寻找当前D中最优划分(属性及其对应二分边界)
@@ -137,8 +271,6 @@ class CART_clf:
             args:
                 D:当前数据集D的索引列表(list)
                 level:当前深度(int)
-                a:最优划分属性的索引(int)
-                t:最优划分属性的最优划分值(float)
             return:
                 root:建树的根节点(Node)
         '''
@@ -156,58 +288,6 @@ class CART_clf:
             root.left=self.BuildTree(lc,level+1)
             root.right=self.BuildTree(rc,level+1)
             return root
-
-    def Train(self):
-        '''构建决策树,将根节点赋给self.root'''
-        print('Start building CART.')
-        D=[i for i in range(len(self.y))]
-        self.root=self.BuildTree(D,0)
-        print('Finish building CART.')
-        return
-
-    def preOrder(self,root):
-        '''前序遍历决策树'''
-        if root==None:
-            return
-        print(root.Infm())
-        self.preOrder(root.left)
-        self.preOrder(root.right)
-        return
-
-    def LevelOrder(self,root):
-        q=queue.Queue()
-        q.put(root)
-        while(q.qsize()>0):
-            node=q.get()
-            print(node.Infm())
-            if node.left is not None:
-                q.put(node.left)
-                q.put(node.right)
-        return
-
-    def getFeatureIndex(self):
-        '''建立属性值->索引的映射,返回字典'''
-        feature_dict={}
-        for i in range(len(self.feature_name)):
-            feature_dict[self.feature_name[i]]=i
-        return feature_dict
-
-    def Pred(self,x):
-        '''对单一测试样本进行分类
-            args:
-                x:一个测试样本的属性(list)
-            return:
-                label:分类标签
-        '''
-        ptr=self.root
-        while ptr is not None:
-            if ptr.left is None and ptr.right is None:  #ptr为叶节点
-                return ptr.feature
-            fi=self.feature_index[ptr.feature]
-            if x[fi]<=ptr.value:
-                ptr=ptr.left
-            else:
-                ptr=ptr.right
 
     def Test(self,X_test,y_test):
         '''对测试集进行分类,统计准确率
@@ -229,81 +309,14 @@ class CART_clf:
         acc=cnt/len(y_test)
         return acc,y_pred
 
-    def ParallelCoordinates(self,data_real,data_pred):
-        '''绘制多维数据的平行坐标
-            每条垂直的线代表一个属性,不同颜色的线表示不同的类别,每条折线表示一个样本
-        '''
-        fig=plt.figure(figsize=(13,4))
-        ax=plt.subplot(121)
-        plt.title('Real_label')
-        parallel_coordinates(data_real,'Real_label')
-        ax=plt.subplot(122)
-        plt.title('Pred_label')
-        parallel_coordinates(data_pred,'Pred_label')
-        plt.show()
 
-    def Radviz(self,data_real,data_pred):
-        '''绘制RadViz雷达图,m个特征对应于单位圆上的m个点,圆中每一个散点代表表中一行数据
-            每个散点上都有m条线分别连接到m个特征点上,而该特征的值就是这m条线上施加在散点上的力,使其受力平衡
-        '''
-        fig=plt.figure(figsize=(13,5))
-        ax=plt.subplot(121)
-        plt.title('Real_label')
-        radviz(data_real,'Real_label',color=['blue','green','red'])
-        ax=plt.subplot(122)
-        plt.title('Pred_label')
-        radviz(data_pred,'Pred_label',color=['blue','green','red'])
-        plt.show()
-
-    def Heatmap(self,data_real,data_pred):
-        '''绘制相关系数热力图'''
-        fig=plt.figure(figsize=(13,5))
-        ax=plt.subplot(121)
-        plt.title('Real_label')
-        data_real_corr=data_real.corr()
-        sns.heatmap(data_real_corr, annot=True)
-        ax=plt.subplot(122)
-        plt.title('Pred_label')
-        data_pred_corr=data_pred.corr()
-        sns.heatmap(data_real_corr, annot=True)
-        plt.show()
-
-    def MatrixPlot(self,data_real,data_pred):
-        '''绘制多维数据的矩阵图,表示不同特征之间的关系'''
-        sns.pairplot(data_real,hue='Real_label')
-        plt.show()
-        sns.pairplot(data_pred,hue='Pred_label')
-        plt.show()
-
-
-'''决策树回归模型
-    在决策树分类模型上加以改进,即可用于回归预测。
-'''
-class CART_reg:
-    '''CART决策树类
-        决策树类在初始化时只需要提供样本的基本数据,即属性值、属性名称、回归值
-        为了方便建树时节点分割,R、Rj中均只存储各结点在整个类的训练集X中的索引
-        为了防止过拟合,可以指定树的最大深度
-        为了便于对测试集进行分类,建立属性值->索引的映射
+class CART_reg(BaseCART):
+    '''CART回归树
+       采用RSS(残差平方和)作为分裂准则
+       叶节点的输出为该节点中样本的均值
     '''
-    def __init__(self,X,y,feature_name,MaxLevel=10):
-        '''args:
-            X:训练样本的属性(list)
-            y:训练样本的回归值(list)
-            feature_name:属性名称(list)
-            MaxLevel:最大深度(int)
-            feature_index:属性对应的索引
-            root:决策树根节点
-        '''
-        self.X=X
-        self.y=y
-        self.feature_name=feature_name
-        self.MaxLevel=MaxLevel
-        self.feature_index=self.getFeatureIndex()
-        self.root=None
-
     def getRSS(self,R,j,s):
-        '''RSS=Σ(R1)(yi-yRj)^2+Σ(R2)(yi-yRj)^2
+        '''RSS=Σ(R1)(yi-yRj)^2Σ(R2)(yi-yRj)^2
             R1={x in R | x.j<=s};R2={x in R | x.j>s}
             args:
                 R:当前数据集R的索引列表(list)
@@ -321,20 +334,6 @@ class CART_reg:
         RSS=np.sum(np.square(Y1-YR1))+np.sum(np.square(Y2-YR2))
         return R1,R2,RSS
 
-    def Continuity2Discrete(self,Rj):
-        '''连续属性离散化:排序->计算相邻点中点
-            args:
-                Rj:当前数据集R在属性j上的[索引,属性值]列表(list)
-            return:
-                Rj_sort:对属性值进行排序的[索引,属性值]列表(list)
-                S:候选划分点(list)
-        '''
-        Rj_sort=sorted(Rj,key=lambda x:x[1])        #对第1列(属性值)进行排序
-        index=[x[0] for x in Rj_sort]               #按属性值升序排列的数据在self.X中索引值
-        J=[x[1] for x in Rj_sort]                   #升序排列的属性值
-        S=[(J[i]+J[i+1])/2 for i in range(len(J)-1)]#候选划分点
-        return Rj_sort,S
-
     def getBestSplit(self,R):
         '''寻找当前R中最优划分(属性及其对应二分边界)
             args:
@@ -342,7 +341,7 @@ class CART_reg:
             return:
                 R1_final:左子树节点的索引列表(list)
                 R2_final:右子树节点的索引列表(list)
-                RSS:最小基尼指数(float)
+                RSS_final:最小RSS值(float)
                 j_final:最优划分属性的索引(int)
                 s_final:最优划分属性的最优划分值(float)
         '''
@@ -352,7 +351,7 @@ class CART_reg:
         j_final=-1
         s_final=0
         for j in range(len(self.feature_name)):     #遍历属性
-            Rj=[[i,self.X[i][j]] for i in R]        #D中样本的属性a上取值的列表
+            Rj=[[i,self.X[i][j]] for i in R]        #R中样本的属性j上取值的列表
             Rj_sort,S=self.Continuity2Discrete(Rj)  #返回对属性值进行排序的[索引,属性值]列表和候选划分点
             for s in S:
                 R1,R2,RSS=self.getRSS(R,j,s)
@@ -362,7 +361,6 @@ class CART_reg:
                     R2_final=R2
                     j_final=j
                     s_final=s
-                # print(j_final,s_final)
         return R1_final,R2_final,RSS_final,j_final,s_final
 
     def BuildTree(self,R,level):
@@ -370,81 +368,26 @@ class CART_reg:
             args:
                 R:当前数据集R的索引列表(list)
                 level:当前深度(int)
-                j:最优划分属性的索引(int)
-                s:最优划分属性的最优划分值(float)
             return:
                 root:建树的根节点(Node)
         '''
         if len(R)==0:
             return None
-        reg=[self.y[x] for x in R]                #当前数据集R的样本分类标签
+        reg=[self.y[x] for x in R]                #当前数据集R的样本回归值
         reg_final=np.mean(np.array(reg))
         if level>=self.MaxLevel:                  #超过最大深度,直接停止,回归值为reg的均值
             return Node(reg_final,None,level)
         elif len(R)==1:
-            return Node(self.y[R[0]],None,level)  #所有节点属于一个类,该节点为叶结点
+            return Node(self.y[R[0]],None,level)  #只有一个样本,该节点为叶结点
         else:
             lc,rc,RSS,j,s=self.getBestSplit(R)
-            # print(RSS,j,s)
             root=Node(self.feature_name[j],s,level)
             root.left=self.BuildTree(lc,level+1)
             root.right=self.BuildTree(rc,level+1)
             return root
 
-    def Train(self):
-        '''构建决策树,将根节点赋给self.root'''
-        print('Start building CART.')
-        R=[i for i in range(len(self.y))]
-        self.root=self.BuildTree(R,0)
-        print('Finish building CART.')
-        return
-
-    def preOrder(self,root):
-        '''前序遍历决策树'''
-        if root==None:
-            return
-        print(root.Infm())
-        self.preOrder(root.left)
-        self.preOrder(root.right)
-        return
-
-    def LevelOrder(self,root):
-        q=queue.Queue()
-        q.put(root)
-        while(q.qsize()>0):
-            node=q.get()
-            print(node.Infm())
-            if node.left is not None:
-                q.put(node.left)
-                q.put(node.right)
-        return
-
-    def getFeatureIndex(self):
-        '''建立属性值->索引的映射,返回字典'''
-        feature_dict={}
-        for i in range(len(self.feature_name)):
-            feature_dict[self.feature_name[i]]=i
-        return feature_dict
-
-    def Pred(self,x):
-        '''对单一测试样本进行分类
-            args:
-                x:一个测试样本的属性(list)
-            return:
-                label:分类标签
-        '''
-        ptr=self.root
-        while ptr is not None:
-            if ptr.left is None and ptr.right is None:  #ptr为叶节点
-                return ptr.feature
-            fi=self.feature_index[ptr.feature]
-            if x[fi]<=ptr.value:
-                ptr=ptr.left
-            else:
-                ptr=ptr.right
-
     def Test(self,X_test,y_test):
-        '''对测试集进行分类,统计准确率
+        '''对测试集进行预测,计算R方值
             args:
                 X_test:测试样本集的属性(list)
                 y_test:测试样本集的真实回归值
@@ -455,19 +398,10 @@ class CART_reg:
         y_pred=[]                                   #记录预测结果
         top=0                                       #分子
         bottom=0                                    #分母
-        yi=np.mean(np.array(y_test))                #真实回归值的均值
+        yi=np.mean(np.array(y_test))               #真实回归值的均值
         for i in range(len(X_test)):
             pred=self.Pred(X_test[i])
             y_pred.append(pred)
             top+=(y_test[i]-pred)*(y_test[i]-pred)
             bottom+=(y_test[i]-yi)*(y_test[i]-yi)
         return 1-top/bottom,y_pred
-
-    def Plt(self,y_test,y_pred):
-        '''回归结果可视化'''
-        x=np.array([i for i in range(len(y_pred))])
-        plt.plot(x,y_test,y_pred)
-        plt.ylabel('Real & Pred')
-        plt.xlabel('number of sample')
-        plt.legend(['Real','Pred'])
-        plt.show()
