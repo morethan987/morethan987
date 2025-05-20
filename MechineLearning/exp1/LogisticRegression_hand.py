@@ -5,7 +5,7 @@ from sklearn.metrics import confusion_matrix, classification_report
 import seaborn as sns
 
 #导入数据，处理数据
-data = pd.read_csv('./data/3.0.csv', encoding='utf-8')
+data = pd.read_csv('exp1/data/3.0.csv', encoding='utf-8')
 #数据有字符属性值，这里使用one_hot 编码
 categorical_columns = ['色泽', '根蒂', '敲声', '纹理', '脐部', '触感']
 data = pd.get_dummies(data, columns=categorical_columns)

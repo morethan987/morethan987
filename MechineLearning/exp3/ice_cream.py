@@ -1,12 +1,5 @@
-'''冰淇淋数据集
-    500个样本,按7:3划分为训练集和测试集
-    回归任务,预测Revenue
-    1个属性('Temperature'),
-    构建决策树回归模型并测试准确率
-    呈现训练过程,评估模型准确性
-'''
 import pandas as pd
-from DecisionTree import CART_reg
+from DecisionTree import DT_reg
 from sklearn.model_selection import train_test_split    #随机划分样本集
 
 #读取冰淇淋数据集
@@ -18,11 +11,11 @@ feature_name=f.columns.tolist()[:1] #特征的列表
 X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.3)
 
 #训练模型并计算R^2
-cart=CART_reg(list(X_train),list(y_train),feature_name,8)
-cart.Train()
-R_square,y_pred=cart.Test(list(X_test),list(y_test))
+tree=DT_reg(list(X_train),list(y_train),feature_name,8)
+tree.Train()
+R_square,y_pred=tree.Test(list(X_test),list(y_test))
 print('R_square of regression: %.2f'%R_square)
 print('Visualization of Decision Tree:')
-print(cart.LevelOrder(cart.root))
+print(tree.LevelOrder(tree.root))
 
-cart.plot_tree()
+tree.plot_tree()

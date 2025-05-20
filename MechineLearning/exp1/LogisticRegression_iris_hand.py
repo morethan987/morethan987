@@ -6,7 +6,7 @@ import itertools
 from sklearn.metrics import accuracy_score, classification_report
 
 # 读取数据
-data = pd.read_csv(r"./data/iris.csv", delimiter=',', header=None)
+data = pd.read_csv(r"exp1/data/iris.csv", delimiter=',', header=None)
 X = data.iloc[1:, :-1]
 Y = data.iloc[1:, -1]
 

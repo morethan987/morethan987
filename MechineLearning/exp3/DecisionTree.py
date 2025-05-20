@@ -5,9 +5,8 @@ import matplotlib.pyplot as plt
 
 class Node:
     '''节点类
-        由于属性都是连续值,连续属性离散化采用的是二分思想,因此决策树是二叉树,节点只有左右子树
-        为了存储当前节点的最优划分属性及其对应的最优划分点,Node类加入了feature和value属性
-        当Node为中间节点时,feature和value存储最优划分属性和值,left和right分别存储feature取值小于等于value和大于value的样本构成的Node
+        由于属性都是连续值,连续属性离散化采用的是二分思想
+        当Node为中间节点时,feature和value存储最优划分属性和值
         当Node为叶节点时,feature存储输出值(分类标签或回归值),value无意义
     '''
     def __init__(self,feature,value,level=0,left=None,right=None):
@@ -30,8 +29,8 @@ class Node:
         return infm
 
 
-class BaseCART:
-    '''CART决策树基类
+class BaseDT:
+    '''基类
         包含分类树和回归树的共同属性和方法
         决策树类在初始化时只需要提供样本的基本数据,即属性值、属性名称、输出值
         为了方便建树时节点分割,样本索引列表中均只存储各结点在整个类的训练集X中的索引
@@ -62,17 +61,11 @@ class BaseCART:
         return feature_dict
 
     def Continuity2Discrete(self,Da):
-        '''连续属性离散化:排序->计算相邻点中点
-            args:
-                Da:当前数据集在属性a上的[索引,属性值]列表(list)
-            return:
-                Da_sort:对属性值进行排序的[索引,属性值]列表(list)
-                T:候选划分点(list)
-        '''
-        Da_sort=sorted(Da,key=lambda x:x[1])        #对第1列(属性值)进行排序
-        index=[x[0] for x in Da_sort]               #按属性值升序排列的数据在self.X中索引值
-        A=[x[1] for x in Da_sort]                   #升序排列的属性值
-        T=[(A[i]+A[i+1])/2 for i in range(len(A)-1)]#候选划分点
+        '''连续属性离散化:排序->计算相邻点中点'''
+        Da_sort=sorted(Da,key=lambda x:x[1])
+        index=[x[0] for x in Da_sort]
+        A=[x[1] for x in Da_sort]
+        T=[(A[i]+A[i+1])/2 for i in range(len(A)-1)]
         return Da_sort,T
         
     def Train(self):
@@ -120,24 +113,6 @@ class BaseCART:
                 ptr=ptr.left
             else:
                 ptr=ptr.right
-
-    def getBestSplit(self,D):
-        '''寻找最优划分(属性及其对应二分边界)的抽象方法
-           需要在子类中实现具体的划分准则
-        '''
-        raise NotImplementedError
-
-    def BuildTree(self,D,level):
-        '''构建决策树的抽象方法
-           需要在子类中实现具体的建树规则
-        '''
-        raise NotImplementedError
-
-    def Test(self,X_test,y_test):
-        '''测试模型的抽象方法
-           需要在子类中实现具体的评估指标
-        '''
-        raise NotImplementedError
 
     def plot_tree(self, figsize=(12, 8)):
         '''绘制决策树的可视化图
@@ -200,9 +175,27 @@ class BaseCART:
         plt.title('Decision Tree Visualization')
         plt.show()
 
+    def getBestSplit(self,D):
+        '''寻找最优划分(属性及其对应二分边界)的抽象方法
+           需要在子类中实现具体的划分准则
+        '''
+        raise NotImplementedError
 
-class CART_clf(BaseCART):
-    '''CART分类树
+    def BuildTree(self,D,level):
+        '''构建决策树的抽象方法
+           需要在子类中实现具体的建树规则
+        '''
+        raise NotImplementedError
+
+    def Test(self,X_test,y_test):
+        '''测试模型的抽象方法
+           需要在子类中实现具体的评估指标
+        '''
+        raise NotImplementedError
+
+
+class DT_clf(BaseDT):
+    '''分类树
        采用基尼指数作为分裂准则
        叶节点的输出为该节点中样本最多的类别
     '''
@@ -310,8 +303,8 @@ class CART_clf(BaseCART):
         return acc,y_pred
 
 
-class CART_reg(BaseCART):
-    '''CART回归树
+class DT_reg(BaseDT):
+    '''回归树
        采用RSS(残差平方和)作为分裂准则
        叶节点的输出为该节点中样本的均值
     '''

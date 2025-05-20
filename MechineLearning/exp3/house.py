@@ -1,5 +1,5 @@
 import pandas as pd
-from DecisionTree import CART_reg
+from DecisionTree import DT_reg
 from sklearn.model_selection import train_test_split    #随机划分样本集
 
 #读取房价数据集
@@ -11,12 +11,12 @@ feature_name=f.columns.tolist()[:5] #特征的列表
 X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.3)
 
 #训练模型并计算R^2
-cart=CART_reg(list(X_train),list(y_train),feature_name,7)
-cart.Train()
-R_square,y_pred=cart.Test(list(X_test),list(y_test))
+tree=DT_reg(list(X_train),list(y_train),feature_name,7)
+tree.Train()
+R_square,y_pred=tree.Test(list(X_test),list(y_test))
 print('R_square of regression: %.2f'%R_square)
 print('Visualization of Decision Tree:')
-print(cart.LevelOrder(cart.root))
+print(tree.LevelOrder(tree.root))
 
 #绘制回归结果
-cart.Plt(y_test,y_pred)
+tree.Plt(y_test,y_pred)
