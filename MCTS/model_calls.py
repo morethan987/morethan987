@@ -1,4 +1,5 @@
 import os
+import httpx
 from openai import OpenAI
 import time
 import logging
@@ -31,10 +32,10 @@ Otherwise, continue contributing to only one step of the solution process based 
     def __init__(
         self, api_key=None, base_url=None, model_name=None
     ):
-        self.api_key = api_key or os.getenv("ALIYUN_API_KEY")
-        self.base_url = base_url or os.getenv("ALIYUN_BASE_URL") or "https://dashscope.aliyuncs.com/compatible-mode/v1"
-        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
-        self.model_name = model_name or "qwen-max-2025-01-25"
+        self.api_key = api_key or os.getenv("DEEPSEEK_API_KEY")
+        self.base_url = base_url or os.getenv("DEEPSEEK_BASE_URL")
+        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url, http_client=httpx.Client(trust_env=False))
+        self.model_name = model_name or os.getenv("DEEPSEEK_MODEL_NAME")
 
     def get_output(self, prompt, max_retries=3, retry_delay=2):
         """

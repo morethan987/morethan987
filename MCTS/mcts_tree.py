@@ -4,13 +4,14 @@ import math
 from typing import Union, TypeAlias
 import logging
 from logging import getLogger
+from setup_logger import logger
 
-logger = getLogger(__name__)
-logger.setLevel("INFO")
-console_handler = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
+# logger = getLogger(__name__)
+# logger.setLevel("INFO")
+# console_handler = logging.StreamHandler()
+# formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+# console_handler.setFormatter(formatter)
+# logger.addHandler(console_handler)
 
 # 定义一个类型别名来统一所有Node类型
 NodeType: TypeAlias = Union[Node, LLMNode, SmartNode, SillyNode, FunnyNode, QuestionNode]
