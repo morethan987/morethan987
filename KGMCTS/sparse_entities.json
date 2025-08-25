@@ -1,0 +1,25 @@
+{
+  "entity_001": [
+    ["head", "nationality"],
+    ["tail", "born_in"],
+    ["head", "occupation"]
+  ],
+  "entity_002": [
+    ["tail", "located_in"],
+    ["head", "part_of"]
+  ],
+  "entity_003": [
+    ["head", "instance_of"],
+    ["tail", "subclass_of"],
+    ["head", "member_of"]
+  ],
+  "entity_004": [
+    ["tail", "educated_at"],
+    ["head", "work_at"]
+  ],
+  "entity_005": [
+    ["head", "country"],
+    ["tail", "capital_of"],
+    ["head", "currency"]
+  ]
+}

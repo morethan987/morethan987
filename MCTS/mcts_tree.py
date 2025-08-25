@@ -42,12 +42,12 @@ class MCTS:
     def choose(self, node:NodeType):
         if node.is_terminal():
             raise RuntimeError(f"choose called on terminal node {node}")
-        
+
         if node not in self.explored:
             return node.find_random_child()
-        
+
         return max(node.find_children(), key=self._get_avg_score)
-        
+
     def _get_avg_score(self, node:NodeType):
         return float('-inf') if self.N[node]==0 else (self.Q[node] / self.N[node])
 
@@ -70,11 +70,11 @@ class MCTS:
         assert all(n in self.explored for n in children)
         # 选取uct最大的
         return max(children, key=self._get_uct)
-        
+
     def _get_uct(self, node:NodeType):
         assert self.N[node] != 0
         return self._get_avg_score(node) + self.exploration_weight * math.sqrt(math.log(self.N[node.parent])/self.N[node])
-    
+
     def _expand(self, node:NodeType):
         if node in self.explored:
             return
@@ -84,7 +84,7 @@ class MCTS:
         while True:
             if node.is_terminal():
                 return node.reward(ans)
-            
+
             node = node.find_random_child() # 快速随机生成路径
 
     def _backpropagate(self, path, reward):
