@@ -20,7 +20,7 @@ An automated, extensible course selection system built with Python and Seleniumb
 ```bash
 # Clone or download the system
 # Install dependencies
-pip install -r requirements.txt
+uv sync
 
 # Set environment variables (Linux/Mac)
 export CQU_USERNAME="your_username"
