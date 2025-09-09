@@ -64,10 +64,7 @@ class KGEnhancer:
 
         self.logger.info("KGEnhancer initialized successfully")
 
-    def enhance_entity_relation(self,
-                               sparse_entity: str,
-                               position: str,
-                               relation: str) -> List[Tuple[str, str, str]]:
+    def enhance_entity_relation(self, sparse_entity: str, position: str, relation: str) -> List[Tuple[str, str, str]]:
         """
         为指定的稀疏实体-位置-关系组合搜索正确的三元组
 

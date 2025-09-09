@@ -1,0 +1,48 @@
+# Course Selection System Configuration
+
+login:
+  url: "https://my.cqu.edu.cn/enroll/CourseStuSelectionList"
+  username: "${CQU_USERNAME}" # Set environment variable CQU_USERNAME
+  password: "${CQU_PASSWORD}" # Set environment variable CQU_PASSWORD
+  timeout: 15
+  max_retries: 5
+
+webdriver:
+  type: "chrome" # chrome or firefox
+  headless: true
+  options: []
+
+monitoring:
+  check_interval: 8 # seconds between checks
+  max_retries: 10
+
+  # General courses to monitor (select first available)
+  courses:
+    - name: "移动应用软件开发"
+      strategy: "first_available"
+    - name: "认识生命"
+      strategy: "first_available"
+    - name: "数学思维和数学文化"
+      strategy: "first_available"
+    - name: "药事管理学"
+      strategy: "first_available"
+    - name: "知识与创新思维"
+      strategy: "first_available"
+
+  # Specific course-teacher pairs to monitor
+  course_teacher_pairs:
+    - course_name: "创业管理"
+      teacher_name: "陈才烈"
+      priority: 1
+
+notifications:
+  console: true
+  email:
+    enabled: false
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    username: "your_email@gmail.com"
+    password: "your_app_password"
+    to_addresses:
+      - "recipient@gmail.com"
+  webhook_url: null # Optional webhook for notifications
