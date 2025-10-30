@@ -8,27 +8,39 @@
   <artifactId>exp1</artifactId>
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
   <name>exp1</name>
   <url>http://maven.apache.org</url>
   <dependencies>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.10.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
       <plugins>
-          <plugin>
-              <!-- 这个插件是Maven自带的，不需要额外安装 -->
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>exec-maven-plugin</artifactId>
-              <version>3.1.0</version> <!-- 使用一个较新的版本 -->
-              <configuration>
-                  <mainClass>com.example.App</mainClass>
-              </configuration>
-          </plugin>
-      </plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.2.5</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.3.0</version>
+          <configuration>
+              <archive>
+                  <manifest>
+                      <addClasspath>true</addClasspath>
+                      <mainClass>com.example.App</mainClass>
+                  </manifest>
+              </archive>
+          </configuration>
+        </plugin>
+    </plugins>
   </build>
 </project>
