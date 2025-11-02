@@ -1,9 +1,7 @@
 package com.example.model.user;
 
-import java.util.*;
-
-public class Teacher {
-
-    private String id;
-    private String name;
-}
+/**
+ * Teacher class representing a teacher entity.
+ * This class will read/write data from/to the 'teacher.txt' file.
+ */
+public class Teacher extends BaseUser {}
