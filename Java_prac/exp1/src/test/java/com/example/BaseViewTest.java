@@ -134,7 +134,7 @@ public class BaseViewTest {
         provideInput("3\n");
         BaseView view = new BaseView(); // 在设置好输入后创建实例
 
-        int choice = view.getChoice(1, 5);
+        int choice = view.getChoice(5);
         assertEquals(3, choice);
     }
 
@@ -148,7 +148,7 @@ public class BaseViewTest {
         provideInput(simulatedInput);
         BaseView view = new BaseView(); // 在设置好输入后创建实例
 
-        int choice = view.getChoice(1, 8);
+        int choice = view.getChoice(8);
         assertEquals(5, choice);
 
         // 验证是否向用户打印了正确的错误提示

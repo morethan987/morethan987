@@ -106,13 +106,15 @@ public class BaseView {
      * @param max_choice
      * @return the valid choice input by the user
      */
-    public int getChoice(int min_choice, int max_choice) {
+    public Integer getChoice(int num_options) {
+        int min_choice = 1;
+        int max_choice = num_options;
         int choice = -1;
         boolean isValid = false;
 
         while (!isValid) {
             System.out.print(
-                "请输入一个数字 (" + min_choice + "-" + max_choice + "): "
+                "请输入一个数字 (" + min_choice + "~" + max_choice + "): "
             );
             String input = scanner.nextLine();
 
@@ -164,5 +166,13 @@ public class BaseView {
             String description = codeMap.get(idx)[1];
             System.out.println("[" + idx + "] " + description);
         }
+    }
+
+    public void show_init() {}
+
+    public void showModifyPersonalInfo() {}
+
+    public Map<Integer, String[]> getCodeMap() {
+        return null;
     }
 }

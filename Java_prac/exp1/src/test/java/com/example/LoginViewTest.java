@@ -72,11 +72,11 @@ class LoginViewTest {
         loginView.closeScanner(); // 关闭资源
 
         // 3. 断言结果
-        assertEquals("testUser", credentials.get("username"));
+        assertEquals("testUser", credentials.get("userid"));
         assertEquals("testPass123", credentials.get("password"));
 
         // 4. 断言输出
-        String expectedOutput = "请输入用户名：" + "请输入密码：";
+        String expectedOutput = "请输入用户id：" + "请输入密码：";
         // 使用 replaceAll 去除换行符和回车符，简化断言
         String actualOutput = outContent
             .toString()
@@ -102,12 +102,12 @@ class LoginViewTest {
         loginView.closeScanner();
 
         // 断言最终获取的凭证是否正确
-        assertEquals("validUser", credentials.get("username"));
+        assertEquals("validUser", credentials.get("userid"));
         assertEquals("validPass", credentials.get("password"));
 
         // 断言控制台是否输出了错误提示
         String output = outContent.toString();
-        assertTrue(output.contains("用户名不能为空，请重新输入。"));
+        assertTrue(output.contains("用户id不能为空，请重新输入"));
     }
 
     @Test
@@ -128,12 +128,12 @@ class LoginViewTest {
         loginView.closeScanner();
 
         // 断言最终获取的凭证是否正确
-        assertEquals("validUser", credentials.get("username"));
+        assertEquals("validUser", credentials.get("userid"));
         assertEquals("validPass", credentials.get("password"));
 
         // 断言控制台是否输出了错误提示
         String output = outContent.toString();
-        assertTrue(output.contains("密码不能为空，请重新输入。"));
+        assertTrue(output.contains("密码不能为空，请重新输入"));
     }
 
     @Test
@@ -156,12 +156,12 @@ class LoginViewTest {
         loginView.closeScanner();
 
         // 断言最终获取的凭证是否正确
-        assertEquals("finalUser", credentials.get("username"));
+        assertEquals("finalUser", credentials.get("userid"));
         assertEquals("finalPass", credentials.get("password"));
 
         // 断言控制台是否输出了所有必要的错误提示
         String output = outContent.toString();
-        assertTrue(output.contains("用户名不能为空，请重新输入。"));
-        assertTrue(output.contains("密码不能为空，请重新输入。"));
+        assertTrue(output.contains("用户id不能为空，请重新输入"));
+        assertTrue(output.contains("密码不能为空，请重新输入"));
     }
 }
