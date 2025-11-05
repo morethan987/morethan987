@@ -2,38 +2,21 @@ package com.example.view;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 
 /**
- * LoginView 类用于处理从用户处读取用户名和密码的逻辑。
+ * LoginView 类用于处理从用户处读取用户名和密码的逻辑
  */
-public class LoginView {
-
-    private final Scanner scanner;
+public class LoginView extends BaseView {
 
     /**
      * 构造函数，初始化 Scanner 对象用于读取输入。
      */
     public LoginView() {
-        // 使用 System.in 初始化 Scanner
-        this.scanner = new Scanner(System.in);
-    }
-
-    /**
-     * 显示提示信息并读取用户的输入。
-     *
-     * @param prompt 提示用户输入的信息（如："请输入用户名："）
-     * @return 用户输入的字符串
-     */
-    private String readInput(String prompt) {
-        System.out.print(prompt);
-        // 使用 nextLine() 读取整行输入，防止空格问题
-        return scanner.nextLine().trim(); // 使用 trim() 移除首尾空白
+        super();
     }
 
     /**
      * 从用户处读取用户名和密码。
-     *
      * @return 包含 "username" 和 "password" 键值对的 Map
      */
     public Map<String, String> getLoginCredentials() {
@@ -65,13 +48,7 @@ public class LoginView {
         return credentials;
     }
 
-    /**
-     * (可选) 关闭 Scanner 对象，释放系统资源。
-     * 通常在应用程序生命周期结束时调用。
-     */
-    public void closeScanner() {
-        if (scanner != null) {
-            scanner.close();
-        }
+    public void showLoginFailed(String reason) {
+        System.out.println("登录失败: " + reason);
     }
 }
