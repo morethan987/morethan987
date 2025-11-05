@@ -1,36 +1,95 @@
 package com.example.controller;
 
-import com.example.view.LoginView;
+import com.example.model.user.Admin;
+import com.example.model.user.Student;
+import com.example.model.user.Teacher;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
-class AuthController {
+public class AuthController {
 
-    private String username;
-    private String password;
-    private final LoginView loginView = new LoginView();
+    private String sessionToken = null;
+    private final Student studentData = new Student();
+    private final Teacher teacherData = new Teacher();
+    private final Admin adminData = new Admin();
 
     public AuthController() {}
 
-    public String handleLogin() {
-        // 获取登录凭据
-        Map<String, String> credentials = loginView.getLoginCredentials();
-        this.username = credentials.get("username");
-        this.password = credentials.get("password");
-        // 在此处可以添加进一步的处理逻辑，例如验证用户名和密码
-        return "xxx-xxx"; // 假设登录成功
+    public Map<String, String> handleLogin(String userid, String password) {
+        Map<String, String> result = new HashMap<>();
+        String role = getUserRole(userid);
+        if (role.equals("unknown")) {
+            result.put("res", "false");
+            result.put("reason", "用户不存在");
+            return result;
+        } else {
+            result.put("role", role);
+        }
+        Integer index = getUserIndex(userid);
+        if (validatePassword(role, index, password)) {
+            UUID token = UUID.randomUUID();
+            sessionToken = token.toString();
+            result.put("res", "true");
+            result.put("reason", "登录成功");
+            result.put("userid", userid);
+            result.put("token", token.toString());
+            return result;
+        } else {
+            result.put("res", "false");
+            result.put("reason", "密码错误");
+            return result;
+        }
     }
 
-    private void saveToken(String _token) {
-        // 将 token 写入文件的逻辑
+    public Integer getUserIndex(String userid) {
+        Integer index = studentData.getIndxexById(userid);
+        if (index != -1) {
+            return index;
+        }
+        index = teacherData.getIndxexById(userid);
+        if (index != -1) {
+            return index;
+        }
+        index = adminData.getIndxexById(userid);
+        return index;
     }
 
-    private boolean validateCredentials(String username, String password) {
-        // 验证用户名和密码的逻辑
-        return true; // 假设验证成功
+    public String getUserRole(String userid) {
+        if (studentData.getIndxexById(userid) != -1) {
+            return "student";
+        }
+        if (teacherData.getIndxexById(userid) != -1) {
+            return "teacher";
+        }
+        if (adminData.getIndxexById(userid) != -1) {
+            return "admin";
+        }
+        return "unknown";
+    }
+
+    private boolean validatePassword(
+        String role,
+        Integer index,
+        String password
+    ) {
+        switch (role) {
+            case "student":
+                return studentData.getPasswordByIndex(index).equals(password);
+            case "teacher":
+                return teacherData.getPasswordByIndex(index).equals(password);
+            case "admin":
+                return adminData.getPasswordByIndex(index).equals(password);
+            default:
+                return false;
+        }
     }
 
     public boolean checkToken(String _token) {
-        // 检查 token 的逻辑
-        return true; // 假设 token 有效
+        if (sessionToken == null || _token == null) {
+            return false;
+        } else {
+            return sessionToken.equals(_token);
+        }
     }
 }
