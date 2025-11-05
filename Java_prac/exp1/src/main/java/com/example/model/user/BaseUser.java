@@ -1,7 +1,9 @@
 package com.example.model.user;
 
 import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -14,7 +16,7 @@ public class BaseUser {
      * @param file the CSV file path (relative to classpath, e.g. "data/users.csv")
      * @return a map containing the CSV data: <column name, column values[]>
      */
-    public Map<String, String[]> readFile(String file) {
+    public Map<String, List<String>> readFile(String file) {
         Map<String, List<String>> dataMap = new LinkedHashMap<>();
 
         try (
@@ -55,20 +57,78 @@ public class BaseUser {
                     dataMap.get(headers[j]).add(row[j]);
                 }
             }
-
-            // 转换为 <String, String[]>
-            Map<String, String[]> result = new LinkedHashMap<>();
-            for (Map.Entry<String, List<String>> entry : dataMap.entrySet()) {
-                result.put(
-                    entry.getKey(),
-                    entry.getValue().toArray(new String[0])
-                );
-            }
-
-            return result;
+            return dataMap;
         } catch (IOException | CsvException e) {
             e.printStackTrace();
             return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Write CSV data to a file.
+     * The file will be created or overwritten at the specified path.
+     * @param file the file path to write the CSV data to (e.g. "output/data.csv")
+     * @param dataMap a map containing the CSV data: <column name, column values[]>
+     */
+    public void writeFile(String file, Map<String, List<String>> dataMap) {
+        if (dataMap == null || dataMap.isEmpty()) {
+            // 如果数据为空，可以选择创建一个空文件或直接返回
+            System.out.println(
+                "Warning: Data map is null or empty, creating an empty file (or doing nothing)."
+            );
+            // 考虑在此处创建一个空文件，但为简洁，此处选择返回
+            return;
+        }
+
+        // 获取列名（表头）
+        String[] headers = dataMap.keySet().toArray(new String[0]);
+        if (headers.length == 0) {
+            System.out.println(
+                "Warning: Data map has no headers, file will be empty or contain only an empty line."
+            );
+            return;
+        }
+
+        // 确定数据的行数 (假设所有列表的长度相同，以第一个列表的长度为准)
+        int rowCount = 0;
+        if (headers.length > 0) {
+            rowCount = dataMap.get(headers[0]).size();
+        }
+
+        // 使用 try-with-resources 确保 CSVWriter 和 FileWriter 被正确关闭
+        try (
+            // 使用 FileWriter 写入文件，true 表示追加，但通常写入 CSV 是覆盖，所以默认是 false
+            CSVWriter writer = new CSVWriter(new FileWriter(file))
+        ) {
+            // 1. 写入表头
+            writer.writeNext(headers);
+
+            // 2. 写入数据行
+            // 循环行数
+            for (int i = 0; i < rowCount; i++) {
+                String[] rowData = new String[headers.length];
+                // 循环列数，从 dataMap 中取出对应的值
+                for (int j = 0; j < headers.length; j++) {
+                    String header = headers[j];
+                    List<String> columnData = dataMap.get(header);
+
+                    // 确保不会因为数据不规则（列表长度不一致）而越界
+                    if (i < columnData.size()) {
+                        rowData[j] = columnData.get(i);
+                    } else {
+                        // 如果当前列的数据行数不足，用空字符串填充
+                        rowData[j] = null;
+                    }
+                }
+                writer.writeNext(rowData);
+            }
+
+            // 确保所有数据都写入文件
+            writer.flush();
+        } catch (IOException e) {
+            // 打印异常信息，通知用户写入失败
+            System.err.println("Error writing CSV file: " + file);
+            e.printStackTrace();
         }
     }
 }
