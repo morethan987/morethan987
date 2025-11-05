@@ -13,7 +13,7 @@ public class Teacher extends BaseModel {
     private Map<String, List<String>> teacherData;
 
     public Teacher() {
-        teacherData = super.readFile("data/teacher.cvs");
+        teacherData = super.readFile("data/teacher.csv");
     }
 
     public String addTeacher(String tid, String password) {
@@ -23,7 +23,15 @@ public class Teacher extends BaseModel {
     }
 
     public String flush() {
-        super.writeFile("data/teacher.cvs", teacherData);
+        super.writeFile("data/teacher.csv", teacherData);
         return "Data flushed successfully.";
+    }
+
+    public Integer getIndxexById(String tid) {
+        return teacherData.get("tid").indexOf(tid);
+    }
+
+    public String getPasswordByIndex(Integer index) {
+        return teacherData.get("password").get(index);
     }
 }

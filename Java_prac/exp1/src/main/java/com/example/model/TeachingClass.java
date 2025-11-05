@@ -9,7 +9,7 @@ public class TeachingClass extends BaseModel {
     private Map<String, List<String>> teachingClassData;
 
     public TeachingClass() {
-        teachingClassData = super.readFile("data/teaching_class.cvs");
+        teachingClassData = super.readFile("data/teaching_class.csv");
     }
 
     public String addTeachingClass(String cid, String tid, String term_idx) {
@@ -21,7 +21,7 @@ public class TeachingClass extends BaseModel {
     }
 
     public String flush() {
-        super.writeFile("data/teaching_class.cvs", teachingClassData);
+        super.writeFile("data/teaching_class.csv", teachingClassData);
         return "Data flushed successfully.";
     }
 }

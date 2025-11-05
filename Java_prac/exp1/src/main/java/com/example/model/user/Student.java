@@ -13,7 +13,7 @@ public class Student extends BaseModel {
     private Map<String, List<String>> studentData;
 
     public Student() {
-        studentData = super.readFile("data/student.cvs");
+        studentData = super.readFile("data/student.csv");
     }
 
     public String addStudent(String sid, String password) {
@@ -23,16 +23,30 @@ public class Student extends BaseModel {
     }
 
     public String flush() {
-        super.writeFile("data/student.cvs", studentData);
+        super.writeFile("data/student.csv", studentData);
         return "Data flushed successfully.";
     }
 
-    public String getNameByid(String sid) {
-        List<String> sids = studentData.get("sid");
-        int index = sids.indexOf(sid);
-        if (index != -1) {
-            return studentData.get("name").get(index);
+    public String updateStudent(String sid, Map<String, String> updates) {
+        int index = studentData.get("sid").indexOf(sid);
+        if (index == -1) {
+            return "Student not found.";
         }
-        return null;
+        for (Map.Entry<String, String> entry : updates.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if (studentData.containsKey(key)) {
+                studentData.get(key).set(index, value);
+            }
+        }
+        return "Student updated successfully.";
+    }
+
+    public Integer getIndxexById(String sid) {
+        return studentData.get("sid").indexOf(sid);
+    }
+
+    public String getPasswordByIndex(Integer index) {
+        return studentData.get("password").get(index);
     }
 }

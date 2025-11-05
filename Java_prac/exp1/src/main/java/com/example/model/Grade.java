@@ -9,7 +9,7 @@ public class Grade extends BaseModel {
     private Map<String, List<String>> gradeData;
 
     public Grade() {
-        gradeData = super.readFile("data/grade.cvs");
+        gradeData = super.readFile("data/grade.csv");
     }
 
     public String addGrade(String sid, String cid) {

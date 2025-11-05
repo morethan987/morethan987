@@ -33,13 +33,13 @@ class BaseModelTest {
     @Test
     @DisplayName("测试读取文件内容")
     void readFile_Test() {
-        Map<String, List<String>> data = baseModel.readFile("data/test.cvs");
+        Map<String, List<String>> data = baseModel.readFile("data/test.csv");
 
         // 1️⃣ 验证读取结果不为空
         assertNotNull(data, "返回的数据 Map 不应为 null");
         if (data.isEmpty()) {
             System.out.println(
-                "警告: data/test.cvs 文件未找到或为空，跳过内容验证。"
+                "警告: data/test.csv 文件未找到或为空，跳过内容验证。"
             );
             return; // 提前返回，或者将其作为一个失败的测试案例
         }

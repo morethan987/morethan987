@@ -6,13 +6,21 @@ import java.util.Map;
 
 public class Admin extends BaseModel {
 
-    private Map<String, List<String>> studentDataMap;
-    private Map<String, List<String>> teacherDataMap;
-    private Map<String, List<String>> adminDataMap;
+    private Map<String, List<String>> studentData;
+    private Map<String, List<String>> teacherData;
+    private Map<String, List<String>> adminData;
 
     public Admin() {
-        studentDataMap = super.readFile("data/admin.cvs");
-        teacherDataMap = super.readFile("data/teacher.cvs");
-        adminDataMap = super.readFile("data/admin.cvs");
+        studentData = super.readFile("data/admin.csv");
+        teacherData = super.readFile("data/teacher.csv");
+        adminData = super.readFile("data/admin.csv");
+    }
+
+    public Integer getIndxexById(String aid) {
+        return adminData.get("aid").indexOf(aid);
+    }
+
+    public String getPasswordByIndex(Integer index) {
+        return adminData.get("password").get(index);
     }
 }

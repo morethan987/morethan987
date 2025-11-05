@@ -9,7 +9,7 @@ public class Course extends BaseModel {
     private Map<String, List<String>> courseData;
 
     public Course() {
-        this.courseData = super.readFile("data/course.cvs");
+        this.courseData = super.readFile("data/course.csv");
     }
 
     public String getCourseNameById(String courseId) {
@@ -29,7 +29,7 @@ public class Course extends BaseModel {
     }
 
     public String flush() {
-        super.writeFile("data/course.cvs", courseData);
+        super.writeFile("data/course.csv", courseData);
         return "Course data flushed successfully.";
     }
 }
