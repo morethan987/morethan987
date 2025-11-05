@@ -2,7 +2,7 @@ package com.example;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.example.model.user.BaseUser;
+import com.example.model.BaseModel;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,9 +17,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-class BaseUserTest {
+class BaseModelTest {
 
-    private BaseUser baseUser;
+    private BaseModel baseModel;
 
     // 使用 @TempDir 注解创建临时目录，JUnit 会在测试结束后自动清理
     @TempDir
@@ -27,13 +27,13 @@ class BaseUserTest {
 
     @BeforeEach
     void setUp() {
-        baseUser = new BaseUser();
+        baseModel = new BaseModel();
     }
 
     @Test
     @DisplayName("测试读取文件内容")
     void readFile_Test() {
-        Map<String, List<String>> data = baseUser.readFile("data/test.cvs");
+        Map<String, List<String>> data = baseModel.readFile("data/test.cvs");
 
         // 1️⃣ 验证读取结果不为空
         assertNotNull(data, "返回的数据 Map 不应为 null");
@@ -85,7 +85,7 @@ class BaseUserTest {
         String filePath = outputFile.getAbsolutePath();
 
         // 3. 执行待测方法
-        baseUser.writeFile(filePath, testData);
+        baseModel.writeFile(filePath, testData);
 
         // 4. 验证文件是否创建
         assertTrue(outputFile.exists(), "文件应该被成功创建");
@@ -118,7 +118,7 @@ class BaseUserTest {
         String filePath = outputFile.getAbsolutePath();
 
         // 2. 写入空数据 map
-        baseUser.writeFile(filePath, Collections.emptyMap());
+        baseModel.writeFile(filePath, Collections.emptyMap());
 
         // 3. 验证文件不应被创建 (或者如果逻辑改变，验证文件是否为空)
         // 根据 writeFile 逻辑，如果 dataMap 为空，它会返回，不会创建文件。
@@ -132,7 +132,7 @@ class BaseUserTest {
         File outputFile2 = tempDir.resolve("header_only.csv").toFile();
         String filePath2 = outputFile2.getAbsolutePath();
 
-        baseUser.writeFile(filePath2, noDataMap);
+        baseModel.writeFile(filePath2, noDataMap);
 
         // 验证文件是否创建
         assertTrue(outputFile2.exists(), "有表头时应创建文件");

@@ -1,4 +1,4 @@
-package com.example.model.user;
+package com.example.model;
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
@@ -9,7 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 
-public class BaseUser {
+public class BaseModel {
 
     /**
      * Read CSV data from a resource file.
