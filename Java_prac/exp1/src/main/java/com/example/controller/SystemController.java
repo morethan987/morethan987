@@ -96,8 +96,6 @@ public class SystemController {
                 return new StudentController(userId, token, authController);
             case "teacher":
                 return new TeacherController(userId, token, authController);
-            case "admin":
-                return new AdminController(userId, token, authController);
             default:
                 return null;
         }

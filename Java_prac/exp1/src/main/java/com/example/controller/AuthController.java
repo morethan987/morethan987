@@ -1,6 +1,5 @@
 package com.example.controller;
 
-import com.example.model.user.Admin;
 import com.example.model.user.Student;
 import com.example.model.user.Teacher;
 import java.util.HashMap;
@@ -12,7 +11,6 @@ public class AuthController {
     private String sessionToken = null;
     private final Student studentData = new Student();
     private final Teacher teacherData = new Teacher();
-    private final Admin adminData = new Admin();
 
     public AuthController() {}
 
@@ -51,7 +49,6 @@ public class AuthController {
         if (index != -1) {
             return index;
         }
-        index = adminData.getIndxexById(userid);
         return index;
     }
 
@@ -61,9 +58,6 @@ public class AuthController {
         }
         if (teacherData.getIndxexById(userid) != -1) {
             return "teacher";
-        }
-        if (adminData.getIndxexById(userid) != -1) {
-            return "admin";
         }
         return "unknown";
     }
@@ -78,8 +72,6 @@ public class AuthController {
                 return studentData.getPasswordByIndex(index).equals(password);
             case "teacher":
                 return teacherData.getPasswordByIndex(index).equals(password);
-            case "admin":
-                return adminData.getPasswordByIndex(index).equals(password);
             default:
                 return false;
         }
