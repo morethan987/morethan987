@@ -106,10 +106,10 @@ public class BaseViewTest {
     @DisplayName("测试 showPersonalInfo 方法能正确打印单行信息")
     void testShowPersonalInfo() {
         BaseView view = new BaseView();
-        Map<String, List<String>> info = new LinkedHashMap<>();
-        info.put("ID", List.of("101"));
-        info.put("Name", List.of("John Doe"));
-        info.put("Email", List.of("john.doe@example.com"));
+        Map<String, String> info = new LinkedHashMap<>();
+        info.put("ID", "101");
+        info.put("Name", "John Doe");
+        info.put("Email", "john.doe@example.com");
 
         view.showPersonalInfo(info);
 

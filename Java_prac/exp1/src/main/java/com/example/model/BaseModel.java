@@ -70,14 +70,14 @@ public class BaseModel {
      * @param file the file path to write the CSV data to (e.g. "output/data.csv")
      * @param dataMap a map containing the CSV data: <column name, column values[]>
      */
-    public void writeFile(String file, Map<String, List<String>> dataMap) {
+    public boolean writeFile(String file, Map<String, List<String>> dataMap) {
         if (dataMap == null || dataMap.isEmpty()) {
             // 如果数据为空，可以选择创建一个空文件或直接返回
             System.out.println(
                 "Warning: Data map is null or empty, creating an empty file (or doing nothing)."
             );
             // 考虑在此处创建一个空文件，但为简洁，此处选择返回
-            return;
+            return true;
         }
 
         // 获取列名（表头）
@@ -86,7 +86,7 @@ public class BaseModel {
             System.out.println(
                 "Warning: Data map has no headers, file will be empty or contain only an empty line."
             );
-            return;
+            return true;
         }
 
         // 确定数据的行数 (假设所有列表的长度相同，以第一个列表的长度为准)
@@ -125,10 +125,12 @@ public class BaseModel {
 
             // 确保所有数据都写入文件
             writer.flush();
+            return true;
         } catch (IOException e) {
             // 打印异常信息，通知用户写入失败
             System.err.println("Error writing CSV file: " + file);
             e.printStackTrace();
+            return false;
         }
     }
 }

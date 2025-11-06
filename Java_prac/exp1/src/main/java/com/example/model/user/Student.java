@@ -1,6 +1,7 @@
 package com.example.model.user;
 
 import com.example.model.BaseModel;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +23,8 @@ public class Student extends BaseModel {
         return "Student added successfully.";
     }
 
-    public String flush() {
-        super.writeFile("data/student.csv", studentData);
-        return "Data flushed successfully.";
+    public boolean flush() {
+        return super.writeFile("data/student.csv", studentData);
     }
 
     public String updateStudent(String sid, Map<String, String> updates) {
@@ -48,5 +48,15 @@ public class Student extends BaseModel {
 
     public String getPasswordByIndex(Integer index) {
         return studentData.get("password").get(index);
+    }
+
+    public Map<String, String> getPersonalInfoById(String id) {
+        Map<String, String> res = new HashMap<>();
+        Integer index = getIndxexById(id);
+        res.put("学号", studentData.get("sid").get(index));
+        res.put("姓名", studentData.get("name").get(index));
+        res.put("性别", studentData.get("gender").get(index));
+        res.put("年龄", studentData.get("age").get(index));
+        return res;
     }
 }

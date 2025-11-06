@@ -84,16 +84,16 @@ public class BaseView {
      * Print personal information.
      * @param info
      */
-    public void showPersonalInfo(Map<String, List<String>> info) {
+    public void showPersonalInfo(Map<String, String> info) {
         // 打印表头
         for (String key : info.keySet()) {
             System.out.print(key + "\t");
         }
-        // 打印唯一的数据项
+        // 打印数据项
         for (String key : info.keySet()) {
-            List<String> column = info.get(key);
-            System.out.print(column.get(0) + "\t");
+            System.out.print(info.get(key) + "\t");
         }
+        System.out.println();
     }
 
     public void showMessage(String message) {
