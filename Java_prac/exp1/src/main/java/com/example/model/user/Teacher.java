@@ -44,4 +44,27 @@ public class Teacher extends BaseModel {
         res.put("年龄", teacherData.get("age").get(index));
         return res;
     }
+
+    public String[] updateInfo(String sid, Map<String, String> updates) {
+        String[] res = new String[2];
+        int index = teacherData.get("tid").indexOf(sid);
+        if (index == -1) {
+            res[0] = "false";
+            res[1] = "Teacher ID not found.";
+            return res;
+        }
+        for (Map.Entry<String, String> entry : updates.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if (teacherData.containsKey(key)) {
+                // 空字符串表示不更新
+                if (!value.isEmpty()) {
+                    teacherData.get(key).set(index, value);
+                }
+            }
+        }
+        res[0] = "true";
+        res[1] = "Teacher information updated successfully.";
+        return res;
+    }
 }

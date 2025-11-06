@@ -94,6 +94,9 @@ public abstract class BaseUserController {
             case "show_personal_info":
                 showPersonalInfo();
                 break;
+            case "update_personal_info":
+                updatePersonalInfo();
+                break;
             default:
                 handleCustomOperation(operationCode);
                 break;
@@ -131,5 +134,12 @@ public abstract class BaseUserController {
      */
     protected void showPersonalInfo() {
         userView.showMessage("用户ID: " + userId);
+    }
+
+    /**
+     * 修改个人信息
+     */
+    protected void updatePersonalInfo() {
+        userView.showMessage("修改个人信息功能暂未实现");
     }
 }

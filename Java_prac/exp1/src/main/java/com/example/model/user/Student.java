@@ -27,19 +27,27 @@ public class Student extends BaseModel {
         return super.writeFile("data/student.csv", studentData);
     }
 
-    public String updateStudent(String sid, Map<String, String> updates) {
+    public String[] updateInfo(String sid, Map<String, String> updates) {
+        String[] res = new String[2];
         int index = studentData.get("sid").indexOf(sid);
         if (index == -1) {
-            return "Student not found.";
+            res[0] = "false";
+            res[1] = "Student ID not found.";
+            return res;
         }
         for (Map.Entry<String, String> entry : updates.entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
             if (studentData.containsKey(key)) {
-                studentData.get(key).set(index, value);
+                // 空字符串表示不更新
+                if (!value.isEmpty()) {
+                    studentData.get(key).set(index, value);
+                }
             }
         }
-        return "Student updated successfully.";
+        res[0] = "true";
+        res[1] = "Student information updated successfully.";
+        return res;
     }
 
     public Integer getIndxexById(String sid) {

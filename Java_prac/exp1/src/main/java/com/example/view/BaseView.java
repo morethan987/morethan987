@@ -89,6 +89,7 @@ public class BaseView {
         for (String key : info.keySet()) {
             System.out.print(key + "\t");
         }
+        System.out.println();
         // 打印数据项
         for (String key : info.keySet()) {
             System.out.print(info.get(key) + "\t");

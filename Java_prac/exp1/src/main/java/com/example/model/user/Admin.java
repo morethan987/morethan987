@@ -38,4 +38,27 @@ public class Admin extends BaseModel {
         res.put("年龄", adminData.get("age").get(index));
         return res;
     }
+
+    public String[] updateInfo(String sid, Map<String, String> updates) {
+        String[] res = new String[2];
+        int index = adminData.get("aid").indexOf(sid);
+        if (index == -1) {
+            res[0] = "false";
+            res[1] = "Admin ID not found.";
+            return res;
+        }
+        for (Map.Entry<String, String> entry : updates.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if (adminData.containsKey(key)) {
+                // 空字符串表示不更新
+                if (!value.isEmpty()) {
+                    adminData.get(key).set(index, value);
+                }
+            }
+        }
+        res[0] = "true";
+        res[1] = "Admin information updated successfully.";
+        return res;
+    }
 }
