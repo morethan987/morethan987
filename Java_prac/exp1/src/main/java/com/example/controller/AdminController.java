@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.model.Grade;
 import com.example.model.user.Admin;
 import com.example.view.AdminView;
 import com.example.view.BaseView;
@@ -9,6 +10,7 @@ import java.util.Map;
 public class AdminController extends BaseUserController {
 
     private final Admin adminData = new Admin();
+    private final Grade gradeData = new Grade();
 
     public AdminController(
         String userId,

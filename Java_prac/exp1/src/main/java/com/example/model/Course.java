@@ -13,10 +13,10 @@ public class Course extends BaseModel {
     }
 
     public String getCourseNameById(String courseId) {
-        List<String> courseIds = courseData.get("courseId");
+        List<String> courseIds = courseData.get("cid");
         int index = courseIds.indexOf(courseId);
         if (index != -1) {
-            return courseData.get("courseName").get(index);
+            return courseData.get("name").get(index);
         }
         return null;
     }
@@ -28,8 +28,7 @@ public class Course extends BaseModel {
         return "Course added successfully.";
     }
 
-    public String flush() {
-        super.writeFile("data/course.csv", courseData);
-        return "Course data flushed successfully.";
+    public boolean flush() {
+        return super.writeFile("data/course.csv", courseData);
     }
 }

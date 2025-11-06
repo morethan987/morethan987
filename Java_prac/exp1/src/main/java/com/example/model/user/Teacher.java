@@ -38,11 +38,19 @@ public class Teacher extends BaseModel {
     public Map<String, String> getPersonalInfoById(String id) {
         Map<String, String> res = new HashMap<>();
         Integer index = getIndxexById(id);
-        res.put("学号", teacherData.get("tid").get(index));
+        res.put("编号", teacherData.get("tid").get(index));
         res.put("姓名", teacherData.get("name").get(index));
         res.put("性别", teacherData.get("gender").get(index));
         res.put("年龄", teacherData.get("age").get(index));
         return res;
+    }
+
+    public String getTeacherNameById(String tid) {
+        Integer index = getIndxexById(tid);
+        if (index == -1) {
+            return null;
+        }
+        return teacherData.get("name").get(index);
     }
 
     public String[] updateInfo(String sid, Map<String, String> updates) {
