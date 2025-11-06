@@ -1,5 +1,7 @@
 package com.example.view;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,50 +53,134 @@ public class BaseView {
     }
 
     /**
-     * Print data according to the order list.
-     * @param data
-     * @param order
+     * 根据指定的顺序打印多行数据，确保列对齐
+     *
+     * @param data  一个Map，其中key是列名，value是该列的数据列表。
+     * @param order 一个List，定义了数据行的打印顺序。
      */
     public void showSortedData(
         Map<String, List<String>> data,
         List<Integer> order
     ) {
-        // 打印表头
-        for (String key : data.keySet()) {
-            System.out.print(key + "\t");
+        if (data == null || data.isEmpty()) {
+            System.out.println("（无数据）");
+            return;
         }
-        System.out.println();
 
-        // 按照order顺序打印数据行
+        List<String> headers = new ArrayList<>(data.keySet());
+        List<List<String>> rows = new ArrayList<>();
+
         for (Integer index : order) {
-            for (String key : data.keySet()) {
-                List<String> column = data.get(key);
-                // 防止索引越界
+            List<String> currentRow = new ArrayList<>();
+            for (String header : headers) {
+                List<String> column = data.get(header);
                 if (index >= 0 && index < column.size()) {
-                    System.out.print(column.get(index) + "\t");
+                    currentRow.add(column.get(index));
                 } else {
-                    System.out.print("\t"); // 空格占位
+                    currentRow.add("");
                 }
             }
-            System.out.println();
+            rows.add(currentRow);
+        }
+
+        printTable(headers, rows);
+    }
+
+    /**
+     * 打印单行个人信息，确保列对齐
+     *
+     * @param info 包含个人信息的Map
+     */
+    public void showPersonalInfo(Map<String, String> info) {
+        if (info == null || info.isEmpty()) {
+            System.out.println("（无信息）");
+            return;
+        }
+
+        List<String> headers = new ArrayList<>(info.keySet());
+        List<String> rowData = new ArrayList<>();
+        for (String header : headers) {
+            rowData.add(info.get(header));
+        }
+
+        printTable(headers, Collections.singletonList(rowData));
+    }
+
+    /**
+     * 计算字符串的视觉显示宽度。
+     * 全角字符（如汉字）计为2，半角字符（如英文、数字）计为1。
+     *
+     * @param str 要计算的字符串
+     * @return 字符串的视觉宽度
+     */
+    private int getDisplayLength(String str) {
+        if (str == null) {
+            return 0;
+        }
+        // 使用正则表达式将全角字符替换为两个半角字符，然后计算长度
+        return str.replaceAll("[^\\x00-\\xff]", "**").length();
+    }
+
+    /**
+     * 这是所有表格打印功能的核心
+     *
+     * @param headers 表头列表
+     * @param rows    数据行列表，每个内部列表代表一行
+     */
+    private void printTable(List<String> headers, List<List<String>> rows) {
+        if (headers == null || headers.isEmpty()) {
+            return;
+        }
+
+        // 1. 使用 getDisplayLength 计算每一列的最大视觉宽度
+        List<Integer> maxWidths = new ArrayList<>();
+        for (String header : headers) {
+            maxWidths.add(getDisplayLength(header));
+        }
+
+        for (List<String> row : rows) {
+            for (int i = 0; i < row.size(); i++) {
+                if (i < maxWidths.size()) {
+                    maxWidths.set(
+                        i,
+                        Math.max(maxWidths.get(i), getDisplayLength(row.get(i)))
+                    );
+                }
+            }
+        }
+
+        // 2. 打印表头
+        printRow(headers, maxWidths);
+
+        // 3. 打印数据行
+        for (List<String> row : rows) {
+            printRow(row, maxWidths);
         }
     }
 
     /**
-     * Print personal information.
-     * @param info
+     * 打印一行数据，并根据最大宽度手动填充空格
+     * @param rowData       要打印的一行数据
+     * @param maxDisplayWidths 各列的最大视觉宽度
      */
-    public void showPersonalInfo(Map<String, String> info) {
-        // 打印表头
-        for (String key : info.keySet()) {
-            System.out.print(key + "\t");
+    private void printRow(
+        List<String> rowData,
+        List<Integer> maxDisplayWidths
+    ) {
+        StringBuilder rowBuilder = new StringBuilder();
+        for (int i = 0; i < rowData.size(); i++) {
+            String cell = rowData.get(i);
+            rowBuilder.append(cell);
+
+            int padding = maxDisplayWidths.get(i) - getDisplayLength(cell);
+            // 手动填充空格
+            for (int j = 0; j < padding; j++) {
+                rowBuilder.append(" ");
+            }
+            // 在列之间添加2个空格作为分隔符
+            rowBuilder.append("  ");
         }
-        System.out.println();
-        // 打印数据项
-        for (String key : info.keySet()) {
-            System.out.print(info.get(key) + "\t");
-        }
-        System.out.println();
+        System.out.println(rowBuilder.toString());
     }
 
     public void showMessage(String message) {
@@ -175,5 +261,34 @@ public class BaseView {
 
     public Map<Integer, String[]> getCodeMap() {
         return null;
+    }
+
+    public void showDistributionChart(Map<String, Integer> distribution) {
+        // 找到最大值
+        int maxCount = distribution
+            .values()
+            .stream()
+            .max(Integer::compare)
+            .orElse(1);
+
+        // 设定最大块长度
+        final int MAX_BAR_LENGTH = 50;
+
+        for (Map.Entry<String, Integer> entry : distribution.entrySet()) {
+            String range = entry.getKey();
+            int count = entry.getValue();
+
+            // 按比例缩放块数量
+            int barLength = (int) Math.round(
+                (count / (double) maxCount) * MAX_BAR_LENGTH
+            );
+            if (barLength == 0 && count > 0) {
+                barLength = 1; // 至少显示一个块
+            }
+
+            // 输出条形
+            String bar = "█".repeat(barLength);
+            System.out.printf("%-10s: %-50s (%d)%n", range, bar, count);
+        }
     }
 }

@@ -114,4 +114,26 @@ public class TeachingClass extends BaseModel {
             super.writeFile("data/stu_teachingclass.csv", student_teachingClass)
         );
     }
+
+    public boolean isTeachingClassExist(String tcid) {
+        List<String> tcidList = teachingClassData.get("tcid");
+        return tcidList.contains(tcid);
+    }
+
+    /**
+     * 根据教学班ID获取学生ID列表
+     * @param tcid 教学班ID
+     * @return 包含该班所有学生ID的列表
+     */
+    public List<String> getStudentIdsByTeachingClassId(String tcid) {
+        List<String> studentIds = new ArrayList<>();
+        List<String> tcidList = student_teachingClass.get("tcid");
+        List<String> sidList = student_teachingClass.get("sid");
+        for (int i = 0; i < tcidList.size(); i++) {
+            if (tcidList.get(i).equals(tcid)) {
+                studentIds.add(sidList.get(i));
+            }
+        }
+        return studentIds;
+    }
 }
