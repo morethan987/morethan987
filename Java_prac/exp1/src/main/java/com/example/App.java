@@ -2,6 +2,8 @@ package com.example;
 
 import com.example.controller.SystemController;
 
+// import com.example.model.GradeGenerator;
+
 /**
  * Students Score Management System
  * A simple Java application to manage and track student scores in terminal.
@@ -25,5 +27,7 @@ public class App {
 
         SystemController systemController = new SystemController();
         systemController.run();
+        // GradeGenerator gradeGenerator = new GradeGenerator();
+        // gradeGenerator.generateGrades();
     }
 }

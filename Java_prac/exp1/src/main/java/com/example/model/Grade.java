@@ -16,6 +16,10 @@ public class Grade extends BaseModel {
         gradeData = super.readFile(GRADE_FILE);
     }
 
+    public void setGradeData(Map<String, List<String>> data) {
+        this.gradeData = data;
+    }
+
     public String addGrade(String sid, String cid) {
         UUID gid = UUID.randomUUID();
         gradeData.get("gid").add(gid.toString());
