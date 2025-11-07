@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.model.Course;
 import com.example.model.Grade;
 import com.example.model.TeachingClass;
 import com.example.model.user.Student;
@@ -17,6 +18,7 @@ public class TeacherController extends BaseUserController {
     private final Teacher teacherDta = new Teacher();
     private final Student studentData = new Student();
     private final Grade gradeData = new Grade();
+    private final Course courseData = new Course();
     private final TeachingClass teachingClassData = new TeachingClass();
 
     public TeacherController(
@@ -38,6 +40,8 @@ public class TeacherController extends BaseUserController {
             "查看个人信息",
             "update_personal_info",
             "修改个人信息",
+            "show_teachingclass_list",
+            "列举自己相关的教学班",
             "show_grade_table",
             "查看某教学班的成绩表",
             "show_grade_distribution_chart",
@@ -103,6 +107,9 @@ public class TeacherController extends BaseUserController {
             case "input_grades":
                 inputGrades();
                 break;
+            case "show_teachingclass_list":
+                showTeachingClassList();
+                break;
             case "show_grade_table":
                 shwoGradeTable();
                 break;
@@ -113,6 +120,18 @@ public class TeacherController extends BaseUserController {
                 userView.showMessage("无效的操作码: " + operationCode);
                 break;
         }
+    }
+
+    private void showTeachingClassList() {
+        userView.showMessage("=== 教学班列表 ===");
+        Map<String, List<String>> classes =
+            teachingClassData.getTeachingClassesByTeacherId(userId);
+        List<String> courseNames = new ArrayList<>();
+        for (String courseId : classes.get("课程ID")) {
+            courseNames.add(courseData.getCourseNameById(courseId));
+        }
+        classes.put("课程名称", courseNames);
+        userView.showData(classes);
     }
 
     private void shwoGradeTable() {

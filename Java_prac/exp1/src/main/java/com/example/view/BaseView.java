@@ -52,6 +52,27 @@ public class BaseView {
         }
     }
 
+    public void showData(Map<String, List<String>> data) {
+        if (data == null || data.isEmpty()) {
+            System.out.println("（无数据）");
+            return;
+        }
+
+        List<String> headers = new ArrayList<>(data.keySet());
+        int numRows = data.values().iterator().next().size();
+        List<List<String>> rows = new ArrayList<>();
+
+        for (int i = 0; i < numRows; i++) {
+            List<String> currentRow = new ArrayList<>();
+            for (String header : headers) {
+                currentRow.add(data.get(header).get(i));
+            }
+            rows.add(currentRow);
+        }
+
+        printTable(headers, rows);
+    }
+
     /**
      * 根据指定的顺序打印多行数据，确保列对齐
      *

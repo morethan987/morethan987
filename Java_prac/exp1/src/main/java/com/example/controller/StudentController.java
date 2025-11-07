@@ -175,13 +175,7 @@ public class StudentController extends BaseUserController {
             courses.get("教师姓名").add(teacherName);
         }
 
-        // 创建顺序列表
-        int numCourses = courses.get("课程名称").size();
-        List<Integer> order = new ArrayList<>();
-        for (int i = 0; i < numCourses; i++) {
-            order.add(i);
-        }
-        userView.showSortedData(courses, order);
+        userView.showData(courses);
     }
 
     /**

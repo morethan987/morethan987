@@ -136,4 +136,27 @@ public class TeachingClass extends BaseModel {
         }
         return studentIds;
     }
+
+    public Map<String, List<String>> getTeachingClassesByTeacherId(String tid) {
+        Map<String, List<String>> result = new java.util.HashMap<>();
+        List<String> tcidList = teachingClassData.get("tcid");
+        List<String> cidList = teachingClassData.get("cid");
+        List<String> termIdxList = teachingClassData.get("term_idx");
+        List<String> nameList = teachingClassData.get("name");
+
+        result.put("教学班号", new ArrayList<>());
+        result.put("课程ID", new ArrayList<>());
+        result.put("开课学期", new ArrayList<>());
+        result.put("教学班名称", new ArrayList<>());
+
+        for (int i = 0; i < tcidList.size(); i++) {
+            if (teachingClassData.get("tid").get(i).equals(tid)) {
+                result.get("教学班号").add(tcidList.get(i));
+                result.get("课程ID").add(cidList.get(i));
+                result.get("开课学期").add(termIdxList.get(i));
+                result.get("教学班名称").add(nameList.get(i));
+            }
+        }
+        return result;
+    }
 }
