@@ -1,0 +1,9 @@
+[project]
+name = "autoclicks"
+version = "0.1.0"
+description = "Some auto clicker scripts using SeleniumBase."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "seleniumbase>=4.44.12",
+]
