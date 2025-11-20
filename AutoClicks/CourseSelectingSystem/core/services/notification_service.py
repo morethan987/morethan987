@@ -1,8 +1,9 @@
+import logging
 from abc import ABC, abstractmethod
 from typing import List
-from core.models.course import Course
+
 from core.models.config import NotificationConfig
-import logging
+from core.models.course import Course
 
 
 class NotificationService(ABC):
@@ -43,7 +44,7 @@ class NotificationManager:
         for service in self.services:
             service.send_notification(message)
 
-    def notify_course_selected(self, course_name: str, teacher_name: str = None):
+    def notify_course_selected(self, course_name: str, teacher_name: str = ""):
         """Notify that a course has been selected"""
         if teacher_name:
             message = f"Successfully selected course '{course_name}' with teacher '{teacher_name}'!"

@@ -1,25 +1,28 @@
+import logging
 import time
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List
+
+from core.exceptions.exceptions import LoginFailedException
+from core.interfaces.interface import CourseHandlerInterface, CourseMonitorInterface
 from core.models.config import SystemConfig
-from core.interfaces.interface import CourseMonitorInterface, CourseHandlerInterface
-from core.services.web_driver_service import WebDriverService
 from core.services.login_service import LoginService
 from core.services.notification_service import NotificationManager
+from core.services.web_driver_service import WebDriverService
 from core.task_scheduler import TaskScheduler
-from core.exceptions.exceptions import LoginFailedException
-import logging
 
 
 class CourseSelectionSystem:
     """重构后的主系统类，支持依赖注入的监控和处理逻辑"""
 
-    def __init__(self, 
-                 config: SystemConfig,
-                 course_monitor: CourseMonitorInterface,
-                 course_handler: CourseHandlerInterface):
+    def __init__(
+        self,
+        config: SystemConfig,
+        course_monitor: CourseMonitorInterface,
+        course_handler: CourseHandlerInterface,
+    ):
         """
         初始化选课系统
-        
+
         Args:
             config: 系统配置
             course_monitor: 课程监控实现
@@ -42,8 +45,12 @@ class CourseSelectionSystem:
         """启动选课系统"""
         try:
             self.logger.info("Starting Course Selection System")
-            self.logger.info(f"Monitoring {len(self.config.monitoring.courses)} general courses")
-            self.logger.info(f"Monitoring {len(self.config.monitoring.course_teacher_pairs)} specific course-teacher pairs")
+            self.logger.info(
+                f"Monitoring {len(self.config.monitoring.courses)} general courses"
+            )
+            self.logger.info(
+                f"Monitoring {len(self.config.monitoring.course_teacher_pairs)} specific course-teacher pairs"
+            )
 
             with self.webdriver_service.get_driver() as sb:
                 self.sb = sb
@@ -54,7 +61,7 @@ class CourseSelectionSystem:
                 # Start monitoring task with injected implementations
                 self.task_scheduler.start_monitoring(
                     monitor_func=self._monitor_courses_wrapper,
-                    selection_func=self._handle_available_courses_wrapper
+                    selection_func=self._handle_available_courses_wrapper,
                 )
 
         except KeyboardInterrupt:
@@ -83,7 +90,9 @@ class CourseSelectionSystem:
                 retry_count += 1
                 if retry_count >= max_retries:
                     raise e
-                self.logger.warning(f"Login failed, attempt {retry_count}/{max_retries}")
+                self.logger.warning(
+                    f"Login failed, attempt {retry_count}/{max_retries}"
+                )
                 time.sleep(2)
 
     def _monitor_courses_wrapper(self) -> List[Dict[str, Any]]:
@@ -94,16 +103,21 @@ class CourseSelectionSystem:
             self.logger.error(f"Error during monitoring: {e}")
             # Try to recover by refreshing and re-login if necessary
             try:
-                self.sb.refresh()
-                time.sleep(2)
-            except:
+                if self.sb:
+                    self.sb.refresh()
+                    time.sleep(2)
+            except Exception:
                 # If refresh fails, try re-login
                 self._perform_login()
             return []
 
-    def _handle_available_courses_wrapper(self, available_courses: List[Dict[str, Any]]):
+    def _handle_available_courses_wrapper(
+        self, available_courses: List[Dict[str, Any]]
+    ):
         """处理可用课程的包装器，调用注入的处理实现"""
         try:
-            self.course_handler.handle_available_courses(self.sb, available_courses, self.config)
+            self.course_handler.handle_available_courses(
+                self.sb, available_courses, self.config
+            )
         except Exception as e:
             self.logger.error(f"Error handling available courses: {e}")

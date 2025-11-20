@@ -69,7 +69,7 @@ class SmartWaiter:
             try:
                 if not self.sb.is_element_visible(selector):
                     return True
-            except:
+            except Exception:
                 return True
             sleep(0.5)
         return False
@@ -82,7 +82,7 @@ class SmartWaiter:
             try:
                 if condition_func():
                     return True
-            except Exception as e:
+            except Exception:
                 pass
             sleep(check_interval)
         return False
@@ -380,7 +380,7 @@ def detect_available_browser():
     for browser in browsers:
         try:
             print(f"🔍 检测 {browser.upper()} 浏览器...")
-            with SB(browser=browser, headed=False) as sb:
+            with SB(browser=browser, headed=False):
                 print(f"✅ 找到 {browser.upper()} 浏览器")
                 return browser
         except Exception:

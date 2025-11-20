@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from typing import List, Optional
 from enum import Enum
+from typing import List, Optional
 
 
 class CourseStatus(Enum):
@@ -23,7 +23,7 @@ class Course:
     status: CourseStatus = CourseStatus.UNKNOWN
     capacity: int = 0
     enrolled: int = 0
-    teachers: List[Teacher] = None
+    teachers: List[Teacher] = []
 
     def __post_init__(self):
         if self.teachers is None:

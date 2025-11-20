@@ -1,9 +1,12 @@
+import argparse
+import os
+
 from core.models.config import SystemConfig
 
 
 def check_environment():
     """Check if required environment variables are set"""
-    required_vars = ['CQU_USERNAME', 'CQU_PASSWORD']
+    required_vars = ["CQU_USERNAME", "CQU_PASSWORD"]
     missing_vars = []
 
     for var in required_vars:
@@ -25,6 +28,7 @@ def check_environment():
 
     return True
 
+
 def display_config_info(config: SystemConfig):
     """Display configuration information"""
     print("✅ Configuration loaded successfully")
@@ -38,7 +42,7 @@ def display_config_info(config: SystemConfig):
     if config.monitoring.courses:
         print("\n📋 General courses being monitored:")
         for i, course in enumerate(config.monitoring.courses, 1):
-            course_name = course.get('name') if isinstance(course, dict) else course
+            course_name = course.get("name") if isinstance(course, dict) else course
             print(f"   {i}. {course_name}")
 
     if config.monitoring.course_teacher_pairs:
@@ -46,10 +50,11 @@ def display_config_info(config: SystemConfig):
         for i, pair in enumerate(config.monitoring.course_teacher_pairs, 1):
             print(f"   {i}. {pair.get('course_name')} - {pair.get('teacher_name')}")
 
+
 def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description='Automated Course Selection System (Refactored Version)',
+        description="Automated Course Selection System (Refactored Version)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Environment Variables:
@@ -64,26 +69,26 @@ Examples:
 Refactor Notes:
   This version uses dependency injection for monitoring and handling logic.
   See examples/basic_usage_example.py for custom implementations.
-        """
+        """,
     )
 
     parser.add_argument(
-        '--config', '-c',
-        default='config/config.yaml',
-        help='Path to configuration file (default: config/config.yaml)'
+        "--config",
+        "-c",
+        default="config/config.yaml",
+        help="Path to configuration file (default: config/config.yaml)",
     )
 
     parser.add_argument(
-        '--log-level', '-l',
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-        default='INFO',
-        help='Set logging level (default: INFO)'
+        "--log-level",
+        "-l",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="INFO",
+        help="Set logging level (default: INFO)",
     )
 
     parser.add_argument(
-        '--log-dir',
-        default='logs',
-        help='Directory for log files (default: logs)'
+        "--log-dir", default="logs", help="Directory for log files (default: logs)"
     )
 
     return parser.parse_args()

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -17,7 +17,7 @@ class WebDriverConfig:
     headless: bool = False
     timeout: int = 15
     user_agent: Optional[str] = None
-    additional_options: List[str] = None
+    additional_options: List[str] = []
 
     def __post_init__(self):
         if self.additional_options is None:
@@ -28,8 +28,8 @@ class WebDriverConfig:
 class MonitoringConfig:
     check_interval: int = 8
     max_retries: int = 10
-    courses: List[Dict[str, Any]] = None
-    course_teacher_pairs: List[Dict[str, str]] = None
+    courses: List[Dict[str, Any]] = []
+    course_teacher_pairs: List[Dict[str, str]] = []
 
     def __post_init__(self):
         if self.courses is None:
