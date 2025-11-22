@@ -1,7 +1,6 @@
 package com.example;
 
-import com.example.auth.AuthService;
-import com.example.view.MenuRouter;
+import com.example.controller.SystemController;
 
 /**
  * Students Score Management System
@@ -16,9 +15,7 @@ public class App {
 
     public static void main(String[] args) {
         printBanner();
-        String sessionId = AuthService.login();
-        MenuRouter router = new MenuRouter(sessionId);
-        router.start();
+        SystemController.init();
     }
 
     private static void printBanner() {

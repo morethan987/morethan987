@@ -1,4 +1,4 @@
-package com.example.model.message_type;
+package com.example.model.dto;
 
 public class BinaryMessage {
 

@@ -1,5 +1,6 @@
 package com.example.session;
 
+import com.example.model.entity.Role;
 import java.util.List;
 import java.util.UUID;
 
@@ -10,25 +11,40 @@ public class SessionManager {
     public static String addSession(
         String userId,
         String username,
-        String role,
-        java.util.Set<String> permissions
+        List<Role> roleList
     ) {
         Session session = new Session(
             UUID.randomUUID().toString(),
             userId,
             username,
-            role,
-            permissions
+            roleList
         );
         currentSessionPool.add(session);
         return session.getSessionId();
     }
 
     public static Session getSession(String sessionId) {
-        return currentSession;
+        for (Session session : currentSessionPool) {
+            if (session.getSessionId().equals(sessionId)) {
+                return session;
+            }
+        }
+        return null;
     }
 
-    public static void clear() {
-        currentSession = null;
+    public static List<Role> getRoleBySessionId(String sessionId) {
+        Session session = getSession(sessionId);
+        if (session != null) {
+            return session.getRoleSet();
+        }
+        return null;
+    }
+
+    public static void clear(String sessionId) {
+        for (Session session : currentSessionPool) {
+            if (session.getSessionId().equals(sessionId)) {
+                session = null;
+            }
+        }
     }
 }

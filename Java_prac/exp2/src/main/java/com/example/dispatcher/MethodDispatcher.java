@@ -2,7 +2,7 @@ package com.example.dispatcher;
 
 import com.example.auth.AuthService;
 import com.example.auth.Permission;
-import com.example.model.message_type.BinaryMessage;
+import com.example.model.dto.BinaryMessage;
 import java.lang.reflect.Method;
 
 /**
