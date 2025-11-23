@@ -1,66 +1,95 @@
 package com.example.dispatcher;
 
-import com.example.auth.AuthService;
-import com.example.auth.Permission;
-import com.example.model.dto.BinaryMessage;
-import java.lang.reflect.Method;
-
 /**
- * 解析注解 + 权限校验 + 调用
+ * 方法调度器 - 处理方法调用、权限校验
  */
 public class MethodDispatcher {
 
-    private final String sessionId;
+    private MenuRegistry menuRegistry;
 
-    public MethodDispatcher(String sessionId) {
-        this.sessionId = sessionId;
+    /**
+     * 默认构造函数，创建新的菜单注册表
+     */
+    public MethodDispatcher() {
+        this.menuRegistry = new MenuRegistry();
     }
 
     /**
-     * 直接使用 Method 对象进行调用
-     * @param controller 控制器实例
-     * @param method 要调用的方法对象
+     * 构造函数，使用指定的菜单注册表
+     * @param menuRegistry 菜单注册表实例
+     */
+    public MethodDispatcher(MenuRegistry menuRegistry) {
+        this.menuRegistry = menuRegistry;
+    }
+
+    /**
+     * 根据菜单和选项进行调度
+     * @param sessionId 会话ID
+     * @param menu 菜单名称
+     * @param option 选项编号
      * @param args 方法参数
      */
-    public BinaryMessage dispatch(
-        Object controller,
-        Method method,
+    public void dispatch(
+        String sessionId,
+        String menu,
+        int option,
         Object... args
     ) {
-        try {
-            // 权限检查
-            if (method.isAnnotationPresent(Permission.class)) {
-                String required = method
-                    .getAnnotation(Permission.class)
-                    .value();
-                if (!AuthService.hasPermission(sessionId, required)) {
-                    return new BinaryMessage(false, "权限不足: " + required);
-                }
-            }
+        MenuItem menuItem = menuRegistry.getMenuItem(menu, option);
 
-            method.invoke(controller, args);
-            return new BinaryMessage(true, "方法调用成功: " + method.getName());
+        if (menuItem == null) {
+            throw new IllegalArgumentException(
+                String.format("菜单项不存在: menu=%s, option=%d", menu, option)
+            );
+        }
+
+        // 权限检查
+        if (!menuItem.hasAccess(sessionId)) {
+            throw new SecurityException(
+                String.format("权限不足，无法访问: %s", menuItem.getTitle())
+            );
+        }
+
+        try {
+            // 调用方法，传入sessionId作为第一个参数
+            Object[] methodArgs = new Object[args.length + 1];
+            methodArgs[0] = sessionId;
+            System.arraycopy(args, 0, methodArgs, 1, args.length);
+
+            menuItem.getMethod().invoke(menuItem.getController(), methodArgs);
         } catch (Exception e) {
-            return new BinaryMessage(false, "方法调用失败: " + e.getMessage());
+            throw new RuntimeException(
+                String.format(
+                    "执行菜单项失败: %s - %s",
+                    menuItem.getTitle(),
+                    e.getMessage()
+                ),
+                e
+            );
         }
     }
 
     /**
-     * 保持向后兼容的方法名调用方式
-     * @param controller 控制器实例
-     * @param methodName 方法名
-     * @param args 方法参数
+     * 获取菜单注册表
+     * @return 菜单注册表实例
      */
-    public BinaryMessage dispatch(
-        Object controller,
-        String methodName,
-        Object... args
-    ) {
-        try {
-            Method method = controller.getClass().getMethod(methodName);
-            return dispatch(controller, method, args);
-        } catch (NoSuchMethodException e) {
-            return new BinaryMessage(false, "无此方法: " + methodName);
-        }
+    public MenuRegistry getMenuRegistry() {
+        return menuRegistry;
+    }
+
+    /**
+     * 注册控制器到菜单系统
+     * @param controller 要注册的控制器
+     */
+    public void registerController(Object controller) {
+        menuRegistry.registerController(controller);
+    }
+
+    /**
+     * 批量注册控制器
+     * @param controllers 控制器数组
+     */
+    public void registerControllers(Object... controllers) {
+        menuRegistry.registerControllers(controllers);
     }
 }

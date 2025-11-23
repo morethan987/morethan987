@@ -35,7 +35,6 @@ public class TeacherDAOImpl extends BaseDAOImpl implements TeacherDAO {
             Statement stmt = conn.createStatement()
         ) {
             stmt.execute(sql);
-            System.out.println("数据表 'teacher' 检查/创建成功。");
         } catch (SQLException e) {
             System.err.println("创建表失败: " + e.getMessage());
         }

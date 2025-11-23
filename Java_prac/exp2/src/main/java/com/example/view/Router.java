@@ -1,80 +1,83 @@
 package com.example.view;
 
-import com.example.controller.*;
-import com.example.dispatcher.MethodDispatcher;
+import com.example.controller.BaseController;
+import com.example.dispatcher.MenuRegistry;
+import com.example.model.dto.LoginMessage;
+import com.example.model.dto.RegistMessage;
 
 /**
- * 菜单路由器，负责不同菜单选项的路由，同时处理用户输入
+ * 菜单路由器，持有所有菜单视图的实例
  */
 public class Router extends BaseView {
 
-    private final MethodDispatcher dispatcher;
-    private final StudentController studentController = new StudentController();
-    private final SystemController systemController = new SystemController();
+    private LoginView loginView = new LoginView();
 
-    public Router(String sessionId) {
-        this.dispatcher = new MethodDispatcher(sessionId);
-        this.setSessionId(sessionId);
+    /**
+     * 默认构造函数
+     */
+    public Router() {
+        super();
     }
 
-    public void start() {
-        try {
-            mainMenu();
-        } finally {
-            close(); // 确保在程序结束时关闭Scanner
-        }
+    /**
+     * 使用菜单注册表的构造函数
+     * @param menuRegistry 菜单注册表
+     */
+    public Router(MenuRegistry menuRegistry) {
+        super();
+        BaseController.menuRenderer = new MenuRenderer(menuRegistry);
     }
 
-    public void mainMenu() {
-        while (true) {
-            System.out.println("\n== 主菜单 ==");
-            System.out.println("1. 系统设置");
-            System.out.println("2. 学生管理");
-            System.out.println("0. 退出");
-
-            switch (scanner.nextLine()) {
-                // 使用统一的scanner
-                case "1":
-                    systemMenu();
-                    break;
-                case "2":
-                    studentMenu();
-                    break;
-                case "0":
-                    return;
-            }
-        }
+    /**
+     * 设置菜单渲染器
+     * @param menuRenderer 菜单渲染器实例
+     */
+    public void setMenuRenderer(MenuRenderer menuRenderer) {
+        BaseController.menuRenderer = menuRenderer;
     }
 
-    private void systemMenu() {
-        System.out.println("\n== 系统设置 ==");
-        System.out.println("1. 查看系统信息");
-        System.out.println("2. 修改角色权限");
-
-        switch (scanner.nextLine()) {
-            // 使用统一的scanner
-            case "1":
-                dispatcher.dispatch(systemController, "showSystemInfo");
-                break;
-            case "2":
-                dispatcher.dispatch(systemController, "editRoles");
-                break;
-        }
+    /**
+     * 显示登录界面并获取用户输入
+     * 支持用户取消操作
+     * @return 登录信息，如果用户取消则返回null
+     */
+    public LoginMessage login() {
+        return loginView.getLoginInput();
     }
 
-    private void studentMenu() {
-        System.out.println("\n== 学生管理 ==");
-        System.out.println("1. 添加学生");
-        System.out.println("2. 查看学生");
+    /**
+     * 显示注册界面并获取用户输入
+     * 支持用户取消操作
+     * @return 注册信息，如果用户取消则返回null
+     */
+    public RegistMessage regist() {
+        return loginView.getRegistInput();
+    }
 
-        switch (scanner.nextLine()) {
-            // 使用统一的scanner
-            case "1":
-                dispatcher.dispatch(studentController, "addStudent");
-                break;
-            case "2":
-                dispatcher.dispatch(studentController, "listStudents");
-                break;
+    /**
+     * 显示指定菜单并获取用户选择
+     * @param menuName 菜单名称
+     * @param sessionId 会话ID
+     * @return 用户选择的选项编号
+     */
+    public Integer showMenu(String menuName, String sessionId) {
+        clearScreen();
+        if (BaseController.menuRenderer == null) {
+            throw new IllegalStateException(
+                "MenuRenderer 未初始化，请先设置 MenuRenderer"
+            );
         }
+        return BaseController.menuRenderer.showMenuAndGetChoice(
+            menuName,
+            sessionId
+        );
+    }
+
+    /**
+     * 获取菜单渲染器
+     * @return 菜单渲染器实例
+     */
+    public MenuRenderer getMenuRenderer() {
+        return BaseController.menuRenderer;
     }
 }

@@ -11,6 +11,7 @@ public class UserDAOImpl extends BaseDAOImpl implements UserDAO {
     public UserDAOImpl() {
         super();
         createTable();
+        createUserRoleTable();
     }
 
     /**
@@ -38,23 +39,90 @@ public class UserDAOImpl extends BaseDAOImpl implements UserDAO {
         }
     }
 
-    @Override
-    public boolean addUser(User user) {
-        String sql = "INSERT INTO user(id, username, password) VALUES(?, ?, ?)";
+    public void createUserRoleTable() {
+        String sql =
+            "CREATE TABLE IF NOT EXISTS user_role (" +
+            "user_id TEXT NOT NULL, " +
+            "role_id TEXT NOT NULL, " +
+            "PRIMARY KEY (user_id, role_id), " +
+            "FOREIGN KEY (user_id) REFERENCES user(id), " +
+            "FOREIGN KEY (role_id) REFERENCES role(id))";
 
         try (
             Connection conn = getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql)
+            Statement stmt = conn.createStatement()
         ) {
-            pstmt.setString(1, user.getId());
-            pstmt.setString(2, user.getUsername());
-            pstmt.setString(3, user.getPassword()); // 注意：实际项目中密码应当加密存储
-
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
+            stmt.execute(sql);
         } catch (SQLException e) {
+            System.err.println("创建用户角色关联表失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean addUser(User user, List<String> roleList) {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false); // 开启事务
+
+            // 1. 插入用户
+            String userSql =
+                "INSERT INTO user(id, username, password) VALUES(?, ?, ?)";
+            try (PreparedStatement pstmt = conn.prepareStatement(userSql)) {
+                pstmt.setString(1, user.getId());
+                pstmt.setString(2, user.getUsername());
+                pstmt.setString(3, user.getPassword()); // TODO: 实际项目中密码应当加密存储
+
+                int userRows = pstmt.executeUpdate();
+                if (userRows == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            // 2. 插入用户角色关联（如果roleId不为空）
+            for (String roleId : roleList) {
+                if (roleId != null && !roleId.trim().isEmpty()) {
+                    String roleSql =
+                        "INSERT INTO user_role(user_id, role_id) VALUES(?, ?)";
+                    try (
+                        PreparedStatement pstmt = conn.prepareStatement(roleSql)
+                    ) {
+                        pstmt.setString(1, user.getId());
+                        pstmt.setString(2, roleId);
+
+                        int roleRows = pstmt.executeUpdate();
+                        if (roleRows == 0) {
+                            conn.rollback();
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            conn.commit(); // 提交事务
+            return true;
+        } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback(); // 回滚事务
+                } catch (SQLException rollbackEx) {
+                    System.err.println(
+                        "回滚事务失败: " + rollbackEx.getMessage()
+                    );
+                }
+            }
             System.err.println("添加用户失败: " + e.getMessage());
             return false;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true); // 恢复自动提交
+                    conn.close();
+                } catch (SQLException closeEx) {
+                    System.err.println("关闭连接失败: " + closeEx.getMessage());
+                }
+            }
         }
     }
 

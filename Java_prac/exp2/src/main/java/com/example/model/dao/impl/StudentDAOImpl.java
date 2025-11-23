@@ -19,6 +19,7 @@ public class StudentDAOImpl extends BaseDAOImpl implements StudentDAO {
     public StudentDAOImpl() {
         super();
         createTable();
+        createStudentTeachingClassTable();
     }
 
     /**
@@ -40,6 +41,25 @@ public class StudentDAOImpl extends BaseDAOImpl implements StudentDAO {
             stmt.execute(createTableSQL);
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void createStudentTeachingClassTable() {
+        String sql =
+            "CREATE TABLE IF NOT EXISTS student_teaching_class (" +
+            "stu_id TEXT NOT NULL, " +
+            "class_id TEXT NOT NULL, " +
+            "PRIMARY KEY (stu_id, class_id), " +
+            "FOREIGN KEY (stu_id) REFERENCES student(stu_id), " +
+            "FOREIGN KEY (class_id) REFERENCES teaching_class(class_id))";
+
+        try (
+            Connection conn = getConnection();
+            Statement stmt = conn.createStatement()
+        ) {
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            System.err.println("创建学生教学班关联表失败: " + e.getMessage());
         }
     }
 

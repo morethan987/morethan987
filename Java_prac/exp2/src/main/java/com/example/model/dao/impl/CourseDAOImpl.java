@@ -34,7 +34,6 @@ public class CourseDAOImpl extends BaseDAOImpl implements CourseDAO {
             Statement stmt = conn.createStatement()
         ) {
             stmt.execute(sql);
-            System.out.println("数据表 'course' 检查/创建成功。");
         } catch (SQLException e) {
             System.err.println("创建表失败: " + e.getMessage());
         }

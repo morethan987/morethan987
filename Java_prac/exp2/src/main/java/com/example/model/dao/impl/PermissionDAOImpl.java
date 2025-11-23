@@ -38,6 +38,25 @@ public class PermissionDAOImpl extends BaseDAOImpl implements PermissionDAO {
         }
     }
 
+    public void createRolePermissionTable() {
+        String sql =
+            "CREATE TABLE IF NOT EXISTS role_permission (" +
+            "role_id TEXT NOT NULL, " +
+            "permission_id TEXT NOT NULL, " +
+            "PRIMARY KEY (role_id, permission_id), " +
+            "FOREIGN KEY (role_id) REFERENCES role(id), " +
+            "FOREIGN KEY (permission_id) REFERENCES permission(id))";
+
+        try (
+            Connection conn = getConnection();
+            Statement stmt = conn.createStatement()
+        ) {
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            System.err.println("创建表失败: " + e.getMessage());
+        }
+    }
+
     @Override
     public boolean addPermission(Permission permission) {
         String sql = "INSERT INTO permission(permission_id, name) VALUES(?, ?)";

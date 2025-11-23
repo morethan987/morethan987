@@ -1,12 +1,13 @@
 package com.example.session;
 
 import com.example.model.entity.Role;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class SessionManager {
 
-    private static List<Session> currentSessionPool = null;
+    private static List<Session> currentSessionPool = new ArrayList<>();
 
     public static String addSession(
         String userId,

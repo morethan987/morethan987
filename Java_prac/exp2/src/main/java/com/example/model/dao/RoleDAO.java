@@ -1,5 +1,6 @@
 package com.example.model.dao;
 
+import com.example.model.entity.Permission;
 import com.example.model.entity.Role;
 import java.util.List;
 
@@ -21,6 +22,8 @@ public interface RoleDAO {
 
     // 查询所有
     List<Role> getAllRoles();
+
+    List<Permission> getPermissionsByRoleId(String roleId);
 
     // 更新
     boolean updateRole(Role role);

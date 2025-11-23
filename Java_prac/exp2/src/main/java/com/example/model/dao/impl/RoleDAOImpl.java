@@ -1,6 +1,7 @@
 package com.example.model.dao.impl;
 
 import com.example.model.dao.RoleDAO;
+import com.example.model.entity.Permission;
 import com.example.model.entity.Role;
 import java.sql.*;
 import java.util.ArrayList;
@@ -32,7 +33,25 @@ public class RoleDAOImpl extends BaseDAOImpl implements RoleDAO {
             Statement stmt = conn.createStatement()
         ) {
             stmt.execute(sql);
-            System.out.println("数据表 'role' 检查/创建成功。");
+        } catch (SQLException e) {
+            System.err.println("创建表失败: " + e.getMessage());
+        }
+    }
+
+    public void createRolePermissionTable() {
+        String sql =
+            "CREATE TABLE IF NOT EXISTS role_permission (" +
+            "role_id TEXT NOT NULL, " +
+            "permission_id TEXT NOT NULL, " +
+            "PRIMARY KEY (role_id, permission_id), " +
+            "FOREIGN KEY (role_id) REFERENCES role(id), " +
+            "FOREIGN KEY (permission_id) REFERENCES permission(id))";
+
+        try (
+            Connection conn = getConnection();
+            Statement stmt = conn.createStatement()
+        ) {
+            stmt.execute(sql);
         } catch (SQLException e) {
             System.err.println("创建表失败: " + e.getMessage());
         }
@@ -94,6 +113,41 @@ public class RoleDAOImpl extends BaseDAOImpl implements RoleDAO {
             System.err.println("查询所有角色失败: " + e.getMessage());
         }
         return roles;
+    }
+
+    @Override
+    public List<Permission> getPermissionsByRoleId(String roleId) {
+        List<Permission> permissions = new ArrayList<>();
+
+        String sql =
+            "SELECT p.id AS perm_id, p.name AS perm_name " +
+            "FROM role_permission rp " +
+            "INNER JOIN permission p ON rp.permission_id = p.id " +
+            "WHERE rp.role_id = ?";
+
+        try (
+            Connection conn = getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)
+        ) {
+            pstmt.setString(1, roleId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    permissions.add(
+                        new Permission(
+                            rs.getString("perm_id"),
+                            rs.getString("perm_name")
+                        )
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                "Failed to query permissions by roleId = " + roleId,
+                e
+            );
+        }
+
+        return permissions;
     }
 
     @Override

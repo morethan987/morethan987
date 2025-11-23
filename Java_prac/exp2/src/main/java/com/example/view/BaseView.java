@@ -26,9 +26,9 @@ public abstract class BaseView {
 
     public void show(BinaryMessage msg) {
         if (msg.isBool_result()) {
-            System.out.println("❌ " + msg.getMessage());
-        } else {
             System.out.println("✅ " + msg.getMessage());
+        } else {
+            System.out.println("❌ " + msg.getMessage());
         }
     }
 
@@ -48,5 +48,24 @@ public abstract class BaseView {
      */
     public String getSessionId() {
         return this.sessionId;
+    }
+
+    /**
+     * 清屏
+     */
+    public void clearScreen() {
+        try {
+            if (System.getProperty("os.name").contains("Windows")) {
+                new ProcessBuilder("cmd", "/c", "cls")
+                    .inheritIO()
+                    .start()
+                    .waitFor();
+            } else {
+                System.out.print("\033[H\033[2J");
+                System.out.flush();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -1,5 +1,9 @@
 package com.example;
 
+import com.example.controller.BaseController;
+import com.example.controller.CourseController;
+import com.example.controller.ScoreController;
+import com.example.controller.StudentController;
 import com.example.controller.SystemController;
 
 /**
@@ -15,7 +19,31 @@ public class App {
 
     public static void main(String[] args) {
         printBanner();
-        SystemController.init();
+
+        // 初始化所有控制器
+        SystemController systemController = new SystemController();
+        StudentController studentController = new StudentController();
+        CourseController courseController = new CourseController();
+        ScoreController scoreController = new ScoreController();
+
+        // 注册所有控制器到菜单系统
+        BaseController.registerControllers(
+            systemController,
+            studentController,
+            courseController,
+            scoreController
+        );
+
+        BaseController.initializeMenuSystem();
+
+        // 注册dispatcher和router
+        systemController.initialize();
+        studentController.initialize();
+        courseController.initialize();
+        scoreController.initialize();
+
+        // 启动系统
+        systemController.init();
     }
 
     private static void printBanner() {

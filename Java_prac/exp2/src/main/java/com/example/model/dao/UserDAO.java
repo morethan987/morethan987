@@ -11,7 +11,7 @@ public interface UserDAO {
     void createTable();
 
     // 增加用户
-    boolean addUser(User user);
+    boolean addUser(User user, List<String> roleId);
 
     // 根据ID查询用户
     User getUserById(String id);
