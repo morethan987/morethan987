@@ -5,6 +5,7 @@ import com.example.controller.CourseController;
 import com.example.controller.ScoreController;
 import com.example.controller.StudentController;
 import com.example.controller.SystemController;
+import com.example.util.LoggerUtil;
 
 /**
  * Students Score Management System
@@ -18,15 +19,22 @@ import com.example.controller.SystemController;
 public class App {
 
     public static void main(String[] args) {
+        // 初始化日志系统
+        LoggerUtil.initializeLogger();
+        LoggerUtil.logSystemEvent("系统启动", "学生成绩管理系统开始启动");
+
         printBanner();
 
         // 初始化所有控制器
+        LoggerUtil.info("开始初始化控制器");
         SystemController systemController = new SystemController();
         StudentController studentController = new StudentController();
         CourseController courseController = new CourseController();
         ScoreController scoreController = new ScoreController();
+        LoggerUtil.info("控制器初始化完成");
 
         // 注册所有控制器到菜单系统
+        LoggerUtil.info("开始注册控制器到菜单系统");
         BaseController.registerControllers(
             systemController,
             studentController,
@@ -35,14 +43,18 @@ public class App {
         );
 
         BaseController.initializeMenuSystem();
+        LoggerUtil.info("菜单系统初始化完成");
 
         // 注册dispatcher和router
+        LoggerUtil.info("开始初始化各控制器的dispatcher和router");
         systemController.initialize();
         studentController.initialize();
         courseController.initialize();
         scoreController.initialize();
+        LoggerUtil.info("所有控制器初始化完成");
 
         // 启动系统
+        LoggerUtil.logSystemEvent("系统启动完成", "进入用户交互界面");
         systemController.init();
     }
 
