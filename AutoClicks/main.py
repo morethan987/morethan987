@@ -139,13 +139,10 @@ class AutoClicksManager:
             self.display_module_info(choice)
 
             # 询问是否要运行
-            run_choice = input("\n🎯 是否要运行此模块? (y/n/info): ").lower().strip()
+            run_choice = input("\n🎯 是否要运行此模块? (y/n): ").lower().strip()
 
             if run_choice == "y" or run_choice == "yes":
                 self.run_module(choice)
-            elif run_choice == "info":
-                # 重新显示详细信息
-                self.display_module_info(choice)
             else:
                 print("🔙 返回主菜单")
 
