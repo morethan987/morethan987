@@ -41,35 +41,35 @@ const data = {
   },
   navMain: [
     {
-      id: PAGE_IDS.DASHBOARD,
-      title: "Dashboard",
+      id: PAGE_IDS.GENERAL,
+      title: "总体概览",
       url: "#",
       icon: IconDashboard,
     },
-    {
-      id: PAGE_IDS.LIFECYCLE,
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
-    },
-    {
-      id: PAGE_IDS.ANALYTICS,
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
-    },
-    {
-      id: PAGE_IDS.PROJECTS,
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      id: PAGE_IDS.TEAM,
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
-    },
+    // {
+    //   id: PAGE_IDS.LIFECYCLE,
+    //   title: "Lifecycle",
+    //   url: "#",
+    //   icon: IconListDetails,
+    // },
+    // {
+    //   id: PAGE_IDS.ANALYTICS,
+    //   title: "Analytics",
+    //   url: "#",
+    //   icon: IconChartBar,
+    // },
+    // {
+    //   id: PAGE_IDS.PROJECTS,
+    //   title: "Projects",
+    //   url: "#",
+    //   icon: IconFolder,
+    // },
+    // {
+    //   id: PAGE_IDS.TEAM,
+    //   title: "Team",
+    //   url: "#",
+    //   icon: IconUsers,
+    // },
   ],
   navClouds: [
     {
@@ -125,7 +125,7 @@ const data = {
   navSecondary: [
     {
       id: PAGE_IDS.SETTINGS,
-      title: "Settings",
+      title: "设置",
       url: "#",
       icon: IconSettings,
     },
