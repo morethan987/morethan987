@@ -12,6 +12,7 @@ import {
 export function NavMain({
   items,
   onPageChange,
+  currentPage,
 }: {
   items: {
     id: string;
@@ -20,6 +21,7 @@ export function NavMain({
     icon?: Icon;
   }[];
   onPageChange?: (page: string) => void;
+  currentPage?: string;
 }) {
   return (
     <SidebarGroup>
@@ -51,6 +53,11 @@ export function NavMain({
                 onClick={() => {
                   onPageChange?.(item.id);
                 }}
+                className={
+                  currentPage === item.id
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                    : ""
+                }
               >
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>

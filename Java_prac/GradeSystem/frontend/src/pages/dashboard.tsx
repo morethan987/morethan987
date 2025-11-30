@@ -29,7 +29,11 @@ export function Dashboard() {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" onPageChange={setCurrentPage} />
+      <AppSidebar
+        variant="inset"
+        onPageChange={setCurrentPage}
+        currentPage={currentPage}
+      />
       <SidebarInset>
         <SiteHeader />
         {renderContent()}

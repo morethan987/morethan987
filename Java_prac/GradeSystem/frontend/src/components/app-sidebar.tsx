@@ -164,9 +164,11 @@ const data = {
 
 export function AppSidebar({
   onPageChange,
+  currentPage,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   onPageChange?: (page: string) => void;
+  currentPage?: string;
 }) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -186,12 +188,17 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} onPageChange={onPageChange} />
+        <NavMain
+          items={data.navMain}
+          onPageChange={onPageChange}
+          currentPage={currentPage}
+        />
         <NavDocuments items={data.documents} />
         <NavSecondary
           items={data.navSecondary}
           className="mt-auto"
           onPageChange={onPageChange}
+          currentPage={currentPage}
         />
       </SidebarContent>
       <SidebarFooter>
