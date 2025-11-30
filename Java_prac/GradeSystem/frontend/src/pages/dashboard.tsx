@@ -1,13 +1,25 @@
+import { useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
-import { ChartAreaInteractive } from "@/components/chart-area-interactive";
-import { DataTable } from "@/components/data-table";
-import { SectionCards } from "@/components/section-cards";
+import { GeneralData } from "./general";
+import { SettingsData } from "./settings";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-
-import data from "./data.json";
+import { PAGE_IDS } from "@/types/page-ids";
 
 export function Dashboard() {
+  const [currentPage, setCurrentPage] = useState<string>(PAGE_IDS.GENERAL);
+
+  const renderContent = () => {
+    switch (currentPage) {
+      case PAGE_IDS.GENERAL:
+        return <GeneralData />;
+      case PAGE_IDS.SETTINGS:
+        return <SettingsData />;
+      default:
+        return <GeneralData />;
+    }
+  };
+
   return (
     <SidebarProvider
       style={
@@ -17,20 +29,10 @@ export function Dashboard() {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+      <AppSidebar variant="inset" onPageChange={setCurrentPage} />
       <SidebarInset>
         <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <SectionCards />
-              <div className="px-4 lg:px-6">
-                <ChartAreaInteractive />
-              </div>
-              <DataTable data={data} />
-            </div>
-          </div>
-        </div>
+        {renderContent()}
       </SidebarInset>
     </SidebarProvider>
   );

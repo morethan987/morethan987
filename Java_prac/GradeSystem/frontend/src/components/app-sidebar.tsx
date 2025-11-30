@@ -31,6 +31,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { ROUTES } from "@/routes";
+import { PAGE_IDS } from "@/types/page-ids";
 
 const data = {
   user: {
@@ -40,26 +41,31 @@ const data = {
   },
   navMain: [
     {
+      id: PAGE_IDS.DASHBOARD,
       title: "Dashboard",
       url: "#",
       icon: IconDashboard,
     },
     {
+      id: PAGE_IDS.LIFECYCLE,
       title: "Lifecycle",
       url: "#",
       icon: IconListDetails,
     },
     {
+      id: PAGE_IDS.ANALYTICS,
       title: "Analytics",
       url: "#",
       icon: IconChartBar,
     },
     {
+      id: PAGE_IDS.PROJECTS,
       title: "Projects",
       url: "#",
       icon: IconFolder,
     },
     {
+      id: PAGE_IDS.TEAM,
       title: "Team",
       url: "#",
       icon: IconUsers,
@@ -67,6 +73,7 @@ const data = {
   ],
   navClouds: [
     {
+      id: PAGE_IDS.CAPTURE,
       title: "Capture",
       icon: IconCamera,
       isActive: true,
@@ -83,6 +90,7 @@ const data = {
       ],
     },
     {
+      id: PAGE_IDS.PROPOSAL,
       title: "Proposal",
       icon: IconFileDescription,
       url: "#",
@@ -98,6 +106,7 @@ const data = {
       ],
     },
     {
+      id: PAGE_IDS.PROMPTS,
       title: "Prompts",
       icon: IconFileAi,
       url: "#",
@@ -115,33 +124,37 @@ const data = {
   ],
   navSecondary: [
     {
+      id: PAGE_IDS.SETTINGS,
       title: "Settings",
       url: "#",
       icon: IconSettings,
     },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
+    // {
+    //   title: "Get Help",
+    //   url: "#",
+    //   icon: IconHelp,
+    // },
+    // {
+    //   title: "Search",
+    //   url: "#",
+    //   icon: IconSearch,
+    // },
   ],
   documents: [
     {
+      id: PAGE_IDS.DATA_LIBRARY,
       name: "Data Library",
       url: "#",
       icon: IconDatabase,
     },
     {
+      id: PAGE_IDS.REPORTS,
       name: "Reports",
       url: "#",
       icon: IconReport,
     },
     {
+      id: PAGE_IDS.WORD_ASSISTANT,
       name: "Word Assistant",
       url: "#",
       icon: IconFileWord,
@@ -149,7 +162,12 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  onPageChange,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  onPageChange?: (page: string) => void;
+}) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -168,9 +186,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain} onPageChange={onPageChange} />
         <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavSecondary
+          items={data.navSecondary}
+          className="mt-auto"
+          onPageChange={onPageChange}
+        />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
