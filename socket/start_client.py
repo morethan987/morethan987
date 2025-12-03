@@ -27,7 +27,7 @@ def print_banner():
 
 def check_files():
     """检查必要文件是否存在"""
-    files = ["client.py", "client_ui.py"]
+    files = ["client_ui.py"]
     missing = []
 
     for file in files:
