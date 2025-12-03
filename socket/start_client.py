@@ -43,33 +43,6 @@ def check_files():
     return True
 
 
-def get_client_choice():
-    """选择客户端类型"""
-    print("请选择客户端版本:")
-    print("=" * 40)
-    print("1. 🎨 UI版客户端 (client_ui.py) - 推荐")
-    print("   • 类QQ界面布局")
-    print("   • 消息左右对齐显示")
-    print("   • 实时用户列表")
-    print("   • 消息滚动查看")
-    print("   • 更好的输入体验")
-    print()
-    print("2. 📝 简单版客户端 (client.py)")
-    print("   • 基础命令行界面")
-    print("   • 轻量级，兼容性好")
-    print("   • 适合老旧终端")
-    print()
-
-    while True:
-        choice = input("请选择客户端版本 (1/2, 默认: 1): ").strip()
-        if not choice or choice == "1":
-            return "client_ui.py"
-        elif choice == "2":
-            return "client.py"
-        else:
-            print("请输入 1 或 2")
-
-
 def get_connection_config():
     """获取连接配置"""
     print("\n请配置连接参数:")
@@ -146,7 +119,7 @@ def start_client():
         return
 
     # 选择客户端
-    client_file = get_client_choice()
+    client_file = "client_ui.py"
 
     # 获取连接配置
     server_ip = get_connection_config()

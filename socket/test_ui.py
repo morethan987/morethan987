@@ -57,7 +57,7 @@ def test_chat_client_init():
         assert client.server_ip == "127.0.0.1"
         assert client.port == 8888
         assert client.nickname == ""
-        assert client.running == True
+        assert client.running
         assert len(client.messages) == 0
         assert len(client.online_users) == 0
         assert client.input_buffer == ""

@@ -5,15 +5,13 @@
 提供更友好的启动界面和配置选项
 """
 
-import json
-import os
 import socket
 import sys
 import threading
 
 # 导入原始服务器模块
 try:
-    from server import broadcast, clients, get_ip_address, handle_client, send_user_list
+    from server import broadcast, clients, get_ip_address, handle_client
 except ImportError:
     print("错误: 无法找到 server.py 文件！")
     print("请确保 start_server.py 和 server.py 在同一目录下")
@@ -119,7 +117,7 @@ def display_connection_info(bind_ip, port):
         print(f"📱 手机热点用户请连接: {local_ip}")
         print(f"💻 局域网用户请连接: {local_ip}")
     else:
-        print(f"🏠 仅本机访问: 127.0.0.1")
+        print("🏠 仅本机访问: 127.0.0.1")
 
     print("\n客户端连接方式:")
     print("=" * 30)
@@ -196,7 +194,7 @@ def start_server():
     stats_thread = threading.Thread(target=show_stats, daemon=True)
     stats_thread.start()
 
-    print(f"\n⏳ 等待用户连接...")
+    print("\n⏳ 等待用户连接...")
 
     try:
         while True:

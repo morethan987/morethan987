@@ -34,6 +34,7 @@ class ChatClient:
         """发送昵称给服务器"""
         try:
             nickname_data = json.dumps({"nickname": nickname}, ensure_ascii=False)
+            assert self.sock is not None
             self.sock.send(nickname_data.encode("utf-8"))
             self.nickname = nickname
             return True
@@ -44,6 +45,7 @@ class ChatClient:
         """接收服务器消息"""
         while self.running:
             try:
+                assert self.sock is not None
                 data = self.sock.recv(1024)
                 if not data:
                     break
@@ -99,6 +101,7 @@ class ChatClient:
                         "message": private_msg,
                         "target": target_nickname,
                     }
+                    assert self.sock is not None
                     self.sock.send(
                         json.dumps(request, ensure_ascii=False).encode("utf-8")
                     )
@@ -110,6 +113,7 @@ class ChatClient:
                     self.add_message("系统", "私聊格式: @昵称 消息内容", "error")
             else:
                 request = {"type": "group", "message": message}
+                assert self.sock is not None
                 self.sock.send(json.dumps(request, ensure_ascii=False).encode("utf-8"))
                 # 立即显示发送的群聊消息
                 self.add_message("我", message, "own")
@@ -313,7 +317,7 @@ class ChatClient:
                 stdscr.addstr(
                     input_y, cursor_x, " ", curses.color_pair(8) | curses.A_REVERSE
                 )
-            except:
+            except Exception:
                 pass
 
     def draw_help(self, stdscr):
@@ -385,7 +389,7 @@ class ChatClient:
             except KeyboardInterrupt:
                 self.running = False
                 break
-            except:
+            except Exception:
                 continue
 
     def run_ui(self, stdscr):
@@ -417,7 +421,7 @@ class ChatClient:
                 time.sleep(0.05)  # 降低CPU使用率
             except KeyboardInterrupt:
                 break
-            except:
+            except Exception:
                 continue
 
     def start(self):
@@ -436,7 +440,7 @@ class ChatClient:
             print("发送昵称失败！")
             return
 
-        print(f"连接成功！正在进入聊天室...")
+        print("连接成功！正在进入聊天室...")
         time.sleep(1)
 
         try:
