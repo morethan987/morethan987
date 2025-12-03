@@ -5,4 +5,19 @@
 ```shell
 ./mvnw spring-boot:run
 ```
-然后访问网页：[swagger UI](http://localhost:8080/swagger-ui/index.html#/)
+
+使用结束记得关闭postgresql：
+
+```shell
+sudo systemctl stop postgresql.service
+```
+
+终端访问pg：
+
+```shell
+// 管理员
+sudo -u postgres psql
+
+// 本用户，直接连接到grade_sys数据库中
+psql grade_sys
+```

@@ -12,6 +12,7 @@ target/
 .settings
 .springBeans
 .sts4-cache
+logs/
 
 ### IntelliJ IDEA ###
 .idea
@@ -31,3 +32,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Zed ###
+.zed/
