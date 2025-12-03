@@ -3,6 +3,7 @@ package com.example.GradeSystemBackend.repository;
 import com.example.GradeSystemBackend.domain.Student;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -22,6 +23,9 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     // 查找分数大于等于指定值的学生
     List<Student> findByScoreGreaterThanEqual(Integer score);
 
-    // 根据学号查找 (并忽略大小写)
+    // 根据学号查找，需驼峰命令，映射到 student_number 列
     Student findByStudentNumberIgnoreCase(String studentNumber);
+
+    @Query("SELECT s FROM Student s WHERE s.score >= 60")
+    List<Student> findPassedStudents();
 }

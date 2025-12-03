@@ -37,7 +37,7 @@ public class SecurityConfig {
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**")
                     .permitAll()
                     // 放行登录接口
-                    .requestMatchers("/api/auth/**")
+                    .requestMatchers("/auth/**")
                     .permitAll()
                     // 其他所有请求都需要认证
                     .anyRequest()
