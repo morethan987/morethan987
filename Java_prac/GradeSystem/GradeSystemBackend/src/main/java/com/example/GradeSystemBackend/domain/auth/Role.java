@@ -1,4 +1,4 @@
-package com.example.GradeSystemBackend.domain;
+package com.example.GradeSystemBackend.domain.auth;
 
 import jakarta.persistence.*;
 import java.util.Set;

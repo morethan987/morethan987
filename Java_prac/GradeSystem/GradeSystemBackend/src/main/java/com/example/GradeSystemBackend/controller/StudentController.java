@@ -1,6 +1,6 @@
 package com.example.GradeSystemBackend.controller;
 
-import com.example.GradeSystemBackend.domain.Student;
+import com.example.GradeSystemBackend.domain.student.Student;
 import com.example.GradeSystemBackend.repository.StudentRepository;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;

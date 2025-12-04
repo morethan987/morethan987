@@ -1,5 +1,7 @@
-package com.example.GradeSystemBackend.domain;
+package com.example.GradeSystemBackend.domain.grade;
 
+import com.example.GradeSystemBackend.domain.course.Course;
+import com.example.GradeSystemBackend.domain.student.Student;
 import jakarta.persistence.*;
 import java.util.UUID;
 

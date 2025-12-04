@@ -1,8 +1,8 @@
-package com.example.GradeSystemBackend.service;
+package com.example.GradeSystemBackend.security;
 
-import com.example.GradeSystemBackend.domain.Permission;
-import com.example.GradeSystemBackend.domain.Role;
-import com.example.GradeSystemBackend.domain.User;
+import com.example.GradeSystemBackend.domain.auth.Permission;
+import com.example.GradeSystemBackend.domain.auth.Role;
+import com.example.GradeSystemBackend.domain.auth.User;
 import com.example.GradeSystemBackend.repository.UserRepository;
 import java.util.HashSet;
 import java.util.Set;

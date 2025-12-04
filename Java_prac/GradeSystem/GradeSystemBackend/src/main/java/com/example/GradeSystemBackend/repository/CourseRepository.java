@@ -1,6 +1,6 @@
 package com.example.GradeSystemBackend.repository;
 
-import com.example.GradeSystemBackend.domain.Course;
+import com.example.GradeSystemBackend.domain.course.Course;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

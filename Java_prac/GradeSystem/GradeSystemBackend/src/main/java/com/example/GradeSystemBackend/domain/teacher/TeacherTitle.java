@@ -1,4 +1,4 @@
-package com.example.GradeSystemBackend.enums;
+package com.example.GradeSystemBackend.domain.teacher;
 
 /**
  * 教师职称枚举
@@ -104,28 +104,42 @@ public enum TeacherTitle {
      * 检查是否为教授级别
      */
     public boolean isProfessorLevel() {
-        return this == PROFESSOR || this == RESEARCH_PROFESSOR ||
-               this == CLINICAL_PROFESSOR || this == EMERITUS_PROFESSOR ||
-               this == VISITING_PROFESSOR || this == ADJUNCT_PROFESSOR ||
-               this == DISTINGUISHED_PROFESSOR;
+        return (
+            this == PROFESSOR ||
+            this == RESEARCH_PROFESSOR ||
+            this == CLINICAL_PROFESSOR ||
+            this == EMERITUS_PROFESSOR ||
+            this == VISITING_PROFESSOR ||
+            this == ADJUNCT_PROFESSOR ||
+            this == DISTINGUISHED_PROFESSOR
+        );
     }
 
     /**
      * 检查是否为正式编制教师
      */
     public boolean isPermanent() {
-        return this == PROFESSOR || this == ASSOCIATE_PROFESSOR ||
-               this == ASSISTANT_PROFESSOR || this == LECTURER ||
-               this == TEACHING_ASSISTANT || this == RESEARCH_PROFESSOR ||
-               this == CLINICAL_PROFESSOR || this == DISTINGUISHED_PROFESSOR;
+        return (
+            this == PROFESSOR ||
+            this == ASSOCIATE_PROFESSOR ||
+            this == ASSISTANT_PROFESSOR ||
+            this == LECTURER ||
+            this == TEACHING_ASSISTANT ||
+            this == RESEARCH_PROFESSOR ||
+            this == CLINICAL_PROFESSOR ||
+            this == DISTINGUISHED_PROFESSOR
+        );
     }
 
     /**
      * 检查是否为临时或访问教师
      */
     public boolean isTemporary() {
-        return this == VISITING_PROFESSOR || this == ADJUNCT_PROFESSOR ||
-               this == EMERITUS_PROFESSOR;
+        return (
+            this == VISITING_PROFESSOR ||
+            this == ADJUNCT_PROFESSOR ||
+            this == EMERITUS_PROFESSOR
+        );
     }
 
     /**

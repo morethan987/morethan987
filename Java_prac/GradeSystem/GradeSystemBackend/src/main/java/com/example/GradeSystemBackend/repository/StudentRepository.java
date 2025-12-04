@@ -1,8 +1,8 @@
 package com.example.GradeSystemBackend.repository;
 
-import com.example.GradeSystemBackend.domain.Student;
-import com.example.GradeSystemBackend.domain.User;
-import com.example.GradeSystemBackend.enums.StudentStatus;
+import com.example.GradeSystemBackend.domain.auth.User;
+import com.example.GradeSystemBackend.domain.student.Student;
+import com.example.GradeSystemBackend.domain.student.StudentStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;

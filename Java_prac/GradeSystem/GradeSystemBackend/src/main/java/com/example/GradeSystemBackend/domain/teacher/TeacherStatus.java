@@ -1,4 +1,4 @@
-package com.example.GradeSystemBackend.enums;
+package com.example.GradeSystemBackend.domain.teacher;
 
 /**
  * 教师状态枚举
@@ -74,37 +74,62 @@ public enum TeacherStatus {
      * 检查是否为活跃状态（可以正常教学）
      */
     public boolean isActive() {
-        return this == ACTIVE || this == TEMPORARY || this == PART_TIME || this == VISITING;
+        return (
+            this == ACTIVE ||
+            this == TEMPORARY ||
+            this == PART_TIME ||
+            this == VISITING
+        );
     }
 
     /**
      * 检查是否已离职
      */
     public boolean isLeft() {
-        return this == RETIRED || this == RESIGNED || this == TERMINATED || this == TRANSFERRED;
+        return (
+            this == RETIRED ||
+            this == RESIGNED ||
+            this == TERMINATED ||
+            this == TRANSFERRED
+        );
     }
 
     /**
      * 检查是否为临时状态
      */
     public boolean isTemporary() {
-        return this == ON_LEAVE || this == UNPAID_LEAVE || this == SUSPENDED ||
-               this == TEMPORARY || this == VISITING;
+        return (
+            this == ON_LEAVE ||
+            this == UNPAID_LEAVE ||
+            this == SUSPENDED ||
+            this == TEMPORARY ||
+            this == VISITING
+        );
     }
 
     /**
      * 检查是否可以分配教学任务
      */
     public boolean canTeach() {
-        return this == ACTIVE || this == TEMPORARY || this == PART_TIME || this == VISITING;
+        return (
+            this == ACTIVE ||
+            this == TEMPORARY ||
+            this == PART_TIME ||
+            this == VISITING
+        );
     }
 
     /**
      * 检查是否有工资
      */
     public boolean hasSalary() {
-        return this == ACTIVE || this == ON_LEAVE || this == TEMPORARY ||
-               this == PART_TIME || this == VISITING;
+        return (
+            this == ACTIVE ||
+            this == ON_LEAVE ||
+            this == TEMPORARY ||
+            this == PART_TIME ||
+            this == VISITING
+        );
     }
 
     @Override

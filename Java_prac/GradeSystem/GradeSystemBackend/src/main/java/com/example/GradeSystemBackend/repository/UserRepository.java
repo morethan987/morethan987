@@ -1,6 +1,6 @@
 package com.example.GradeSystemBackend.repository;
 
-import com.example.GradeSystemBackend.domain.User;
+import com.example.GradeSystemBackend.domain.auth.User;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

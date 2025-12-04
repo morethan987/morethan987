@@ -1,6 +1,5 @@
-package com.example.GradeSystemBackend.config;
+package com.example.GradeSystemBackend.security;
 
-import com.example.GradeSystemBackend.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

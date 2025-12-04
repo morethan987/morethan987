@@ -1,4 +1,4 @@
-package com.example.GradeSystemBackend.enums;
+package com.example.GradeSystemBackend.domain.student;
 
 /**
  * 学生状态枚举
@@ -66,7 +66,12 @@ public enum StudentStatus {
      * 检查是否已离校
      */
     public boolean isLeft() {
-        return this == WITHDRAWN || this == GRADUATED || this == TRANSFERRED || this == EXPELLED;
+        return (
+            this == WITHDRAWN ||
+            this == GRADUATED ||
+            this == TRANSFERRED ||
+            this == EXPELLED
+        );
     }
 
     /**

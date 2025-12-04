@@ -1,7 +1,6 @@
-package com.example.GradeSystemBackend.domain;
+package com.example.GradeSystemBackend.domain.teacher;
 
-import com.example.GradeSystemBackend.enums.TeacherStatus;
-import com.example.GradeSystemBackend.enums.TeacherTitle;
+import com.example.GradeSystemBackend.domain.auth.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;

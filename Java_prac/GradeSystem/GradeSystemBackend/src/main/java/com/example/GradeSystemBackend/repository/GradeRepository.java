@@ -1,8 +1,8 @@
 package com.example.GradeSystemBackend.repository;
 
-import com.example.GradeSystemBackend.domain.Course;
-import com.example.GradeSystemBackend.domain.Grade;
-import com.example.GradeSystemBackend.domain.Student;
+import com.example.GradeSystemBackend.domain.course.Course;
+import com.example.GradeSystemBackend.domain.grade.Grade;
+import com.example.GradeSystemBackend.domain.student.Student;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

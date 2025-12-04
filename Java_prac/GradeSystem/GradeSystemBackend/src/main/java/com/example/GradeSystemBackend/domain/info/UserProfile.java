@@ -1,6 +1,6 @@
-package com.example.GradeSystemBackend.domain;
+package com.example.GradeSystemBackend.domain.info;
 
-import com.example.GradeSystemBackend.enums.Gender;
+import com.example.GradeSystemBackend.domain.auth.User;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;

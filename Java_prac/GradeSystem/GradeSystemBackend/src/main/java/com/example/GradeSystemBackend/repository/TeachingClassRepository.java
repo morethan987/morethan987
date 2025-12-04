@@ -1,8 +1,8 @@
 package com.example.GradeSystemBackend.repository;
 
-import com.example.GradeSystemBackend.domain.TeachingClass;
-import com.example.GradeSystemBackend.domain.Teacher;
-import com.example.GradeSystemBackend.domain.Course;
+import com.example.GradeSystemBackend.domain.course.Course;
+import com.example.GradeSystemBackend.domain.teacher.Teacher;
+import com.example.GradeSystemBackend.domain.teachingclass.TeachingClass;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,7 +12,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface TeachingClassRepository extends JpaRepository<TeachingClass, UUID> {
+public interface TeachingClassRepository
+    extends JpaRepository<TeachingClass, UUID> {
     // 根据班级名称查找
     List<TeachingClass> findByName(String name);
 
@@ -38,10 +39,16 @@ public interface TeachingClassRepository extends JpaRepository<TeachingClass, UU
     List<TeachingClass> findByTeacherAndCourse(Teacher teacher, Course course);
 
     // 根据教师和学期查找教学班
-    List<TeachingClass> findByTeacherAndSemester(Teacher teacher, Integer semester);
+    List<TeachingClass> findByTeacherAndSemester(
+        Teacher teacher,
+        Integer semester
+    );
 
     // 根据课程和学期查找教学班
-    List<TeachingClass> findByCourseAndSemester(Course course, Integer semester);
+    List<TeachingClass> findByCourseAndSemester(
+        Course course,
+        Integer semester
+    );
 
     // 根据教师、课程和学期查找教学班
     Optional<TeachingClass> findByTeacherAndCourseAndSemester(
@@ -70,14 +77,18 @@ public interface TeachingClassRepository extends JpaRepository<TeachingClass, UU
     long countBySemester(Integer semester);
 
     // 查找某教师在某学期的所有教学班
-    @Query("SELECT tc FROM TeachingClass tc WHERE tc.teacher.id = :teacherId AND tc.semester = :semester ORDER BY tc.name ASC")
+    @Query(
+        "SELECT tc FROM TeachingClass tc WHERE tc.teacher.id = :teacherId AND tc.semester = :semester ORDER BY tc.name ASC"
+    )
     List<TeachingClass> findTeacherClassesInSemester(
         @Param("teacherId") UUID teacherId,
         @Param("semester") Integer semester
     );
 
     // 查找某课程在某学期的所有教学班
-    @Query("SELECT tc FROM TeachingClass tc WHERE tc.course.id = :courseId AND tc.semester = :semester ORDER BY tc.name ASC")
+    @Query(
+        "SELECT tc FROM TeachingClass tc WHERE tc.course.id = :courseId AND tc.semester = :semester ORDER BY tc.name ASC"
+    )
     List<TeachingClass> findCourseClassesInSemester(
         @Param("courseId") UUID courseId,
         @Param("semester") Integer semester
@@ -99,6 +110,8 @@ public interface TeachingClassRepository extends JpaRepository<TeachingClass, UU
     );
 
     // 查找最新学期的教学班
-    @Query("SELECT tc FROM TeachingClass tc WHERE tc.semester = (SELECT MAX(tc2.semester) FROM TeachingClass tc2)")
+    @Query(
+        "SELECT tc FROM TeachingClass tc WHERE tc.semester = (SELECT MAX(tc2.semester) FROM TeachingClass tc2)"
+    )
     List<TeachingClass> findLatestSemesterClasses();
 }

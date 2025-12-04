@@ -1,18 +1,18 @@
-package com.example.GradeSystemBackend.domain;
+package com.example.GradeSystemBackend.domain.auth;
 
 import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "course")
-public class Course {
+@Table(name = "permission")
+public class Permission {
 
     @Id
     @GeneratedValue
     private UUID id;
 
-    @Column(nullable = false)
-    private String name;
+    @Column(unique = true, nullable = false)
+    private String name; // 例如: score:view, score:input, user:manage
 
     @Column(nullable = true)
     private String description;
