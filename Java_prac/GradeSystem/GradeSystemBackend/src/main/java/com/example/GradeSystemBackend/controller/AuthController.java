@@ -24,4 +24,20 @@ public class AuthController {
     public void logout() {
         // Session 自动失效
     }
+
+    /**
+     * 用户注册
+     */
+    @PostMapping("/register")
+    public void register() {
+        // 用户注册逻辑
+    }
+
+    /**
+     * 获取当前登录用户信息
+     */
+    @PostMapping("/me")
+    public void getCurrentUser() {
+        // 获取当前用户信息逻辑
+    }
 }

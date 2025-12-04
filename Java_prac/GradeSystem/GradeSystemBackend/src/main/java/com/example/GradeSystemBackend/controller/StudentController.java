@@ -43,20 +43,9 @@ public class StudentController {
      */
     @PreAuthorize("hasAuthority('student:view')")
     @GetMapping("/{id}")
-    public Student getStudentById(@PathVariable Long id) {
+    public Student getStudentById(@PathVariable String id) {
         printCurrentUser("getStudentById");
-        return studentRepository.findById(id).orElse(null);
-    }
-
-    /**
-     * ✅ 只有老师 / 教务可以查看“高分学生”
-     * permission: student:export
-     */
-    @PreAuthorize("hasAuthority('student:export')")
-    @GetMapping("/high-scores")
-    public List<Student> getHighScoringStudents() {
-        printCurrentUser("getHighScoringStudents");
-        return studentRepository.findByScoreGreaterThanEqual(80);
+        return studentRepository.findByStudentCode(id).orElse(null);
     }
 
     /**
