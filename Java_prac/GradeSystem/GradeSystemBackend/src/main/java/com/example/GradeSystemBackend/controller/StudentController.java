@@ -4,12 +4,10 @@ import com.example.GradeSystemBackend.domain.Student;
 import com.example.GradeSystemBackend.repository.StudentRepository;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/students")
@@ -18,28 +16,58 @@ public class StudentController {
     @Autowired
     private StudentRepository studentRepository;
 
-    // 1. 创建新学生
+    /**
+     * ✅ 教务才能创建学生
+     * permission: student:add
+     */
+    @PreAuthorize("hasAuthority('student:add')")
     @PostMapping
     public Student createStudent(@RequestBody Student student) {
-        // save() 方法由 JpaRepository 提供
+        printCurrentUser("createStudent");
         return studentRepository.save(student);
     }
 
-    // 2. 获取所有学生
+    /**
+     * ✅ 学生 / 教师 / 教务都可以查看学生列表
+     * permission: student:view
+     */
+    @PreAuthorize("hasAuthority('student:view')")
     @GetMapping
     public List<Student> getAllStudents() {
+        printCurrentUser("getAllStudents");
         return studentRepository.findAll();
     }
 
-    // 3. 根据ID获取学生
+    /**
+     * ✅ 查看某个学生
+     */
+    @PreAuthorize("hasAuthority('student:view')")
     @GetMapping("/{id}")
     public Student getStudentById(@PathVariable Long id) {
+        printCurrentUser("getStudentById");
         return studentRepository.findById(id).orElse(null);
     }
 
-    // 4. 根据自定义方法查询学生 (查找分数 >= 80 的)
+    /**
+     * ✅ 只有老师 / 教务可以查看“高分学生”
+     * permission: student:export
+     */
+    @PreAuthorize("hasAuthority('student:export')")
     @GetMapping("/high-scores")
     public List<Student> getHighScoringStudents() {
+        printCurrentUser("getHighScoringStudents");
         return studentRepository.findByScoreGreaterThanEqual(80);
+    }
+
+    /**
+     * 打印当前访问者（用于调试你是否真的登录 & 授权生效）
+     */
+    private void printCurrentUser(String method) {
+        Authentication auth =
+            SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("[" + method + "] 当前登录用户：" + auth.getName());
+        System.out.println(
+            "[" + method + "] 用户权限：" + auth.getAuthorities()
+        );
     }
 }

@@ -1,60 +1,107 @@
 package com.example.GradeSystemBackend.config;
 
+import com.example.GradeSystemBackend.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
-    private final JwtFilter jwtFilter;
+    private final CustomUserDetailsService userDetailsService;
 
-    public SecurityConfig(JwtFilter jwtFilter) {
-        this.jwtFilter = jwtFilter;
+    public SecurityConfig(CustomUserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
     }
 
+    /**
+     * 认证相关配置
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * 核心：告诉 Spring
+     * 用户从哪里查？ → CustomUserDetailsService
+     * 密码如何比？ → BCrypt
+     */
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(
+            userDetailsService
+        );
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
+    }
+
+    /**
+     * 给 Controller / Service 注入用
+     * 大多数时候你用不到
+     */
+    @Bean
+    public AuthenticationManager authenticationManager(
+        AuthenticationConfiguration authenticationConfiguration
+    ) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    /**
+     * 安全过滤链
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)
         throws Exception {
         http
-            // 1. 禁用 CSRF (因为我们用 JWT，不需要 Session，所以也不需要 CSRF 防护)
-            .csrf(csrf -> csrf.disable())
-            // 2. 设置 Session 管理为无状态 (Stateless)
+            // Session 为主认证方式
             .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             )
-            // 3. 配置拦截规则
+            // 使用 DaoAuthenticationProvider
+            .authenticationProvider(authenticationProvider())
+            // 表单登录（你前端 POST /auth/login）
+            .formLogin(form ->
+                form
+                    .loginProcessingUrl("/auth/login")
+                    .usernameParameter("username")
+                    .passwordParameter("password")
+                    .permitAll()
+            )
+            // 退出登录
+            .logout(logout ->
+                logout
+                    .logoutUrl("/auth/logout")
+                    .invalidateHttpSession(true)
+                    .deleteCookies("JSESSIONID")
+                    .permitAll()
+            )
+            // CSRF
+            .csrf(csrf -> csrf.disable())
+            // URL 层只做"是否登录"校验
             .authorizeHttpRequests(auth ->
                 auth
-                    // 放行 Swagger 相关路径 (否则你看不到 API 文档)
-                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**")
+                    .requestMatchers(
+                        "/auth/**",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**"
+                    )
                     .permitAll()
-                    // 放行登录接口
-                    .requestMatchers("/auth/**")
-                    .permitAll()
-                    // 其他所有请求都需要认证
                     .anyRequest()
                     .authenticated()
-            )
-            // 4. 把我们的 JWT 过滤器加到 Spring Security 过滤器链中
-            .addFilterBefore(
-                jwtFilter,
-                UsernamePasswordAuthenticationFilter.class
             );
 
         return http.build();
-    }
-
-    // 密码加密器
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 }

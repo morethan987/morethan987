@@ -1,9 +1,5 @@
 package com.example.GradeSystemBackend;
 
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import org.slf4j.Logger;
@@ -14,14 +10,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.Environment;
 
 @SpringBootApplication
-@OpenAPIDefinition(security = { @SecurityRequirement(name = "bearer-key") })
-@SecurityScheme(
-    name = "bearer-key",
-    type = SecuritySchemeType.HTTP,
-    scheme = "bearer",
-    bearerFormat = "JWT",
-    description = "请在下面填入登录接口返回的 Token"
-)
 public class GradeSystemBackendApplication {
 
     private static final Logger log = LoggerFactory.getLogger(
