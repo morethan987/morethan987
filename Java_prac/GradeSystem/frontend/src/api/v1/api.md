@@ -9,36 +9,27 @@
 | API 前缀   | `/api/v1`             |
 | 数据格式     | JSON                  |
 | 编码       | UTF-8                 |
-| 认证方式     | JWT                   |
+| 认证方式     | Session               |
 | 鉴权模型     | RBAC（基于角色）            |
 | 时间格式     | `YYYY-MM-DD HH:mm:ss` |
-| Token 传输 | HTTP Header           |
+| 会话传输   | Cookie                |
 
 ---
 
-## 二、JWT 认证机制
+## 二、Session 认证机制
 
-### 请求头规范
+### 认证方式说明
+
+- 使用 Session-Cookie 认证机制
+- 登录成功后，服务器自动设置 Session Cookie
+- 后续请求自动携带 Cookie 进行认证
+- 无需前端手动管理 Token
+
+### Cookie 设置规范
 
 ```http
-Authorization: Bearer <AccessToken>
-Content-Type: application/json
+Set-Cookie: sessionId=abc123; HttpOnly; Secure; SameSite=Strict; Path=/
 ```
-
----
-
-### JWT Payload 规范
-
-```json
-{
-  "uid": "stu_001",
-  "role": "student",
-  "name": "张三",
-  "exp": 1710000000
-}
-```
-
----
 
 ### 权限模型说明
 
@@ -109,9 +100,6 @@ Content-Type: application/json
   "code": 0,
   "msg": "ok",
   "data": {
-    "accessToken": "xxxx.jwt",
-    "refreshToken": "xxxx.jwt",
-    "expiresIn": 7200,
     "user": {
       "id": "stu_001",
       "role": "student",
@@ -122,37 +110,36 @@ Content-Type: application/json
 }
 ```
 
+#### HTTP 响应头
+
+```http
+Set-Cookie: sessionId=abc123; HttpOnly; Secure; SameSite=Strict; Path=/
+```
+
 | 字段           | 含义                  |
 | ------------ | ------------------- |
-| accessToken  | 短期有效JWT             |
-| refreshToken | 刷新用JWT              |
-| expiresIn    | accessToken 过期时间（秒） |
 | user         | 当前用户信息              |
+| sessionId    | 服务器设置的 Session ID      |
 
 ---
 
-### 2. 刷新 Token
+### 2. 用户登出
 
-**POST** `/api/v1/auth/refresh`
-
-#### 请求
-
-```json
-{
-  "refreshToken": "xxxx.jwt"
-}
-```
+**POST** `/api/v1/auth/logout`
 
 #### 响应
 
 ```json
 {
   "code": 0,
-  "data": {
-    "accessToken": "new.jwt",
-    "expiresIn": 7200
-  }
+  "msg": "ok"
 }
+```
+
+#### HTTP 响应头
+
+```http
+Set-Cookie: sessionId=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/
 ```
 
 ---
@@ -376,14 +363,7 @@ import axios from "axios"
 export const client = axios.create({
   baseURL: "/api/v1",
   timeout: 5000,
-})
-
-client.interceptors.request.use(config => {
-  const token = localStorage.getItem("accessToken")
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
+  withCredentials: true, // 携带 Cookie
 })
 ```
 
@@ -427,6 +407,12 @@ await client.post("/auth/login", {
 })
 ```
 
+## 登出示例
+
+```ts
+await client.post("/auth/logout")
+```
+
 ---
 
 ## 错误统一处理建议
@@ -436,7 +422,8 @@ client.interceptors.response.use(
   res => res,
   err => {
     if (err.response?.status === 401) {
-      // 尝试刷新 or 跳转登录
+      // Session 已失效，跳转登录页
+      window.location.href = "/login"
     }
     return Promise.reject(err)
   }
