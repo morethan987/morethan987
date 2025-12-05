@@ -6,6 +6,7 @@ import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,7 +38,7 @@ public class RoleController {
     /**
      * 删除角色
      */
-    @PreAuthorize("hasAuthority('role:delete', 'admin:all')")
+    @PreAuthorize("hasAnyAuthority('role:delete', 'admin:all')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteRole(@PathVariable UUID id) {
         printCurrentUser("deleteRole");
@@ -59,7 +60,7 @@ public class RoleController {
     /**
      * 为角色添加权限
      */
-    @PreAuthorize("hasAuthority('role:update', 'admin:all')")
+    @PreAuthorize("hasAnyAuthority('role:update', 'admin:all')")
     @PostMapping("/{roleId}/permissions")
     public ResponseEntity<?> addPermissionToRole(
         @PathVariable UUID roleId,
@@ -82,7 +83,7 @@ public class RoleController {
     /**
      * 从角色移除权限
      */
-    @PreAuthorize("hasAuthority('role:update', 'admin:all')")
+    @PreAuthorize("hasAnyAuthority('role:update', 'admin:all')")
     @DeleteMapping("/{roleId}/permissions/{permissionName}")
     public ResponseEntity<?> removePermissionFromRole(
         @PathVariable UUID roleId,
@@ -104,7 +105,7 @@ public class RoleController {
     /**
      * 批量设置角色权限
      */
-    @PreAuthorize("hasAuthority('role:update', 'admin:all')")
+    @PreAuthorize("hasAnyAuthority('role:update', 'admin:all')")
     @PutMapping("/{roleId}/permissions")
     public ResponseEntity<?> setRolePermissions(
         @PathVariable UUID roleId,
@@ -126,7 +127,7 @@ public class RoleController {
     /**
      * 获取所有角色列表
      */
-    @PreAuthorize("hasAuthority('role:view', 'admin:all')")
+    @PreAuthorize("hasAnyAuthority('role:view', 'admin:all')")
     @GetMapping
     public ResponseEntity<?> getAllRoles() {
         printCurrentUser("getAllRoles");
@@ -138,7 +139,7 @@ public class RoleController {
     /**
      * 根据名称搜索角色
      */
-    @PreAuthorize("hasAuthority('role:view', 'admin:all')")
+    @PreAuthorize("hasAnyAuthority('role:view', 'admin:all')")
     @GetMapping("/search")
     public ResponseEntity<?> searchRolesByName(@RequestParam String name) {
         printCurrentUser("searchRolesByName");
@@ -154,7 +155,7 @@ public class RoleController {
     /**
      * 查看角色的所有权限
      */
-    @PreAuthorize("hasAuthority('role:view', 'admin:all')")
+    @PreAuthorize("hasAnyAuthority('role:view', 'admin:all')")
     @GetMapping("/{roleId}/permissions")
     public ResponseEntity<?> getRolePermissions(@PathVariable UUID roleId) {
         printCurrentUser("getRolePermissions");
@@ -172,7 +173,7 @@ public class RoleController {
     /**
      * 根据ID查看角色详情
      */
-    @PreAuthorize("hasAuthority('role:view', 'admin:all')")
+    @PreAuthorize("hasAnyAuthority('role:view', 'admin:all')")
     @GetMapping("/{id}")
     public ResponseEntity<?> getRoleById(@PathVariable UUID id) {
         printCurrentUser("getRoleById");
@@ -190,7 +191,7 @@ public class RoleController {
     /**
      * 获取角色统计信息
      */
-    @PreAuthorize("hasAuthority('role:view', 'admin:all')")
+    @PreAuthorize("hasAnyAuthority('role:view', 'admin:all')")
     @GetMapping("/stats")
     public ResponseEntity<?> getRoleStats() {
         printCurrentUser("getRoleStats");
@@ -202,7 +203,7 @@ public class RoleController {
     /**
      * 检查角色是否存在
      */
-    @PreAuthorize("hasAuthority('role:view', 'admin:all')")
+    @PreAuthorize("hasAnyAuthority('role:view', 'admin:all')")
     @GetMapping("/exists/{name}")
     public ResponseEntity<?> checkRoleExists(@PathVariable String name) {
         printCurrentUser("checkRoleExists");
@@ -224,6 +225,26 @@ public class RoleController {
         System.out.println("[" + method + "] 当前登录用户：" + auth.getName());
         System.out.println(
             "[" + method + "] 用户权限：" + auth.getAuthorities()
+        );
+    }
+
+    /**
+     * 专门处理权限不足异常
+     * 返回 403 Forbidden 而不是 500
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<?> handleAccessDeniedException(
+        AccessDeniedException e
+    ) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+            Map.of(
+                "error",
+                "权限不足",
+                "message",
+                "您没有操作该资源的权限: " + e.getMessage(),
+                "timestamp",
+                System.currentTimeMillis()
+            )
         );
     }
 
