@@ -33,7 +33,7 @@ public class Student {
     @Column(nullable = false)
     private StudentStatus status = StudentStatus.ENROLLED;
 
-    @Column(nullable = true, precision = 3, scale = 2)
+    @Column(nullable = true, precision = 3)
     private Double gpa;
 
     @Column(nullable = true)

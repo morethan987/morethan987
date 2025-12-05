@@ -15,7 +15,7 @@ public class Role {
     @Column(unique = true, nullable = false)
     private String name; // 例如: ADMIN, TEACHER, STUDENT
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "role_permission",
         joinColumns = @JoinColumn(name = "role_id"),
