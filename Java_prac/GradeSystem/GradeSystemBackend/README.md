@@ -1,4 +1,4 @@
-# 学生成绩管理西戎后端
+# 学生成绩管理后端
 
 启动测试：
 
@@ -73,6 +73,8 @@ Frontend Query -> Security -> Controller -> Service -> Repository ->Domain -> Pa
 ```text
 Frontend Query -> Security -> DTO -> Controller -> Service -> Repository ->Domain -> Packages -> Entity -> DataBase
 ```
+
+当然，实体类有时候为了方便也会参与到这一步来
 
 最终，调用依赖：
 
