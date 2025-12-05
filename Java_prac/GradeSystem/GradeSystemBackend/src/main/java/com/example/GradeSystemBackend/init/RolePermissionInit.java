@@ -54,6 +54,7 @@ public class RolePermissionInit implements ApplicationRunner {
 
     /**
      * 从Controller注解中动态发现并初始化权限
+     * 集成了原 PermissionScanner 的数据库写入逻辑
      */
     private void initPermissionsFromControllers() {
         logger.info("开始扫描Controller权限...");
@@ -65,21 +66,32 @@ public class RolePermissionInit implements ApplicationRunner {
         logger.info("权限扫描结果: {}", groups);
 
         // 首先确保管理员全局权限存在
-        createPermissionIfNotExists(
-            RoleConstants.ADMIN_ALL_PERMISSION,
-            "管理员全部权限，拥有系统所有操作权限"
-        );
+        savePermissionIfMissing(RoleConstants.ADMIN_ALL_PERMISSION);
 
-        // 创建所有发现的权限
+        // 创建所有发现的权限 - 使用原PermissionScanner的直接写入逻辑
         Set<String> allPermissions = groups.getAllPermissions();
         for (String permission : allPermissions) {
-            createPermissionIfNotExists(
-                permission,
-                generatePermissionDescription(permission)
-            );
+            savePermissionIfMissing(permission);
         }
 
         logger.info("权限初始化完成，共创建 {} 个权限", allPermissions.size());
+    }
+
+    /**
+     * 保存权限（如果不存在）- 集成了原PermissionScanner的核心逻辑并增加了描述信息
+     */
+    private void savePermissionIfMissing(String permName) {
+        if (!permissionRepository.existsByName(permName)) {
+            Permission p = new Permission();
+            p.setName(permName);
+            p.setDescription(generatePermissionDescription(permName));
+            permissionRepository.save(p);
+            logger.info(
+                "[RolePermissionInit] Initialized permission: {} - {}",
+                permName,
+                p.getDescription()
+            );
+        }
     }
 
     /**
@@ -263,28 +275,6 @@ public class RolePermissionInit implements ApplicationRunner {
     }
 
     /**
-     * 创建权限（如果不存在）
-     */
-    private void createPermissionIfNotExists(
-        String permissionName,
-        String description
-    ) {
-        Optional<Permission> permissionOpt = permissionRepository.findByName(
-            permissionName
-        );
-        if (permissionOpt.isPresent()) {
-            return; // 已存在，不重复创建
-        }
-
-        Permission permission = new Permission();
-        permission.setName(permissionName);
-        permission.setDescription(description);
-        permissionRepository.save(permission);
-
-        logger.debug("创建权限: {} - {}", permissionName, description);
-    }
-
-    /**
      * 获取权限对象
      */
     private Permission getPermission(String permissionName) {
@@ -322,6 +312,8 @@ public class RolePermissionInit implements ApplicationRunner {
                 return "管理员";
             case "user":
                 return "用户";
+            case "user_profile":
+                return "用户画像";
             case "student":
                 return "学生";
             case "teacher":

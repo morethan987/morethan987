@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -53,32 +54,31 @@ public class PermissionDiscoveryService {
                     RestController.class
                 );
 
-            // 处理@Controller注解的类
-            for (String beanName : controllerNames) {
-                Object bean = applicationContext.getBean(beanName);
-                Set<String> beanPermissions = extractPermissionsFromClass(
-                    bean.getClass()
-                );
-                permissions.addAll(beanPermissions);
-                logger.debug(
-                    "从Controller {} 中提取到 {} 个权限",
-                    bean.getClass().getSimpleName(),
-                    beanPermissions.size()
-                );
-            }
+            // 合并数组
+            Set<String> allBeanNames = new HashSet<>();
+            Set.of(controllerNames).forEach(allBeanNames::add);
+            Set.of(restControllerNames).forEach(allBeanNames::add);
 
-            // 处理@RestController注解的类
-            for (String beanName : restControllerNames) {
+            for (String beanName : allBeanNames) {
                 Object bean = applicationContext.getBean(beanName);
+
+                // 使用 AopUtils.getTargetClass 获取原始类
+                // 这样才能读取到写在源码上的 @PreAuthorize 注解
+                Class<?> targetClass = AopUtils.getTargetClass(bean);
+
                 Set<String> beanPermissions = extractPermissionsFromClass(
-                    bean.getClass()
+                    targetClass
                 );
                 permissions.addAll(beanPermissions);
-                logger.debug(
-                    "从RestController {} 中提取到 {} 个权限",
-                    bean.getClass().getSimpleName(),
-                    beanPermissions.size()
-                );
+
+                if (!beanPermissions.isEmpty()) {
+                    logger.debug(
+                        "从 Controller {} (原始类: {}) 中提取到 {} 个权限",
+                        beanName,
+                        targetClass.getSimpleName(),
+                        beanPermissions.size()
+                    );
+                }
             }
 
             logger.info("权限扫描完成，共发现 {} 个权限", permissions.size());
