@@ -1,6 +1,7 @@
 package com.example.GradeSystemBackend.controller;
 
 import com.example.GradeSystemBackend.dto.AuthResponse;
+import com.example.GradeSystemBackend.dto.LoginRequest;
 import com.example.GradeSystemBackend.dto.RegisterRequest;
 import com.example.GradeSystemBackend.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,36 +10,67 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "*")
 public class AuthController {
 
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    // 注入 SecurityContextRepository
+    @Autowired
+    private SecurityContextRepository securityContextRepository;
+
     /**
-     * 登录由 Spring Security 处理
-     * 本接口只作为登录入口占位
-     * 实际登录处理由 SecurityConfig 中的 formLogin 配置处理
-     *
-     * 前端应该POST到 /auth/login，参数：username, password
+     * 登录接口
+     * 接收 JSON 格式: {"username": "...", "password": "..."}
      */
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login() {
-        // 如果到达这里，说明登录成功（否则会被Security拦截）
-        AuthResponse response = authService.getCurrentUser();
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
+    public ResponseEntity<AuthResponse> login(
+        @Valid @RequestBody LoginRequest req,
+        HttpServletRequest request,
+        HttpServletResponse response
+    ) {
+        try {
+            // 1. 创建认证令牌
+            UsernamePasswordAuthenticationToken token =
+                new UsernamePasswordAuthenticationToken(
+                    req.getUsername(),
+                    req.getPassword()
+                );
+
+            // 2. 执行认证 (会调用 UserDetailsService)
+            Authentication auth = authenticationManager.authenticate(token);
+
+            // 3. 创建新的 SecurityContext
+            SecurityContext context =
+                SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(auth);
+            SecurityContextHolder.setContext(context);
+
+            // 4. 显式保存 Context 到 Session
+            // 这会触发创建 JSESSIONID Cookie 并写回给前端
+            securityContextRepository.saveContext(context, request, response);
+
+            return ResponseEntity.ok(
+                AuthResponse.success("登录成功").setData(auth.getName())
+            );
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                response
+                AuthResponse.error("登录失败: 用户名或密码错误")
             );
         }
     }
@@ -51,24 +83,13 @@ public class AuthController {
         HttpServletRequest request,
         HttpServletResponse response
     ) {
-        try {
-            Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-            if (authentication != null) {
-                new SecurityContextLogoutHandler().logout(
-                    request,
-                    response,
-                    authentication
-                );
-            }
-
-            return ResponseEntity.ok(AuthResponse.success("退出登录成功"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                AuthResponse.error("退出登录失败: " + e.getMessage())
-            );
+        Authentication auth =
+            SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            // Spring Security 提供的注销处理器，会自动清理 Session 和 Cookie
+            new SecurityContextLogoutHandler().logout(request, response, auth);
         }
+        return ResponseEntity.ok(AuthResponse.success("退出登录成功"));
     }
 
     /**
