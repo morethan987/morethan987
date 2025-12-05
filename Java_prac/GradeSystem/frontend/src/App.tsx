@@ -2,6 +2,7 @@ import { LoginPage, SignupPage, NotFoundPage, Dashboard } from "./pages";
 import { Route, Switch, Redirect } from "wouter";
 import { ROUTES } from "./routes";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider, ProtectedRoute } from "@/contexts/auth-context";
 import "styles/globals.css";
 
 export function App() {
@@ -12,23 +13,29 @@ export function App() {
       enableSystem
       disableTransitionOnChange
     >
-      <Switch>
-        <Route path="/">
-          <Redirect to={ROUTES.LOGIN} />
-        </Route>
+      <AuthProvider>
+        <Switch>
+          <Route path="/">
+            <Redirect to={ROUTES.LOGIN} />
+          </Route>
 
-        <Route path={ROUTES.LOGIN} component={LoginPage} />
+          <Route path={ROUTES.LOGIN} component={LoginPage} />
 
-        <Route path={ROUTES.SIGNUP} component={SignupPage} />
+          <Route path={ROUTES.SIGNUP} component={SignupPage} />
 
-        <Route path={ROUTES.FORGOT_PASSWORD}>
-          <div>Forgot Password Page - To be implemented</div>
-        </Route>
+          <Route path={ROUTES.FORGOT_PASSWORD}>
+            <div>Forgot Password Page - To be implemented</div>
+          </Route>
 
-        <Route path={ROUTES.DASHBOARD} component={Dashboard} />
+          <Route path={ROUTES.DASHBOARD}>
+            <ProtectedRoute fallback={<Redirect to={ROUTES.LOGIN} />}>
+              <Dashboard />
+            </ProtectedRoute>
+          </Route>
 
-        <Route component={NotFoundPage}></Route>
-      </Switch>
+          <Route component={NotFoundPage}></Route>
+        </Switch>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
