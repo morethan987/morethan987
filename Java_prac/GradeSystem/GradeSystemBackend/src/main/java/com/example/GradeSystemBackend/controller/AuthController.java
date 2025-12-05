@@ -65,9 +65,7 @@ public class AuthController {
             // 这会触发创建 JSESSIONID Cookie 并写回给前端
             securityContextRepository.saveContext(context, request, response);
 
-            return ResponseEntity.ok(
-                AuthResponse.success("登录成功").setData(auth.getName())
-            );
+            return ResponseEntity.ok(authService.getCurrentUser());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 AuthResponse.error("登录失败: 用户名或密码错误")

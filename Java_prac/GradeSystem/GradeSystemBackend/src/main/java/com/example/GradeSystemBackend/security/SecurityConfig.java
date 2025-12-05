@@ -59,11 +59,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(
                 auth ->
                     auth
-                        .requestMatchers(
-                            "/auth/login",
-                            "/auth/register",
-                            "/error"
-                        )
+                        .requestMatchers("/auth/**", "/error")
                         .permitAll() // 开放登录注册接口
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**")
                         .permitAll()
