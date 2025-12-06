@@ -82,6 +82,7 @@ public class AuthResponse {
         private Set<String> roles;
         private String realName;
         private String email;
+        private String avatarUrl;
 
         // 构造函数
         public UserInfo() {}
@@ -145,6 +146,14 @@ public class AuthResponse {
 
         public void setEmail(String email) {
             this.email = email;
+        }
+
+        public String getAvatarUrl() {
+            return avatarUrl;
+        }
+
+        public void setAvatarUrl(String avatarUrl) {
+            this.avatarUrl = avatarUrl;
         }
     }
 }

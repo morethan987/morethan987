@@ -3,7 +3,10 @@ package com.example.GradeSystemBackend.init;
 import com.example.GradeSystemBackend.domain.auth.Role;
 import com.example.GradeSystemBackend.domain.auth.RoleConstants;
 import com.example.GradeSystemBackend.domain.auth.User;
+import com.example.GradeSystemBackend.domain.info.Gender;
+import com.example.GradeSystemBackend.domain.info.UserProfile;
 import com.example.GradeSystemBackend.repository.RoleRepository;
+import com.example.GradeSystemBackend.repository.UserProfileRepository;
 import com.example.GradeSystemBackend.repository.UserRepository;
 import java.util.Optional;
 import java.util.Set;
@@ -22,6 +25,9 @@ public class UserInit implements ApplicationRunner {
     private UserRepository userRepository;
 
     @Autowired
+    private UserProfileRepository userProfileRepository;
+
+    @Autowired
     private RoleRepository roleRepository;
 
     @Override
@@ -30,6 +36,7 @@ public class UserInit implements ApplicationRunner {
     }
 
     private void createAdminUser() {
+        // 添加用户
         Optional<User> adminUserOpt = userRepository.findByUsername("admin");
         if (adminUserOpt.isPresent()) {
             return; // 已存在，不重复创建
@@ -46,5 +53,19 @@ public class UserInit implements ApplicationRunner {
             adminUser.setRoles(Set.of(adminRoleOpt.get()));
         }
         userRepository.save(adminUser);
+
+        // 创建关联的用户资料
+        UserProfile adminProfile = new UserProfile(
+            adminUser,
+            "系统管理员",
+            Gender.MALE
+        );
+        adminProfile.setEmail("2404385626@qq.com");
+        adminProfile.setPhone("1234567890");
+        adminProfile.setAvatarUrl(
+            "https://raw.githubusercontent.com/morethan987/hugo_main/refs/heads/main/assets/img/figure_transparent.png"
+        );
+
+        userProfileRepository.save(adminProfile);
     }
 }

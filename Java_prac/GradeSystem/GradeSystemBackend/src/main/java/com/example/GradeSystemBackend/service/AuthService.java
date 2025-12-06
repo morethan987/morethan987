@@ -201,6 +201,7 @@ public class AuthService {
                 UserProfile profile = profileOpt.get();
                 userInfo.setRealName(profile.getRealName());
                 userInfo.setEmail(profile.getEmail());
+                userInfo.setAvatarUrl(profile.getAvatarUrl());
             }
 
             return AuthResponse.success("获取用户信息成功", userInfo);
