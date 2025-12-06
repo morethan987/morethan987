@@ -7,6 +7,8 @@ import com.example.GradeSystemBackend.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+
+    private static final Logger logger = LoggerFactory.getLogger(
+        AuthService.class
+    );
 
     @Autowired
     private AuthService authService;
@@ -65,8 +71,15 @@ public class AuthController {
             // 这会触发创建 JSESSIONID Cookie 并写回给前端
             securityContextRepository.saveContext(context, request, response);
 
+            logger.debug("用户 {} 登录成功", req.getUsername());
+
             return ResponseEntity.ok(authService.getCurrentUser());
         } catch (Exception e) {
+            logger.warn(
+                "用户 {} 登录失败: {}",
+                req.getUsername(),
+                e.getMessage()
+            );
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 AuthResponse.error("登录失败: 用户名或密码错误")
             );
@@ -87,6 +100,7 @@ public class AuthController {
             // Spring Security 提供的注销处理器，会自动清理 Session 和 Cookie
             new SecurityContextLogoutHandler().logout(request, response, auth);
         }
+        logger.debug("用户退出登录成功");
         return ResponseEntity.ok(AuthResponse.success("退出登录成功"));
     }
 
