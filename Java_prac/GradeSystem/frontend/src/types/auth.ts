@@ -5,6 +5,7 @@ export interface UserInfo {
   roles: string[];
   realName?: string;
   email?: string;
+  avatarUrl?: string;
 }
 
 export interface AuthResponse {

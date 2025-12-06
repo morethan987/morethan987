@@ -31,6 +31,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { ROUTES } from "@/routes";
+import { useAuthContext } from "@/contexts/auth-context";
 import { PAGE_IDS } from "@/types/page-ids";
 
 const data = {
@@ -170,6 +171,7 @@ export function AppSidebar({
   onPageChange?: (page: string) => void;
   currentPage?: string;
 }) {
+  const { user, logout } = useAuthContext();
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -202,7 +204,7 @@ export function AppSidebar({
         />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} logout={logout} />
       </SidebarFooter>
     </Sidebar>
   );
