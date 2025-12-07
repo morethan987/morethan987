@@ -6,6 +6,7 @@ import com.example.GradeSystemBackend.domain.auth.User;
 import com.example.GradeSystemBackend.domain.info.UserProfile;
 import com.example.GradeSystemBackend.dto.AuthResponse;
 import com.example.GradeSystemBackend.dto.RegisterRequest;
+import com.example.GradeSystemBackend.dto.UserBasicInfo;
 import com.example.GradeSystemBackend.repository.RoleRepository;
 import com.example.GradeSystemBackend.repository.UserProfileRepository;
 import com.example.GradeSystemBackend.repository.UserRepository;
@@ -142,7 +143,7 @@ public class AuthService {
             }
 
             // 10. 构建响应
-            AuthResponse.UserInfo userInfo = new AuthResponse.UserInfo();
+            UserBasicInfo userInfo = new UserBasicInfo();
             userInfo.setId(user.getId());
             userInfo.setUsername(user.getUsername());
             userInfo.setEnabled(user.isEnabled());
@@ -191,7 +192,7 @@ public class AuthService {
             );
 
             // 构建用户信息
-            AuthResponse.UserInfo userInfo = new AuthResponse.UserInfo();
+            UserBasicInfo userInfo = new UserBasicInfo();
             userInfo.setId(user.getId());
             userInfo.setUsername(user.getUsername());
             userInfo.setEnabled(user.isEnabled());
