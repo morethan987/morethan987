@@ -6,10 +6,6 @@ import { useLocation } from "wouter";
 export function NotFoundPage() {
   const [, setLocation] = useLocation();
 
-  function handleGoHome() {
-    setLocation(ROUTES.HOME);
-  }
-
   return (
     <div className="h-screen mx-auto grid place-items-center text-center px-8">
       <div>
@@ -23,7 +19,10 @@ export function NotFoundPage() {
         <p className="mt-8 mb-14 text-[18px] font-normal text-muted-foreground mx-auto md:max-w-sm antialiased">
           您貌似意外进入了一个网页的荒原
         </p>
-        <Button onClick={handleGoHome} className="w-full px-4 md:w-32">
+        <Button
+          onClick={() => setLocation(ROUTES.HOME)}
+          className="w-full px-4 md:w-32"
+        >
           返回首页
         </Button>
       </div>

@@ -126,7 +126,7 @@ const data = {
   navSecondary: [
     {
       id: PAGE_IDS.SETTINGS,
-      title: "设置",
+      title: "系统设置",
       url: "#",
       icon: IconSettings,
     },
