@@ -1,4 +1,5 @@
 import { LoginPage, SignupPage, NotFoundPage, Dashboard } from "./pages";
+import { UserProfilePage } from "./pages/user-profile";
 import { Route, Switch, Redirect } from "wouter";
 import { ROUTES } from "./routes";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -30,6 +31,12 @@ export function App() {
           <Route path={ROUTES.DASHBOARD}>
             <ProtectedRoute fallback={<Redirect to={ROUTES.LOGIN} />}>
               <Dashboard />
+            </ProtectedRoute>
+          </Route>
+
+          <Route path={ROUTES.USER_PROFILE}>
+            <ProtectedRoute fallback={<Redirect to={ROUTES.LOGIN} />}>
+              <UserProfilePage />
             </ProtectedRoute>
           </Route>
 

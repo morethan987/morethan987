@@ -22,16 +22,23 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { type UserInfo } from "@/types/auth";
+import { type UserBasicInfo } from "@/types/auth";
+import { useLocation } from "wouter";
+import { ROUTES } from "@/routes";
 
 export function NavUser({
   user,
   logout,
 }: {
-  user: UserInfo | null;
+  user: UserBasicInfo | null;
   logout: () => void;
 }) {
   const { isMobile } = useSidebar();
+  const [, setLocation] = useLocation();
+
+  const handleUserProfile = () => {
+    setLocation(ROUTES.USER_PROFILE);
+  };
 
   return (
     <SidebarMenu>
@@ -87,17 +94,9 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleUserProfile}>
                 <IconUserCircle />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconNotification />
-                Notifications
+                用户设置
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
