@@ -1,10 +1,9 @@
 package com.example.GradeSystemBackend.controller;
 
-import com.example.GradeSystemBackend.domain.info.UserProfile;
 import com.example.GradeSystemBackend.dto.ChangePasswordRequest;
 import com.example.GradeSystemBackend.dto.ChangeUsernameRequest;
-import com.example.GradeSystemBackend.dto.UpdateUserProfileRequest;
 import com.example.GradeSystemBackend.dto.UserDTO;
+import com.example.GradeSystemBackend.dto.UserProfileDTO;
 import com.example.GradeSystemBackend.service.UserService;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/user")
 @CrossOrigin(origins = "*")
 public class UserController {
 
@@ -40,7 +39,7 @@ public class UserController {
     @PreAuthorize("hasAnyAuthority('user_profile:view', 'admin:all')")
     public ResponseEntity<?> getUserProfile(@PathVariable UUID id) {
         try {
-            UserProfile profile = userService.getUserProfile(id);
+            UserProfileDTO profile = userService.getUserProfile(id);
             return ResponseEntity.ok(profile);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
@@ -58,7 +57,7 @@ public class UserController {
         @PathVariable String username
     ) {
         try {
-            UserProfile profile = userService.getUserProfileByUsername(
+            UserProfileDTO profile = userService.getUserProfileByUsername(
                 username
             );
             return ResponseEntity.ok(profile);
@@ -76,13 +75,15 @@ public class UserController {
     @PreAuthorize("hasAnyAuthority('user_profile:update', 'admin:all')")
     public ResponseEntity<?> updateUserProfile(
         @PathVariable UUID id,
-        @RequestBody UpdateUserProfileRequest request
+        @RequestBody UserProfileDTO request
     ) {
         try {
-            UserDTO updatedUser = userService.updateUserProfile(id, request);
-            return ResponseEntity.ok(updatedUser);
+            userService.updateUserProfile(id, request);
+            return ResponseEntity.ok(
+                createSuccessResponse("User profile updated successfully")
+            );
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 createErrorResponse(e.getMessage())
             );
         }

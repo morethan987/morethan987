@@ -1,7 +1,9 @@
 package com.example.GradeSystemBackend.dto;
 
+import com.example.GradeSystemBackend.domain.auth.User;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class UserDTO {
 
@@ -17,6 +19,17 @@ public class UserDTO {
         this.id = id;
         this.username = username;
         this.enabled = enabled;
+    }
+
+    public UserDTO(User user) {
+        this.id = user.getId();
+        this.username = user.getUsername();
+        this.enabled = user.isEnabled();
+        this.roles = user
+            .getRoles()
+            .stream()
+            .map(role -> role.getName())
+            .collect(Collectors.toSet());
     }
 
     // Getters and Setters

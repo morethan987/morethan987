@@ -1,14 +1,13 @@
 package com.example.GradeSystemBackend.service;
 
-import com.example.GradeSystemBackend.domain.auth.Role;
 import com.example.GradeSystemBackend.domain.auth.User;
 import com.example.GradeSystemBackend.domain.info.UserProfile;
 import com.example.GradeSystemBackend.dto.*;
 import com.example.GradeSystemBackend.repository.UserProfileRepository;
 import com.example.GradeSystemBackend.repository.UserRepository;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,73 +31,54 @@ public class UserService {
     /**
      * 根据ID获取用户资料信息
      */
-    public UserProfile getUserProfile(UUID userId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            throw new RuntimeException("User not found with id: " + userId);
-        }
-        return userProfileRepository
-            .findByUserId(userId)
-            .orElseThrow(() ->
-                new RuntimeException(
-                    "User profile not found for user id: " + userId
-                )
+    public UserProfileDTO getUserProfile(UUID userId) {
+        Optional<UserProfile> profile = userProfileRepository.findByUserId(
+            userId
+        );
+        if (profile.isEmpty()) {
+            throw new RuntimeException(
+                "User Profile not found with id: " + userId
             );
+        }
+        return new UserProfileDTO(profile.get());
     }
 
     /**
      * 根据用户名获取用户资料信息
      */
-    public UserProfile getUserProfileByUsername(String username) {
-        Optional<User> userOpt = userRepository.findByUsername(username);
-        if (userOpt.isEmpty()) {
+    public UserProfileDTO getUserProfileByUsername(String username) {
+        Optional<UserProfile> profile = userProfileRepository.findByUsername(
+            username
+        );
+        if (profile.isEmpty()) {
             throw new RuntimeException(
-                "User not found with username: " + username
+                "User Profile not found with username: " + username
             );
         }
-        return userProfileRepository
-            .findByUserId(userOpt.get().getId())
-            .orElseThrow(() ->
-                new RuntimeException(
-                    "User profile not found for username: " + username
-                )
-            );
+        return new UserProfileDTO(profile.get());
     }
 
     /**
      * 更新用户资料信息
      */
-    public UserDTO updateUserProfile(
-        UUID userId,
-        UpdateUserProfileRequest request
-    ) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
+    public void updateUserProfile(UUID userId, UserProfileDTO request) {
+        Optional<UserProfile> profile = userProfileRepository.findByUserId(
+            userId
+        );
+        if (profile.isEmpty()) {
             throw new RuntimeException("User not found with id: " + userId);
         }
 
-        User user = userOpt.get();
-
-        // 如果要更新用户名，检查新用户名是否已存在
-        if (
-            request.getUsername() != null &&
-            !request.getUsername().equals(user.getUsername())
-        ) {
-            if (userRepository.existsByUsername(request.getUsername())) {
-                throw new RuntimeException(
-                    "Username already exists: " + request.getUsername()
-                );
-            }
-            user.setUsername(request.getUsername());
-        }
-
-        // 更新启用状态
-        if (request.getEnabled() != null) {
-            user.setEnabled(request.getEnabled());
-        }
-
-        User savedUser = userRepository.save(user);
-        return convertToDTO(savedUser);
+        UserProfile userProfile = profile.get();
+        userProfile.setRealName(request.getRealName());
+        userProfile.setGender(request.getGender());
+        userProfile.setBirthDate(request.getBirthDate());
+        userProfile.setEmail(request.getEmail());
+        userProfile.setPhone(request.getPhone());
+        userProfile.setAddress(request.getAddress());
+        userProfile.setBio(request.getBio());
+        userProfile.setAvatarUrl(request.getAvatarUrl());
+        userProfile.setUpdatedAt(LocalDateTime.now());
     }
 
     /**
@@ -133,7 +113,7 @@ public class UserService {
 
         user.setUsername(request.getNewUsername());
         User savedUser = userRepository.save(user);
-        return convertToDTO(savedUser);
+        return new UserDTO(savedUser);
     }
 
     /**
@@ -173,7 +153,6 @@ public class UserService {
 
         // 加密新密码并保存
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
     }
 
     /**
@@ -183,7 +162,7 @@ public class UserService {
         List<User> users = userRepository.findAllOrderByUsernameAsc();
         return users
             .stream()
-            .map(this::convertToDTO)
+            .map(user -> new UserDTO(user))
             .collect(Collectors.toList());
     }
 
@@ -196,7 +175,7 @@ public class UserService {
         );
         return users
             .stream()
-            .map(this::convertToDTO)
+            .map(user -> new UserDTO(user))
             .collect(Collectors.toList());
     }
 
@@ -207,7 +186,7 @@ public class UserService {
         List<User> users = userRepository.findByEnabledTrue();
         return users
             .stream()
-            .map(this::convertToDTO)
+            .map(user -> new UserDTO(user))
             .collect(Collectors.toList());
     }
 
@@ -218,7 +197,7 @@ public class UserService {
         List<User> users = userRepository.findByEnabledFalse();
         return users
             .stream()
-            .map(this::convertToDTO)
+            .map(user -> new UserDTO(user))
             .collect(Collectors.toList());
     }
 
@@ -248,7 +227,7 @@ public class UserService {
         User user = userOpt.get();
         user.setEnabled(enabled);
         User savedUser = userRepository.save(user);
-        return convertToDTO(savedUser);
+        return new UserDTO(savedUser);
     }
 
     /**
@@ -256,27 +235,5 @@ public class UserService {
      */
     public boolean usernameExists(String username) {
         return userRepository.existsByUsername(username);
-    }
-
-    /**
-     * 将User实体转换为UserDTO
-     */
-    private UserDTO convertToDTO(User user) {
-        UserDTO dto = new UserDTO();
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
-        dto.setEnabled(user.isEnabled());
-
-        // 转换角色信息
-        if (user.getRoles() != null) {
-            Set<String> roleNames = user
-                .getRoles()
-                .stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet());
-            dto.setRoles(roleNames);
-        }
-
-        return dto;
     }
 }
