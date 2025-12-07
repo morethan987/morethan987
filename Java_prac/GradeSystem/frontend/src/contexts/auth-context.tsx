@@ -1,10 +1,10 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import type { UserInfo, AuthError, LoginRequest } from "@/types/auth";
+import type { UserBasicInfo, AuthError, LoginRequest } from "@/types/auth";
 
 interface AuthContextType {
   // 状态
-  user: UserInfo | null;
+  user: UserBasicInfo | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   error: AuthError | null;

@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { authApi } from "@/api/v1/modules/auth";
-import type { LoginRequest, UserInfo, AuthError } from "@/types/auth";
+import type { LoginRequest, UserBasicInfo, AuthError } from "@/types/auth";
 import { ROUTES } from "@/routes";
 
 interface UseAuthReturn {
   // 状态
-  user: UserInfo | null;
+  user: UserBasicInfo | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   error: AuthError | null;
@@ -21,7 +21,7 @@ interface UseAuthReturn {
  * 认证状态管理 Hook
  */
 export function useAuth(): UseAuthReturn {
-  const [user, setUser] = useState<UserInfo | null>(null);
+  const [user, setUser] = useState<UserBasicInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
   const [, setLocation] = useLocation();
