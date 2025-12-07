@@ -1,5 +1,6 @@
 package com.example.GradeSystemBackend.controller;
 
+import com.example.GradeSystemBackend.domain.info.UserProfile;
 import com.example.GradeSystemBackend.dto.ChangePasswordRequest;
 import com.example.GradeSystemBackend.dto.ChangeUsernameRequest;
 import com.example.GradeSystemBackend.dto.UpdateUserProfileRequest;
@@ -39,8 +40,8 @@ public class UserController {
     @PreAuthorize("hasAnyAuthority('user_profile:view', 'admin:all')")
     public ResponseEntity<?> getUserProfile(@PathVariable UUID id) {
         try {
-            UserDTO user = userService.getUserProfile(id);
-            return ResponseEntity.ok(user);
+            UserProfile profile = userService.getUserProfile(id);
+            return ResponseEntity.ok(profile);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 createErrorResponse(e.getMessage())
@@ -57,8 +58,10 @@ public class UserController {
         @PathVariable String username
     ) {
         try {
-            UserDTO user = userService.getUserProfileByUsername(username);
-            return ResponseEntity.ok(user);
+            UserProfile profile = userService.getUserProfileByUsername(
+                username
+            );
+            return ResponseEntity.ok(profile);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 createErrorResponse(e.getMessage())
@@ -168,30 +171,22 @@ public class UserController {
     }
 
     /**
-     * 启用用户
+     * 启用/禁用用户
      */
-    @PutMapping("/{id}/enable")
+    @PutMapping("/{id}/status")
     @PreAuthorize("hasAnyAuthority('user:update', 'admin:all')")
-    public ResponseEntity<?> enableUser(@PathVariable UUID id) {
+    public ResponseEntity<?> changeUserStatus(
+        @PathVariable UUID id,
+        boolean isEnabled
+    ) {
         try {
-            UserDTO updatedUser = userService.enableUser(id);
-            return ResponseEntity.ok(updatedUser);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                createErrorResponse(e.getMessage())
-            );
-        }
-    }
-
-    /**
-     * 禁用用户
-     */
-    @PutMapping("/{id}/disable")
-    @PreAuthorize("hasAnyAuthority('user:update', 'admin:all')")
-    public ResponseEntity<?> disableUser(@PathVariable UUID id) {
-        try {
-            UserDTO updatedUser = userService.disableUser(id);
-            return ResponseEntity.ok(updatedUser);
+            if (isEnabled) {
+                UserDTO updatedUser = userService.enableUser(id);
+                return ResponseEntity.ok(updatedUser);
+            } else {
+                UserDTO updatedUser = userService.disableUser(id);
+                return ResponseEntity.ok(updatedUser);
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 createErrorResponse(e.getMessage())

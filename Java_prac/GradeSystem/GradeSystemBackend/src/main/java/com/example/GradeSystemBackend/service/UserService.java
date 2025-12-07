@@ -2,7 +2,9 @@ package com.example.GradeSystemBackend.service;
 
 import com.example.GradeSystemBackend.domain.auth.Role;
 import com.example.GradeSystemBackend.domain.auth.User;
+import com.example.GradeSystemBackend.domain.info.UserProfile;
 import com.example.GradeSystemBackend.dto.*;
+import com.example.GradeSystemBackend.repository.UserProfileRepository;
 import com.example.GradeSystemBackend.repository.UserRepository;
 import java.util.List;
 import java.util.Optional;
@@ -22,30 +24,45 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
+    private UserProfileRepository userProfileRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     /**
      * 根据ID获取用户资料信息
      */
-    public UserDTO getUserProfile(UUID userId) {
+    public UserProfile getUserProfile(UUID userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             throw new RuntimeException("User not found with id: " + userId);
         }
-        return convertToDTO(userOpt.get());
+        return userProfileRepository
+            .findByUserId(userId)
+            .orElseThrow(() ->
+                new RuntimeException(
+                    "User profile not found for user id: " + userId
+                )
+            );
     }
 
     /**
      * 根据用户名获取用户资料信息
      */
-    public UserDTO getUserProfileByUsername(String username) {
+    public UserProfile getUserProfileByUsername(String username) {
         Optional<User> userOpt = userRepository.findByUsername(username);
         if (userOpt.isEmpty()) {
             throw new RuntimeException(
                 "User not found with username: " + username
             );
         }
-        return convertToDTO(userOpt.get());
+        return userProfileRepository
+            .findByUserId(userOpt.get().getId())
+            .orElseThrow(() ->
+                new RuntimeException(
+                    "User profile not found for username: " + username
+                )
+            );
     }
 
     /**
@@ -93,6 +110,14 @@ public class UserService {
             throw new RuntimeException("User not found with id: " + userId);
         }
 
+        // 检查密码
+        User user = userOpt.get();
+        if (
+            !passwordEncoder.matches(request.getPassword(), user.getPassword())
+        ) {
+            throw new RuntimeException("Incorrect password");
+        }
+
         if (
             request.getNewUsername() == null ||
             request.getNewUsername().trim().isEmpty()
@@ -106,7 +131,6 @@ public class UserService {
             );
         }
 
-        User user = userOpt.get();
         user.setUsername(request.getNewUsername());
         User savedUser = userRepository.save(user);
         return convertToDTO(savedUser);
@@ -116,6 +140,11 @@ public class UserService {
      * 修改密码
      */
     public void changePassword(UUID userId, ChangePasswordRequest request) {
+        // 验证两次新密码是否匹配
+        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+            throw new RuntimeException("New passwords do not match");
+        }
+
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             throw new RuntimeException("User not found with id: " + userId);
