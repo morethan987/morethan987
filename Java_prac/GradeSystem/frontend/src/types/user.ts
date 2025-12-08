@@ -19,17 +19,22 @@ export enum Gender {
 /**
  * 性别显示文本映射
  */
-export const GenderLabels: Record<Gender, string> = {
+export const GenderLabels: Record<Gender | string, string> = {
   [Gender.UNKNOWN]: "未知",
   [Gender.MALE]: "男",
   [Gender.FEMALE]: "女",
   [Gender.OTHER]: "其他",
+  UNKNOWN: "未知",
+  MALE: "男",
+  FEMALE: "女",
+  OTHER: "其他",
 };
 
 /**
  * 性别选项（用于表单）
  */
 export const GenderOptions = [
+  { value: Gender.UNKNOWN, label: GenderLabels[Gender.UNKNOWN] },
   { value: Gender.MALE, label: GenderLabels[Gender.MALE] },
   { value: Gender.FEMALE, label: GenderLabels[Gender.FEMALE] },
   { value: Gender.OTHER, label: GenderLabels[Gender.OTHER] },

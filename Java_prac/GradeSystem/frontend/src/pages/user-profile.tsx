@@ -22,12 +22,14 @@ import {
   IconUpload,
   IconTrash,
   IconFileDownload,
+  IconArrowLeft,
 } from "@tabler/icons-react";
 import { ROUTES } from "@/routes";
 import { useAuthContext } from "@/contexts/auth-context";
 import { useUserProfile } from "@/hooks/use-user";
 import { Gender, GenderLabels, GenderOptions } from "@/types/user";
 import { toast } from "sonner";
+import { Link } from "wouter";
 
 export function UserProfilePage() {
   // 使用 useRoute hook 获取动态路由参数
@@ -210,7 +212,19 @@ export function UserProfilePage() {
     <div className="container mx-auto p-6 space-y-6">
       {/* 页面标题 */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">用户资料</h1>
+        <div className="flex items-center gap-4">
+          <Link href={ROUTES.DASHBOARD}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <IconArrowLeft className="w-4 h-4" />
+              返回主页
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold">用户资料</h1>
+        </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary">ID: {userId}</Badge>
           <Badge variant={user?.enabled ? "default" : "destructive"}>
