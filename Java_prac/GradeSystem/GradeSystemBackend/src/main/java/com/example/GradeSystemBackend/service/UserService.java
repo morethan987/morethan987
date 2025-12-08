@@ -5,11 +5,17 @@ import com.example.GradeSystemBackend.domain.info.UserProfile;
 import com.example.GradeSystemBackend.dto.*;
 import com.example.GradeSystemBackend.repository.UserProfileRepository;
 import com.example.GradeSystemBackend.repository.UserRepository;
+import java.beans.PropertyDescriptor;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -61,24 +67,27 @@ public class UserService {
     /**
      * 更新用户资料信息
      */
-    public void updateUserProfile(UUID userId, UserProfileDTO request) {
-        Optional<UserProfile> profile = userProfileRepository.findByUserId(
-            userId
-        );
-        if (profile.isEmpty()) {
-            throw new RuntimeException("User not found with id: " + userId);
-        }
+    public UserProfileDTO updateUserProfile(
+        UUID userId,
+        UserProfileDTO request
+    ) {
+        UserProfile userProfile = userProfileRepository
+            .findByUserId(userId)
+            .orElseThrow(() ->
+                new RuntimeException(
+                    "User Profile not found with id: " + userId
+                )
+            );
 
-        UserProfile userProfile = profile.get();
-        userProfile.setRealName(request.getRealName());
-        userProfile.setGender(request.getGender());
-        userProfile.setBirthDate(request.getBirthDate());
-        userProfile.setEmail(request.getEmail());
-        userProfile.setPhone(request.getPhone());
-        userProfile.setAddress(request.getAddress());
-        userProfile.setBio(request.getBio());
-        userProfile.setAvatarUrl(request.getAvatarUrl());
+        BeanUtils.copyProperties(
+            request,
+            userProfile,
+            getNullPropertyNames(request)
+        );
+
         userProfile.setUpdatedAt(LocalDateTime.now());
+        userProfileRepository.save(userProfile);
+        return new UserProfileDTO(userProfile);
     }
 
     /**
@@ -235,5 +244,20 @@ public class UserService {
      */
     public boolean usernameExists(String username) {
         return userRepository.existsByUsername(username);
+    }
+
+    public static String[] getNullPropertyNames(Object source) {
+        BeanWrapper src = new BeanWrapperImpl(source);
+        PropertyDescriptor[] pds = src.getPropertyDescriptors();
+
+        Set<String> nullNames = new HashSet<>();
+        for (PropertyDescriptor pd : pds) {
+            String propName = pd.getName();
+            Object srcValue = src.getPropertyValue(propName);
+            if (srcValue == null) {
+                nullNames.add(propName);
+            }
+        }
+        return nullNames.toArray(new String[0]);
     }
 }

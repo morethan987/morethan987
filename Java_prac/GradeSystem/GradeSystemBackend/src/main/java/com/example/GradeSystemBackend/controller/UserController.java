@@ -78,10 +78,11 @@ public class UserController {
         @RequestBody UserProfileDTO request
     ) {
         try {
-            userService.updateUserProfile(id, request);
-            return ResponseEntity.ok(
-                createSuccessResponse("User profile updated successfully")
+            UserProfileDTO profileDTO = userService.updateUserProfile(
+                id,
+                request
             );
+            return ResponseEntity.ok(profileDTO);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 createErrorResponse(e.getMessage())
