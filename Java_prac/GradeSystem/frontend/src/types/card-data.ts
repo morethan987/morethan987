@@ -1,63 +1,20 @@
-interface CardData {
-  title: string;
-  description: string;
-  value: string;
+export enum TrendDirection {
+  UP = "up",
+  DOWN = "down",
+  NEUTRAL = "neutral",
+}
+
+export interface CardData {
+  id: string; // 唯一标识符，用于 key
+  title: string; // 卡片左上角的标题 (例如：GPA, 教学班数量)
+  value: string; // 中间的大数字 (例如：3.8, 12)
   trend: {
-    direction: "up" | "down";
-    value: string;
+    direction: TrendDirection; // 趋势方向：上升、下降、持平
+    value: string; // 趋势显示的数值 (例如：+5%, +0.2)
+    isVisible: boolean; // 是否显示趋势角标（某些静态数据可能不需要）
   };
   footer: {
-    status: string;
-    description: string;
+    status: string; // 底部左侧的状态文案 (例如：比上学期进步)
+    description: string; // 底部灰色的辅助说明 (例如：统计截止今日)
   };
 }
-
-/**
- * JSON / API 原始对象类型（不可信）
- */
-type RawCardData = {
-  title?: unknown;
-  description?: unknown;
-  value?: unknown;
-  trend?: {
-    direction?: unknown;
-    value?: unknown;
-  };
-  footer?: {
-    status?: unknown;
-    description?: unknown;
-  };
-};
-
-/**
- * 单条记录解析
- */
-function parseCardData(raw: RawCardData): CardData {
-  return {
-    title: typeof raw.title === "string" ? raw.title : "",
-    description: typeof raw.description === "string" ? raw.description : "",
-    value: typeof raw.value === "string" ? raw.value : "",
-    trend: {
-      direction: raw.trend?.direction === "up" ? "up" : "down",
-      value: typeof raw.trend?.value === "string" ? raw.trend.value : "",
-    },
-    footer: {
-      status: typeof raw.footer?.status === "string" ? raw.footer.status : "",
-      description:
-        typeof raw.footer?.description === "string"
-          ? raw.footer.description
-          : "",
-    },
-  };
-}
-
-/**
- * 数组装载器（你页面将永远只用它）
- */
-function loadCardDataArray(raw: unknown): CardData[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.map(parseCardData);
-}
-
-export type { CardData };
-export { parseCardData, loadCardDataArray };

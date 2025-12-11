@@ -1,0 +1,58 @@
+[
+  {
+    "id": "gpa-stats",
+    "title": "当前绩点 (GPA)",
+    "value": "3.85",
+    "trend": {
+      "direction": "up",
+      "value": "+0.12",
+      "isVisible": true
+    },
+    "footer": {
+      "status": "表现优异",
+      "description": "专业排名前 5%"
+    }
+  },
+  {
+    "id": "credits-progress",
+    "title": "修读学分",
+    "value": "86 / 120",
+    "trend": {
+      "direction": "up",
+      "value": "+12",
+      "isVisible": true
+    },
+    "footer": {
+      "status": "本学期新增 12 学分",
+      "description": "毕业进度 71%"
+    }
+  },
+  {
+    "id": "current-courses",
+    "title": "本学期课程",
+    "value": "6",
+    "trend": {
+      "direction": "neutral",
+      "value": "0",
+      "isVisible": false
+    },
+    "footer": {
+      "status": "学习状态",
+      "description": "包含 2 门必修课"
+    }
+  },
+  {
+    "id": "weighted-score",
+    "title": "加权平均分",
+    "value": "89.2",
+    "trend": {
+      "direction": "down",
+      "value": "-1.5",
+      "isVisible": true
+    },
+    "footer": {
+      "status": "较上学期轻微下滑",
+      "description": "基于所有已修课程"
+    }
+  }
+]

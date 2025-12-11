@@ -1,0 +1,58 @@
+[
+  {
+    "id": "total-users",
+    "title": "在校师生总数",
+    "value": "12,450",
+    "trend": {
+      "direction": "up",
+      "value": "+8.5%",
+      "isVisible": true
+    },
+    "footer": {
+      "status": "持续增长",
+      "description": "学生 11,800 / 教师 650"
+    }
+  },
+  {
+    "id": "active-classes",
+    "title": "本学期开设课程",
+    "value": "345",
+    "trend": {
+      "direction": "up",
+      "value": "+12",
+      "isVisible": true
+    },
+    "footer": {
+      "status": "教学资源",
+      "description": "覆盖 42 个专业"
+    }
+  },
+  {
+    "id": "avg-enrollment",
+    "title": "平均报到率",
+    "value": "98.2%",
+    "trend": {
+      "direction": "neutral",
+      "value": "0%",
+      "isVisible": false
+    },
+    "footer": {
+      "status": "运行平稳",
+      "description": "2024 秋季学期"
+    }
+  },
+  {
+    "id": "system-health",
+    "title": "成绩录入进度",
+    "value": "65%",
+    "trend": {
+      "direction": "up",
+      "value": "进行中",
+      "isVisible": true
+    },
+    "footer": {
+      "status": "期末归档",
+      "description": "预计 3 天后截止"
+    }
+  }
+]

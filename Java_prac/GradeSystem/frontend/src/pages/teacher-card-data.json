@@ -1,0 +1,58 @@
+[
+  {
+    "id": "teaching-classes",
+    "title": "执教班级",
+    "value": "3",
+    "trend": {
+      "direction": "neutral",
+      "value": "0",
+      "isVisible": false
+    },
+    "footer": {
+      "status": "当前学期",
+      "description": "高等数学A, 线性代数"
+    }
+  },
+  {
+    "id": "total-students",
+    "title": "学生总数",
+    "value": "142",
+    "trend": {
+      "direction": "up",
+      "value": "+15%",
+      "isVisible": true
+    },
+    "footer": {
+      "status": "课堂容量饱和度",
+      "description": "平均每班 47 人"
+    }
+  },
+  {
+    "id": "workload-hours",
+    "title": "本周课时 (Workload)",
+    "value": "12.0",
+    "trend": {
+      "direction": "up",
+      "value": "+4.0",
+      "isVisible": true
+    },
+    "footer": {
+      "status": "工作量达标",
+      "description": "含 2 个实验课时"
+    }
+  },
+  {
+    "id": "avg-pass-rate",
+    "title": "所教课程及格率",
+    "value": "94.5%",
+    "trend": {
+      "direction": "down",
+      "value": "-2.1%",
+      "isVisible": true
+    },
+    "footer": {
+      "status": "需关注",
+      "description": "期中考试后统计"
+    }
+  }
+]
