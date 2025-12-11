@@ -4,6 +4,7 @@ export interface User {
   username: string;
   enabled: boolean;
   roles: string[];
+  uiType: string;
 }
 
 /**

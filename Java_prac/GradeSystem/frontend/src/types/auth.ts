@@ -4,6 +4,7 @@ export interface UserBasicInfo {
   username: string;
   enabled: boolean;
   roles: string[];
+  uiType: string;
   // from entity UserProfile
   realName?: string;
   email?: string;
