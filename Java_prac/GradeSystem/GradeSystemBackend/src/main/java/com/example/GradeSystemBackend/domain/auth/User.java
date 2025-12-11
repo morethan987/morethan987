@@ -22,6 +22,10 @@ public class User {
     @Column(nullable = false)
     private boolean enabled = true;
 
+    @Enumerated(EnumType.ORDINAL)
+    @Column(nullable = false)
+    private UIType uiType = UIType.DEFAULT;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_role",
@@ -77,5 +81,13 @@ public class User {
 
     public void removeRole(Role role) {
         this.roles.remove(role);
+    }
+
+    public UIType getUiType() {
+        return uiType;
+    }
+
+    public void setUiType(UIType uiType) {
+        this.uiType = uiType;
     }
 }

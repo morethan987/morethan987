@@ -1,5 +1,6 @@
 package com.example.GradeSystemBackend.dto;
 
+import com.example.GradeSystemBackend.domain.auth.UIType;
 import java.util.Set;
 import java.util.UUID;
 
@@ -10,6 +11,7 @@ public class UserBasicInfo {
     private String username;
     private boolean enabled;
     private Set<String> roles;
+    private UIType uiType;
 
     // from entity UserProfile
     private String realName;
@@ -86,5 +88,13 @@ public class UserBasicInfo {
 
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+
+    public UIType getUiType() {
+        return uiType;
+    }
+
+    public void setUiType(UIType uiType) {
+        this.uiType = uiType;
     }
 }

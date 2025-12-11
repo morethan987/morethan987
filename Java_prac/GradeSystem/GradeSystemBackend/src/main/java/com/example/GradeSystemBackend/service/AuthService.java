@@ -148,6 +148,7 @@ public class AuthService {
             userInfo.setUsername(user.getUsername());
             userInfo.setEnabled(user.isEnabled());
             userInfo.setRoles(getUserRoleNames(user));
+            userInfo.setUiType(user.getUiType());
             userInfo.setRealName(request.getRealName());
             userInfo.setEmail(request.getEmail());
 
@@ -197,6 +198,7 @@ public class AuthService {
             userInfo.setUsername(user.getUsername());
             userInfo.setEnabled(user.isEnabled());
             userInfo.setRoles(getUserRoleNames(user));
+            userInfo.setUiType(user.getUiType());
 
             if (profileOpt.isPresent()) {
                 UserProfile profile = profileOpt.get();
