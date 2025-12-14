@@ -112,6 +112,7 @@ export interface Student {
   major?: string;
   className?: string;
   enrollmentYear?: number;
+  currentSemester: number;
   status: StudentStatus;
   gpa?: number;
   totalCredits?: number;

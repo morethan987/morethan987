@@ -8,7 +8,7 @@ import { useAuthContext } from "@/contexts/auth-context";
 const sampleCardsData = [
   {
     id: "gpa-stats",
-    title: "当前绩点 (GPA)",
+    title: "当前绩点",
     value: "3.85",
     trend: {
       direction: TrendDirection.UP,
