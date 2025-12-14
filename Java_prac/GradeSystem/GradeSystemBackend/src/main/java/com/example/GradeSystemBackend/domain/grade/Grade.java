@@ -108,4 +108,17 @@ public class Grade {
         this.finalScore =
             usual * 0.2 + mid * 0.3 + experiment * 0.1 + finalExam * 0.4;
     }
+
+    public Double getGPA() {
+        if (finalScore == null) {
+            return null;
+        }
+        if (finalScore >= 90) {
+            return 4.0;
+        } else if (finalScore < 60) {
+            return 0.0;
+        } else {
+            return 1.0 + (finalScore - 60) * 0.1;
+        }
+    }
 }

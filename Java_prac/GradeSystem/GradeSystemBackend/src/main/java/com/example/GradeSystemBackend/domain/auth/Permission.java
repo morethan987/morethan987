@@ -12,7 +12,7 @@ public class Permission {
     private UUID id;
 
     @Column(unique = true, nullable = false)
-    private String name; // 例如: score:view, score:input, user:manage
+    private String name = "default:null"; // 例如: score:view, score:input, user:manage
 
     @Column(nullable = true)
     private String description;

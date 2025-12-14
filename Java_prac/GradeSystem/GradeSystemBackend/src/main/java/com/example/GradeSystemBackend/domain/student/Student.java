@@ -29,6 +29,9 @@ public class Student {
     @Column(nullable = true)
     private Integer enrollmentYear;
 
+    @Column(nullable = false)
+    private Integer currentSemester = 1;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StudentStatus status = StudentStatus.ENROLLED;
@@ -37,7 +40,7 @@ public class Student {
     private Double gpa;
 
     @Column(nullable = true)
-    private Integer totalCredits = 0;
+    private Integer totalCredits = 128;
 
     @Column(nullable = true)
     private Integer completedCredits = 0;
@@ -123,6 +126,14 @@ public class Student {
 
     public void setEnrollmentYear(Integer enrollmentYear) {
         this.enrollmentYear = enrollmentYear;
+    }
+
+    public Integer getCurrentSemester() {
+        return currentSemester;
+    }
+
+    public void setCurrentSemester(Integer currentSemester) {
+        this.currentSemester = currentSemester;
     }
 
     public StudentStatus getStatus() {

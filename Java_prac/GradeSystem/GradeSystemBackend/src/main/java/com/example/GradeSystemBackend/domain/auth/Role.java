@@ -13,7 +13,7 @@ public class Role {
     private UUID id;
 
     @Column(unique = true, nullable = false)
-    private String name; // 例如: ADMIN, TEACHER, STUDENT
+    private String name = "STUDENT"; // 例如: ADMIN, TEACHER, STUDENT
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

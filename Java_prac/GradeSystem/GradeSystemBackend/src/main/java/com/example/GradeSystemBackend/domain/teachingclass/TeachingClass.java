@@ -16,9 +16,6 @@ public class TeachingClass {
     @Column(nullable = true)
     private String name;
 
-    @Column(nullable = true)
-    private Integer semester;
-
     @ManyToOne(optional = false)
     @JoinColumn(name = "teacher_id", nullable = false)
     private Teacher teacher;
@@ -42,14 +39,6 @@ public class TeachingClass {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Integer getSemester() {
-        return semester;
-    }
-
-    public void setSemester(Integer semester) {
-        this.semester = semester;
     }
 
     public Teacher getTeacher() {
