@@ -1,0 +1,9 @@
+[project]
+name = "autoclicks-pydoll"
+version = "0.1.0"
+description = "基于 pydoll 实现的网页自动化脚本集合"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pydoll-python>=2.14.0",
+]
