@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   IconDots,
@@ -6,7 +6,7 @@ import {
   IconShare3,
   IconTrash,
   type Icon,
-} from "@tabler/icons-react"
+} from "@tabler/icons-react";
 
 import {
   DropdownMenu,
@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -23,32 +23,44 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
-export function NavDocuments({
+export function NavBasic({
   items,
+  onPageChange,
+  currentPage,
 }: {
   items: {
-    name: string
-    url: string
-    icon: Icon
-  }[]
+    id: string;
+    name: string;
+    url: string;
+    icon: Icon;
+  }[];
+  onPageChange?: (page: string) => void;
+  currentPage?: string;
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile } = useSidebar();
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Documents</SidebarGroupLabel>
+      <SidebarGroupLabel>基础操作</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
-              <a href={item.url}>
-                <item.icon />
-                <span>{item.name}</span>
-              </a>
+            <SidebarMenuButton
+              onClick={() => {
+                onPageChange?.(item.id);
+              }}
+              className={
+                currentPage === item.id
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                  : ""
+              }
+            >
+              <item.icon />
+              <span>{item.name}</span>
             </SidebarMenuButton>
-            <DropdownMenu>
+            {/*<DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction
                   showOnHover
@@ -77,16 +89,16 @@ export function NavDocuments({
                   <span>Delete</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu>*/}
           </SidebarMenuItem>
         ))}
-        <SidebarMenuItem>
+        {/*<SidebarMenuItem>
           <SidebarMenuButton className="text-sidebar-foreground/70">
             <IconDots className="text-sidebar-foreground/70" />
             <span>More</span>
           </SidebarMenuButton>
-        </SidebarMenuItem>
+        </SidebarMenuItem>*/}
       </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }
