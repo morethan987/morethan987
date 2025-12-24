@@ -1,4 +1,4 @@
-import { ChartAreaInteractive } from "@/components/chart-area-interactive";
+import { GenericAreaChart } from "@/components/chart-area-interactive";
 import { SectionCards } from "@/components/section-cards";
 import { DataTable } from "@/components/data-table";
 import data from "./data.json";
@@ -64,7 +64,24 @@ const sampleCardsData = [
   },
 ];
 
-export function GeneralData() {
+const sampleChartData = {
+  title: "学业成绩趋势",
+  description: "个人绩点与班级平均分对比",
+  xAxisKey: "semester",
+  series: [
+    { key: "gpa", label: "个人 GPA" },
+    { key: "class_avg", label: "班级平均" },
+  ],
+  data: [
+    { semester: "2022 秋", gpa: 3.2, class_avg: 3.0 },
+    { semester: "2023 春", gpa: 3.5, class_avg: 3.1 },
+    { semester: "2023 秋", gpa: 3.4, class_avg: 3.2 },
+    { semester: "2024 春", gpa: 3.8, class_avg: 3.3 },
+    { semester: "2024 秋", gpa: 3.9, class_avg: 3.2 },
+  ],
+};
+
+export function GeneralView() {
   {
     /* TODO 根据用户角色进行响应,使用use去获取数据，这里只是渲染*/
   }
@@ -75,7 +92,7 @@ export function GeneralData() {
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           <SectionCards cardsData={sampleCardsData} />
           <div className="px-4 lg:px-6">
-            <ChartAreaInteractive />
+            <GenericAreaChart chartData={sampleChartData} />
           </div>
           <DataTable data={data} />
         </div>

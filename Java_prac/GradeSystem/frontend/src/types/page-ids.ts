@@ -16,10 +16,13 @@ export const PAGE_IDS = {
   PROPOSAL: "proposals",
   PROMPTS: "prompts",
 
-  // Documents
-  DATA_LIBRARY: "data-library",
-  REPORTS: "reports",
-  WORD_ASSISTANT: "word-assistant",
+  // Basic
+  STU_GRADES: "student-grades",
+  STU_COURSES: "student-courses",
+  STU_SELECT_COURSES: "student-select-courses",
+  TEA_COURSES: "teacher-courses",
+  TEA_GRADE_VIEW: "teacher-grade-view",
+  TEA_GRADE_INPUT: "teacher-grade-input",
 } as const;
 
 // Page types for type safety
