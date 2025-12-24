@@ -114,9 +114,7 @@ export interface Student {
   enrollmentYear?: number;
   currentSemester: number;
   status: StudentStatus;
-  gpa?: number;
   totalCredits?: number;
-  completedCredits?: number;
   advisor?: string;
   expectedGraduationDate?: string; // ISO date string (YYYY-MM-DD)
   createdAt: string; // ISO datetime string

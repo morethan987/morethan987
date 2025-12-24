@@ -10,4 +10,5 @@ export interface Grade {
   finalExamScore?: number;
   experimentScore?: number;
   finalScore?: number;
+  gpa?: number;
 }
