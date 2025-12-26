@@ -7,6 +7,8 @@ from config import (
     USERNAME,
     CourseSelectors,
     LoginSelectors,
+    SelectionSelectors,
+    SidebarSelectors,
     TargetCourses,
 )
 from pydoll.browser.chromium import Chrome
@@ -87,18 +89,17 @@ async def find_target_courses(tab: Tab) -> list[WebElement]:
 async def select_course(tab: Tab, course_link: WebElement):
     await course_link.click()
     # 检测侧边栏加载
-    await tab.find(
-        tag_name=TargetCourses.sidebar_flag["tag_name"],
-        type=TargetCourses.sidebar_flag["type"],
+    await tab.query(
+        SidebarSelectors.sidebar_flag_css,
         timeout=10,
     )
-    close_button = await tab.query(TargetCourses.close_button_css, timeout=10)
+    close_button = await tab.query(SidebarSelectors.close_button_css, timeout=10)
     print("侧边栏加载完成，开始提取教师信息...")
 
-    raws = await tab.query(TargetCourses.data_raw_css, find_all=True, timeout=10)
-    print(f"提取到{len(raws)}名教师，开始匹配教师姓名...")
-    for raw in raws:
-        cells = await raw.find(tag_name="td", find_all=True, timeout=10)
+    rows = await tab.query(SidebarSelectors.data_raw_css, find_all=True, timeout=10)
+    print(f"提取到{len(rows)}名教师，开始匹配教师姓名...")
+    for row in rows:
+        cells = await row.find(tag_name="td", find_all=True, timeout=10)
         teacher_name = await cells[3].text
         print(f"检测到教师：{teacher_name}，开始与目标教师匹配...")
         for target in TargetCourses.target_list:
@@ -106,14 +107,70 @@ async def select_course(tab: Tab, course_link: WebElement):
                 print(
                     f"找到目标课程：{target['name']}，教师：{teacher_name}，开始选课..."
                 )
-                input_box = await raw.find(
-                    tag_name=TargetCourses.sidebar_inputbox["tag_name"],
-                    type=TargetCourses.sidebar_inputbox["type"],
-                    timeout=10,
-                )
-                await input_box.click()
+
+                # 检查课程是否可选
+                if await _is_available(row):
+                    # 先定位复选框并点击
+                    input_box = await row.find(
+                        tag_name=SidebarSelectors.sidebar_inputbox["tag_name"],
+                        type=SidebarSelectors.sidebar_inputbox["type"],
+                        timeout=10,
+                    )
+                    await input_box.click()
+
+                    # 确认选课
+                    await confirm_selection(tab)
+                else:
+                    print("课程已满或已选，无法选择该课程。")
     await close_button.click()
     print("侧边栏已关闭，继续下一个课程...")
+
+
+async def _is_available(row: WebElement) -> bool:
+    full = await row.find(tag_name="span", class_name="text-error", raise_exc=False)
+    already_selected = await row.find(
+        tag_name="span", class_name="text-success", raise_exc=False
+    )
+    if full or already_selected:
+        print("检测到课程已满或已选")
+        return False
+    return True
+
+
+async def confirm_selection(tab: Tab):
+    buttons = await tab.query(
+        SelectionSelectors.select_button_css, raise_exc=False, find_all=True
+    )
+    if not buttons:
+        print("未找到选课按钮，目前可能不是选课时间段")
+        return
+    select_button = None
+    for button in buttons:
+        if await button.text == "选课":
+            select_button = button
+            break
+    if not select_button:
+        print("未找到选课按钮，目前可能不是选课时间段")
+        return
+    await select_button.click()
+    print("选课按钮已点击，等待确认对话框...")
+
+    confirm_buttons = await tab.query(
+        SelectionSelectors.confirm_button_css, timeout=10, find_all=True
+    )
+    if not confirm_buttons:
+        print("未找到确认按钮，选课可能未成功")
+        return
+    confirm_button = None
+    for button in confirm_buttons:
+        if await button.text == "确认":
+            confirm_button = button
+            break
+    if not confirm_button:
+        print("未找到确认按钮，选课可能未成功")
+        return
+    await confirm_button.click()
+    print("确认按钮已点击，选课成功...")
 
 
 @retry(max_retries=5, exceptions=[WaitElementTimeout, NetworkError, PageLoadTimeout])
