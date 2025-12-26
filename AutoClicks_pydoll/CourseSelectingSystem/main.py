@@ -4,6 +4,7 @@ from config import (
     COURSE_SELECTION_URL,
     INTERVAL,
     PASSWORD,
+    SERVER_KEY,
     USERNAME,
     CourseSelectors,
     LoginSelectors,
@@ -11,6 +12,7 @@ from config import (
     SidebarSelectors,
     TargetCourses,
 )
+from notification import sc_send
 from pydoll.browser.chromium import Chrome
 from pydoll.browser.options import ChromiumOptions
 from pydoll.browser.tab import Tab
@@ -54,7 +56,7 @@ async def wait_for_course_page(tab: Tab):
     await tab.find(
         tag_name=CourseSelectors.flag["tag_name"],
         class_name=CourseSelectors.flag["class_name"],
-        timeout=20,
+        timeout=40,
     )
     print("选课页面加载完成，开始查找课程数据...")
 
@@ -171,6 +173,10 @@ async def confirm_selection(tab: Tab):
         return
     await confirm_button.click()
     print("确认按钮已点击，选课成功...")
+
+    # 发送通知
+    result = sc_send(SERVER_KEY, "选课成功通知", "成功选择了一门课程！")
+    print("已发送选课成功通知，返回结果：", result)
 
 
 @retry(max_retries=5, exceptions=[WaitElementTimeout, NetworkError, PageLoadTimeout])

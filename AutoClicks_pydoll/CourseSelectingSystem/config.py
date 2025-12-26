@@ -2,6 +2,7 @@ COURSE_SELECTION_URL = "https://my.cqu.edu.cn/enroll/CourseStuSelectionList"
 USERNAME = "your_username"
 PASSWORD = "your_password"
 INTERVAL = 10
+SERVER_KEY = "your_server_key_here"
 
 
 # 元素选择器
