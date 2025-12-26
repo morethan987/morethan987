@@ -17,7 +17,7 @@ def get_chromium_options() -> ChromiumOptions:
     options.add_argument("--disable-background-networking")
     options.add_argument("--disable-sync")
     options.add_argument("--disable-translate")
-    # options.add_argument("--headless=new")
+    options.add_argument("--headless=new")
     options.add_argument("--disable-notifications")
     # 禁用图像以实现更快的加载
     options.add_argument("--blink-settings=imagesEnabled=false")
