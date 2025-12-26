@@ -166,8 +166,9 @@ async def confirm_selection(tab: Tab):
     print("确认按钮已点击，选课成功...")
 
     # 发送通知
-    result = sc_send(SERVER_KEY, "选课成功通知", "成功选择了一门课程！")
-    print("已发送选课成功通知，返回结果：", result)
+    if SERVER_KEY:
+        result = sc_send(SERVER_KEY, "选课成功通知", "成功选择了一门课程！")
+        print("已发送选课成功通知，返回结果：", result)
 
 
 @retry(

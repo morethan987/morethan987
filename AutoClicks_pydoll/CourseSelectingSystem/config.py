@@ -4,7 +4,7 @@ USERNAME = "your_username"
 PASSWORD = "your_password"
 INTERVAL = 10
 MAX_RETRY = 1000
-SERVER_KEY = "your_server_key"  # 填写你的Server酱SCKEY以启用微信通知功能
+SERVER_KEY = None  # 填写你的Server酱SCKEY以启用微信通知功能
 COURSE_SELECTION_URL = "https://my.cqu.edu.cn/enroll/CourseStuSelectionList"
 
 
