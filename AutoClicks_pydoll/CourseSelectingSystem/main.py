@@ -3,6 +3,7 @@ import asyncio
 from config import (
     COURSE_SELECTION_URL,
     INTERVAL,
+    MAX_RETRY,
     PASSWORD,
     SERVER_KEY,
     USERNAME,
@@ -11,10 +12,10 @@ from config import (
     SelectionSelectors,
     SidebarSelectors,
     TargetCourses,
+    get_chromium_options,
 )
 from notification import sc_send
 from pydoll.browser.chromium import Chrome
-from pydoll.browser.options import ChromiumOptions
 from pydoll.browser.tab import Tab
 from pydoll.decorators import retry
 from pydoll.elements.web_element import WebElement
@@ -169,23 +170,12 @@ async def confirm_selection(tab: Tab):
     print("已发送选课成功通知，返回结果：", result)
 
 
-@retry(max_retries=5, exceptions=[WaitElementTimeout, NetworkError, PageLoadTimeout])
+@retry(
+    max_retries=MAX_RETRY,
+    exceptions=[WaitElementTimeout, NetworkError, PageLoadTimeout],
+)
 async def main():
-    options = ChromiumOptions()
-    # 禁用不必要的功能
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-background-networking")
-    options.add_argument("--disable-sync")
-    options.add_argument("--disable-translate")
-    options.add_argument("--headless=new")
-    options.add_argument("--disable-notifications")
-    options.add_argument("--proxy-server=127.0.0.1:7890")
-    # 禁用图像以实现更快的加载
-    options.add_argument("--blink-settings=imagesEnabled=false")
-    # 网络优化
-    options.add_argument("--disable-features=NetworkPrediction")
-    options.add_argument("--dns-prefetch-disable")
+    options = get_chromium_options()
 
     async with Chrome(options=options) as browser:
         # 启动浏览器并打开新标签页

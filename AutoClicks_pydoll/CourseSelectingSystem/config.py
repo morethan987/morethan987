@@ -1,8 +1,35 @@
+from pydoll.browser.options import ChromiumOptions
+
 USERNAME = "your_username"
 PASSWORD = "your_password"
 INTERVAL = 10
+MAX_RETRY = 1000
 SERVER_KEY = "your_server_key"  # 填写你的Server酱SCKEY以启用微信通知功能
 COURSE_SELECTION_URL = "https://my.cqu.edu.cn/enroll/CourseStuSelectionList"
+
+
+def get_chromium_options() -> ChromiumOptions:
+    """获取 Chromium 浏览器选项"""
+    options = ChromiumOptions()
+    # 禁用不必要的功能
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-background-networking")
+    options.add_argument("--disable-sync")
+    options.add_argument("--disable-translate")
+    # options.add_argument("--headless=new")
+    options.add_argument("--disable-notifications")
+    # 禁用图像以实现更快的加载
+    options.add_argument("--blink-settings=imagesEnabled=false")
+    # 网络优化
+    options.add_argument("--disable-features=NetworkPrediction")
+    options.add_argument("--dns-prefetch-disable")
+    # 代理配置（可选）
+    options.add_argument("--proxy-server=127.0.0.1:7890")
+    # root 用户需要添加的参数
+    # options.add_argument("--no-sandbox")
+
+    return options
 
 
 class TargetCourses:
