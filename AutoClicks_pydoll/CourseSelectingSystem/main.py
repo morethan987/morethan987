@@ -140,34 +140,20 @@ async def _is_available(row: WebElement) -> bool:
 
 
 async def confirm_selection(tab: Tab):
-    buttons = await tab.query(
-        SelectionSelectors.select_button_css, raise_exc=False, find_all=True
+    select_button = await tab.find(
+        class_name=SelectionSelectors.select_button["class_name"],
+        type=SelectionSelectors.select_button["type"],
+        raise_exc=False,
     )
-    if not buttons:
-        print("未找到选课按钮，目前可能不是选课时间段")
-        return
-    select_button = None
-    for button in buttons:
-        if await button.text == "选课":
-            select_button = button
-            break
     if not select_button:
         print("未找到选课按钮，目前可能不是选课时间段")
         return
     await select_button.click()
     print("选课按钮已点击，等待确认对话框...")
 
-    confirm_buttons = await tab.query(
-        SelectionSelectors.confirm_button_css, timeout=10, find_all=True
+    confirm_button = await tab.query(
+        SelectionSelectors.confirm_button_css, raise_exc=False
     )
-    if not confirm_buttons:
-        print("未找到确认按钮，选课可能未成功")
-        return
-    confirm_button = None
-    for button in confirm_buttons:
-        if await button.text == "确认":
-            confirm_button = button
-            break
     if not confirm_button:
         print("未找到确认按钮，选课可能未成功")
         return
