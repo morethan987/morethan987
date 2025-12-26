@@ -100,6 +100,8 @@ async def select_course(tab: Tab, course_link: WebElement):
 
     rows = await tab.query(SidebarSelectors.data_raw_css, find_all=True, timeout=10)
     print(f"提取到{len(rows)}名教师，开始匹配教师姓名...")
+
+    select_flag = False  # 标记是否成功选课
     for row in rows:
         cells = await row.find(tag_name="td", find_all=True, timeout=10)
         teacher_name = await cells[3].text
@@ -122,9 +124,13 @@ async def select_course(tab: Tab, course_link: WebElement):
 
                     # 确认选课
                     await confirm_selection(tab)
+                    select_flag = True
                 else:
                     print("课程已满或已选，无法选择该课程。")
-    await close_button.click()
+
+    # 如果选课成功，侧边栏会自动关闭，无需点击关闭按钮
+    if not select_flag:
+        await close_button.click()
     print("侧边栏已关闭，继续下一个课程...")
 
 
@@ -140,10 +146,8 @@ async def _is_available(row: WebElement) -> bool:
 
 
 async def confirm_selection(tab: Tab):
-    select_button = await tab.find(
-        class_name=SelectionSelectors.select_button["class_name"],
-        type=SelectionSelectors.select_button["type"],
-        raise_exc=False,
+    select_button = await tab.query(
+        SelectionSelectors.select_button_css, timeout=5, raise_exc=False
     )
     if not select_button:
         print("未找到选课按钮，目前可能不是选课时间段")
@@ -152,7 +156,7 @@ async def confirm_selection(tab: Tab):
     print("选课按钮已点击，等待确认对话框...")
 
     confirm_button = await tab.query(
-        SelectionSelectors.confirm_button_css, raise_exc=False
+        SelectionSelectors.confirm_button_css, timeout=5, raise_exc=False
     )
     if not confirm_button:
         print("未找到确认按钮，选课可能未成功")

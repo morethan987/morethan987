@@ -50,5 +50,6 @@ class SelectionSelectors:
     """选课确认元素选择器"""
 
     select_button = {"type": "button", "class_name": "ant-btn ant-btn-primary"}
+    select_button_css = "div.ant-drawer-body button"
     confirm_button_css = ".ant-modal button.ant-btn.ant-btn-primary"
     forbidden_flag = {"tag_name": "div", "class_name": "ant-alert ant-alert-error"}
