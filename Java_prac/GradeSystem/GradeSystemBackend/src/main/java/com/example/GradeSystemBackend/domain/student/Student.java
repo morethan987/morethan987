@@ -53,7 +53,7 @@ public class Student {
     @Column(nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    @ManyToMany(mappedBy = "students")
+    @ManyToMany(mappedBy = "students", fetch = FetchType.EAGER)
     private Set<TeachingClass> teachingClasses;
 
     // Constructors

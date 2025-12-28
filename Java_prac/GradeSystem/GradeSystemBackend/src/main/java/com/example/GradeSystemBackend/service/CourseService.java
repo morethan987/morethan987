@@ -74,28 +74,24 @@ public class CourseService {
             return new ArrayList<>();
         }
 
-        Integer semester = student.getCurrentSemester();
-        List<TeachingClass> teachingClasses = new ArrayList<>();
-
-        if (semester != null) {
-            teachingClasses =
-                teachingClassRepository.findByStudentIdAndSemester(
-                    studentId,
-                    semester
-                );
-        } else {
-            teachingClasses = teachingClassRepository.findByStudentId(
-                studentId
-            );
-        }
+        List<TeachingClass> teachingClasses =
+            teachingClassRepository.findByStudentIdDirect(studentId);
 
         final int enrollmentYear = student.getEnrollmentYear();
+        final Integer currentSemester = student.getCurrentSemester();
+
         return teachingClasses
             .stream()
             .filter(
                 tc ->
                     courseType == null ||
                     tc.getCourse().getCourseType().name().equals(courseType)
+            )
+            // 只返回当前学期的课程
+            .filter(
+                tc ->
+                    currentSemester == null ||
+                    tc.getCourse().getSemester().equals(currentSemester)
             )
             .map(tc -> convertToTeachingClassDTO(tc, enrollmentYear))
             .collect(Collectors.toList());
@@ -152,7 +148,7 @@ public class CourseService {
             .findById(teachingClassId)
             .orElseThrow(() -> new BusinessException("该教学班不存在"));
 
-        // 2. 检查人数是否已满 (你原代码漏掉了这个关键逻辑，建议加上)
+        // 2. 检查人数是否已满
         if (teachingClass.getEnrolledCount() >= teachingClass.getCapacity()) {
             throw new BusinessException("该课程选课人数已满");
         }

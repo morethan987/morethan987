@@ -4,6 +4,7 @@ import com.example.GradeSystemBackend.domain.course.Course;
 import com.example.GradeSystemBackend.domain.student.Student;
 import com.example.GradeSystemBackend.domain.teacher.Teacher;
 import jakarta.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -32,7 +33,7 @@ public class TeachingClass {
         joinColumns = @JoinColumn(name = "teaching_class_id"),
         inverseJoinColumns = @JoinColumn(name = "student_id")
     )
-    private Set<Student> students;
+    private Set<Student> students = new HashSet<>();
 
     @Column(length = 50)
     private String classroom;
