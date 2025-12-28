@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,8 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +26,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   IconSearch,
   IconBook2,
@@ -40,613 +41,480 @@ import {
   IconAlertCircle,
   IconCheck,
   IconX,
+  IconRefresh,
+  IconLoader2,
 } from "@tabler/icons-react";
-import type { Course, CourseType } from "@/types/course";
-import { CourseTypeDescriptions } from "@/types/course";
+import { CourseType, CourseTypeDescriptions } from "@/types/course";
 import { SectionCards } from "@/components/section-cards";
 import { TrendDirection } from "@/types/card-data";
+import { useCourses } from "@/hooks/use-courses";
+import { useAuth } from "@/hooks/use-auth";
+import { useStudent } from "@/hooks/use-student";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-// 选课课程接口
-interface SelectableCourse extends Course {
-  teacher: string;
-  classroom: string;
-  time: string;
-  capacity: number;
-  enrolled: number;
-  available: number;
-  conflicts: string[];
-  prerequisites: string[];
-  isSelected: boolean;
-  canSelect: boolean;
-  selectReason?: string;
-}
+export function StudentSelectCourseView() {
+  // --- 数据 Hooks ---
+  const { user } = useAuth();
+  const { student, getStudentByUserId } = useStudent();
+  const {
+    courses: availableCourses,
+    isLoading,
+    error,
+    fetchAvailableCourses,
+    selectCourse,
+    refreshCourses,
+    clearError,
+  } = useCourses();
 
-// 样例数据
-const availableCourses: SelectableCourse[] = [
-  {
-    id: "cs101",
-    name: "高级数据结构",
-    description: "深入学习高级数据结构：红黑树、B树、图算法等",
-    credit: 3,
-    semester: 6,
-    courseType: "ELECTIVE",
-    teacher: "李教授",
-    classroom: "A201",
-    time: "周二 1-3节",
-    capacity: 40,
-    enrolled: 32,
-    available: 8,
-    conflicts: [],
-    prerequisites: ["数据结构与算法"],
-    isSelected: false,
-    canSelect: true,
-  },
-  {
-    id: "cs102",
-    name: "机器学习基础",
-    description: "机器学习算法基础，包括监督学习、无监督学习等",
-    credit: 3,
-    semester: 6,
-    courseType: "ELECTIVE",
-    teacher: "王教授",
-    classroom: "B301",
-    time: "周四 5-7节",
-    capacity: 30,
-    enrolled: 28,
-    available: 2,
-    conflicts: [],
-    prerequisites: ["高等数学", "线性代数"],
-    isSelected: true,
-    canSelect: true,
-  },
-  {
-    id: "cs103",
-    name: "分布式系统",
-    description: "学习分布式系统架构设计与实现",
-    credit: 3,
-    semester: 6,
-    courseType: "ELECTIVE",
-    teacher: "张教授",
-    classroom: "C401",
-    time: "周三 3-5节",
-    capacity: 35,
-    enrolled: 35,
-    available: 0,
-    conflicts: [],
-    prerequisites: ["计算机网络", "操作系统"],
-    isSelected: false,
-    canSelect: false,
-    selectReason: "名额已满",
-  },
-  {
-    id: "cs104",
-    name: "Web安全技术",
-    description: "Web应用安全漏洞分析与防护技术",
-    credit: 2,
-    semester: 6,
-    courseType: "ELECTIVE",
-    teacher: "陈老师",
-    classroom: "D101",
-    time: "周二 1-2节",
-    capacity: 25,
-    enrolled: 20,
-    available: 5,
-    conflicts: ["高级数据结构"],
-    prerequisites: ["Web开发技术"],
-    isSelected: false,
-    canSelect: false,
-    selectReason: "时间冲突",
-  },
-  {
-    id: "cs105",
-    name: "移动应用开发",
-    description: "Android和iOS移动应用开发技术",
-    credit: 3,
-    semester: 6,
-    courseType: "ELECTIVE",
-    teacher: "刘老师",
-    classroom: "E201",
-    time: "周五 1-3节",
-    capacity: 30,
-    enrolled: 18,
-    available: 12,
-    conflicts: [],
-    prerequisites: ["面向对象程序设计"],
-    isSelected: false,
-    canSelect: true,
-  },
-  {
-    id: "ge001",
-    name: "艺术欣赏",
-    description: "中外艺术作品鉴赏与文化内涵分析",
-    credit: 2,
-    semester: 6,
-    courseType: "GENERAL",
-    teacher: "李老师",
-    classroom: "F101",
-    time: "周一 7-8节",
-    capacity: 60,
-    enrolled: 45,
-    available: 15,
-    conflicts: [],
-    prerequisites: [],
-    isSelected: true,
-    canSelect: true,
-  },
-];
-
-export function SelectCourseView() {
-  const [courses, setCourses] = useState(availableCourses);
+  // --- 状态管理 ---
+  const [selectedSemester, setSelectedSemester] = useState("全部学期");
   const [selectedCourseType, setSelectedCourseType] = useState("全部类型");
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterAvailable, setFilterAvailable] = useState(false);
+  const [filterAvailableOnly, setFilterAvailableOnly] = useState(false);
+  const [batchSelection, setBatchSelection] = useState<Set<string>>(new Set());
 
-  // 筛选课程
-  const filteredCourses = courses.filter((course) => {
-    const matchesType =
-      selectedCourseType === "全部类型" ||
-      course.courseType === selectedCourseType;
-    const matchesSearch =
-      course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.teacher.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesAvailable = !filterAvailable || course.available > 0;
+  // --- 初始化加载 ---
+  useEffect(() => {
+    if (user?.id) getStudentByUserId(user.id);
+  }, [user?.id, getStudentByUserId]);
 
-    return matchesType && matchesSearch && matchesAvailable;
-  });
+  useEffect(() => {
+    if (student?.id) {
+      const filters: any = {};
+      if (selectedCourseType !== "全部类型")
+        filters.courseType = selectedCourseType;
+      fetchAvailableCourses(student.id, filters);
+    }
+  }, [student?.id, selectedCourseType, fetchAvailableCourses]);
 
-  // 统计数据
-  const selectedCourses = courses.filter((c) => c.isSelected);
-  const selectedCredits = selectedCourses.reduce((sum, c) => sum + c.credit, 0);
-  const requiredCourses = selectedCourses.filter(
-    (c) => c.courseType === "REQUIRED",
-  ).length;
-  const electiveCourses = selectedCourses.filter(
-    (c) => c.courseType === "ELECTIVE",
-  ).length;
+  // --- 逻辑计算 ---
+  const filteredCourses = useMemo(() => {
+    return availableCourses.filter((item) => {
+      const matchesSearch =
+        item.course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.teacherName.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesAvailable =
+        !filterAvailableOnly || item.enrolled < item.capacity;
+      return matchesSearch && matchesAvailable;
+    });
+  }, [availableCourses, searchQuery, filterAvailableOnly]);
+
+  const stats = useMemo(() => {
+    const selected = availableCourses.filter(
+      (c) => c.status === "ongoing" || c.status === "completed",
+    ); // 假设逻辑
+    const credits = selected.reduce((sum, c) => sum + c.course.credit, 0);
+    return { count: selected.length, credits };
+  }, [availableCourses]);
 
   const statsCardsData = [
     {
-      id: "selected-courses",
-      title: "已选课程",
-      value: `${selectedCourses.length}`,
-      trend: {
-        direction: TrendDirection.UP,
-        value: "+2",
-        isVisible: true,
-      },
-      footer: {
-        status: "本次新增",
-        description: "选课进行中",
-      },
-    },
-    {
-      id: "selected-credits",
-      title: "已选学分",
-      value: `${selectedCredits}`,
-      trend: {
-        direction: TrendDirection.UP,
-        value: "+5",
-        isVisible: true,
-      },
-      footer: {
-        status: "学分累计",
-        description: `建议总学分20-25`,
-      },
-    },
-    {
-      id: "required-courses",
-      title: "必修课程",
-      value: `${requiredCourses}`,
+      id: "available",
+      title: "可选课程总数",
+      value: `${filteredCourses.length}`,
       trend: {
         direction: TrendDirection.NEUTRAL,
         value: "0",
         isVisible: false,
       },
-      footer: {
-        status: "门必修课",
-        description: "按计划进行",
-      },
+      footer: { status: "neutral" as const, description: "当前学期开放" },
     },
     {
-      id: "elective-courses",
-      title: "选修课程",
-      value: `${electiveCourses}`,
+      id: "selected-credits",
+      title: "已选学分",
+      value: `${stats.credits}`,
+      trend: { direction: TrendDirection.UP, value: "+3", isVisible: true },
+      footer: { status: "positive" as const, description: "建议 20-25 学分" },
+    },
+    {
+      id: "batch-count",
+      title: "待选清单",
+      value: `${batchSelection.size}`,
       trend: {
-        direction: TrendDirection.UP,
-        value: "+2",
-        isVisible: true,
+        direction: TrendDirection.NEUTRAL,
+        value: "0",
+        isVisible: false,
       },
-      footer: {
-        status: "门选修课",
-        description: "丰富专业知识",
+      footer: { status: "neutral" as const, description: "勾选中的课程" },
+    },
+    {
+      id: "selection-status",
+      title: "选课阶段",
+      value: "第一轮",
+      trend: {
+        direction: TrendDirection.NEUTRAL,
+        value: "0",
+        isVisible: false,
       },
+      footer: { status: "positive" as const, description: "正在进行中" },
     },
   ];
 
-  const handleSelectCourse = (courseId: string) => {
-    setCourses((prev) =>
-      prev.map((course) =>
-        course.id === courseId
-          ? { ...course, isSelected: !course.isSelected }
-          : course,
-      ),
-    );
+  // --- 交互处理 ---
+  const handleToggleBatch = (id: string, checked: boolean) => {
+    const next = new Set(batchSelection);
+    if (checked) next.add(id);
+    else next.delete(id);
+    setBatchSelection(next);
   };
 
-  const getAvailabilityColor = (available: number, capacity: number) => {
-    const ratio = available / capacity;
-    if (ratio <= 0) return "text-red-600";
-    if (ratio <= 0.2) return "text-orange-600";
-    return "text-green-600";
+  const handleSelectOne = async (courseId: string) => {
+    if (!student?.id) return;
+    await selectCourse(student.id, courseId);
+    setBatchSelection((prev) => {
+      const next = new Set(prev);
+      next.delete(courseId);
+      return next;
+    });
   };
 
-  const getSelectButtonProps = (course: SelectableCourse) => {
-    if (!course.canSelect) {
-      return {
-        disabled: true,
-        variant: "secondary" as const,
-        children: (
-          <div className="flex items-center gap-2">
-            <IconX className="h-4 w-4" />
-            不可选
-          </div>
-        ),
-      };
+  const handleBatchSubmit = async () => {
+    if (!student?.id) return;
+    for (const id of batchSelection) {
+      await selectCourse(student.id, id);
     }
+    setBatchSelection(new Set());
+  };
 
-    if (course.isSelected) {
+  // --- 样式辅助 ---
+  const getAvailabilityInfo = (enrolled: number, capacity: number) => {
+    const ratio = enrolled / capacity;
+    if (ratio >= 1) return { color: "text-red-600", text: "名额已满" };
+    if (ratio >= 0.8)
       return {
-        disabled: false,
-        variant: "destructive" as const,
-        children: (
-          <div className="flex items-center gap-2">
-            <IconMinus className="h-4 w-4" />
-            退选
-          </div>
-        ),
+        color: "text-orange-600",
+        text: `紧张 (余 ${capacity - enrolled})`,
       };
-    }
-
     return {
-      disabled: false,
-      variant: "default" as const,
-      children: (
-        <div className="flex items-center gap-2">
-          <IconPlus className="h-4 w-4" />
-          选课
-        </div>
-      ),
+      color: "text-green-600",
+      text: `充足 (余 ${capacity - enrolled})`,
     };
   };
+
+  const isInitialLoading = !student && user?.id;
 
   return (
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+          {/* 标题栏 */}
+          <div className="px-4 lg:px-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">选课中心</h1>
+              <p className="text-sm text-muted-foreground">
+                欢迎，{user?.username || "正在加载档案..."}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refreshCourses()}
+                disabled={isLoading}
+              >
+                <IconRefresh
+                  className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+                />
+                重载课程
+              </Button>
+              {batchSelection.size > 0 && (
+                <Button
+                  size="sm"
+                  onClick={handleBatchSubmit}
+                  disabled={isLoading}
+                >
+                  <IconPlus className="mr-2 h-4 w-4" />
+                  提交所选 ({batchSelection.size})
+                </Button>
+              )}
+            </div>
+          </div>
+
           {/* 统计卡片 */}
           <SectionCards cardsData={statsCardsData} />
 
-          {/* 选课提醒 */}
+          {/* 选课提醒 (第一版样式) */}
           <div className="px-4 lg:px-6">
-            <Card className="border-orange-200 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-800">
+            <Card className="border-orange-200 bg-orange-50/50 dark:bg-orange-900/10 dark:border-orange-900/50">
               <CardContent className="flex items-center gap-3 p-4">
                 <IconAlertCircle className="h-5 w-5 text-orange-600" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
-                    选课提醒
+                  <p className="text-sm font-bold text-orange-800 dark:text-orange-300">
+                    2024 秋季学期正选阶段
                   </p>
-                  <p className="text-sm text-orange-700 dark:text-orange-300">
-                    选课时间：2024年12月1日 08:00 - 2024年12月15日 18:00 |
-                    本学期建议选择 20-25 学分课程
+                  <p className="text-xs text-orange-700 dark:text-orange-400">
+                    截止时间：2024-12-15
+                    18:00。请确保已完成先修课程认定，避免因时间冲突导致选课失败。
                   </p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* 主要内容 */}
+          {/* 筛选区 */}
+          <div className="px-4 lg:px-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="输入课程名、教师或关键词搜索..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select
+                value={selectedCourseType}
+                onValueChange={setSelectedCourseType}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="全部类型">全部类型</SelectItem>
+                  {Object.entries(CourseTypeDescriptions).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>
+                      {v}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant={filterAvailableOnly ? "default" : "outline"}
+                onClick={() => setFilterAvailableOnly(!filterAvailableOnly)}
+              >
+                仅看有名额
+              </Button>
+            </div>
+          </div>
+
+          {/* 错误展示 */}
+          {error && (
+            <div className="mx-4 lg:mx-6 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between text-red-700 text-sm">
+              <div className="flex items-center gap-2">
+                <IconAlertCircle className="h-4 w-4" />
+                {error}
+              </div>
+              <Button variant="ghost" size="sm" onClick={clearError}>
+                <IconX className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {/* 主要内容 Tabs */}
           <div className="px-4 lg:px-6">
             <Tabs defaultValue="available" className="w-full">
-              <div className="flex items-center justify-between mb-4">
-                <TabsList>
-                  <TabsTrigger value="available">可选课程</TabsTrigger>
-                  <TabsTrigger value="selected">已选课程</TabsTrigger>
-                  <TabsTrigger value="cart">选课购物车</TabsTrigger>
-                </TabsList>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    培养方案
-                  </Button>
-                  <Button size="sm">提交选课</Button>
-                </div>
-              </div>
+              <TabsList className="mb-4">
+                <TabsTrigger value="available">可选课程库</TabsTrigger>
+                <TabsTrigger value="selected">已选结果</TabsTrigger>
+              </TabsList>
 
               <TabsContent value="available" className="space-y-4">
-                {/* 搜索和筛选 */}
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="relative flex-1">
-                    <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                    <Input
-                      placeholder="搜索课程名称或教师..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                    />
+                {isLoading || isInitialLoading ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                    <IconLoader2 className="h-10 w-10 animate-spin mb-4 opacity-20" />
+                    <p>正在获取实时选课名额...</p>
                   </div>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {filteredCourses.map((item) => {
+                      const avail = getAvailabilityInfo(
+                        item.enrolled,
+                        item.capacity,
+                      );
+                      const isConflict = false; // 逻辑预留
+                      const isSelectedInBatch = batchSelection.has(item.id);
 
-                  <Select
-                    value={selectedCourseType}
-                    onValueChange={setSelectedCourseType}
-                  >
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="全部类型">全部类型</SelectItem>
-                      {Object.entries(CourseTypeDescriptions).map(
-                        ([key, value]) => (
-                          <SelectItem key={key} value={key}>
-                            {value}
-                          </SelectItem>
-                        ),
-                      )}
-                    </SelectContent>
-                  </Select>
-
-                  <Button
-                    variant={filterAvailable ? "default" : "outline"}
-                    onClick={() => setFilterAvailable(!filterAvailable)}
-                  >
-                    仅显示可选
-                  </Button>
-                </div>
-
-                {/* 课程列表 */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {filteredCourses.map((course) => (
-                    <Card
-                      key={course.id}
-                      className={`hover:shadow-md transition-shadow bg-linear-to-t from-primary/5 to-card bg-card border-border shadow-sm ${course.isSelected ? "ring-2 ring-primary" : ""}`}
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                              {course.name}
-                              {course.isSelected && (
-                                <Badge className="bg-green-100 text-green-800 text-xs">
-                                  <IconCheck className="h-3 w-3 mr-1" />
-                                  已选
-                                </Badge>
-                              )}
-                            </CardTitle>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                              <div className="flex items-center gap-1">
-                                <IconBook2 className="h-4 w-4" />
-                                <span>{course.credit}学分</span>
+                      return (
+                        <Card
+                          key={item.id}
+                          className={`hover:shadow-md transition-all bg-linear-to-t from-primary/5 to-card border-border ${
+                            isSelectedInBatch ? "ring-2 ring-primary" : ""
+                          }`}
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-3">
+                                <Checkbox
+                                  checked={isSelectedInBatch}
+                                  onCheckedChange={(checked) =>
+                                    handleToggleBatch(item.id, !!checked)
+                                  }
+                                  disabled={item.enrolled >= item.capacity}
+                                />
+                                <div>
+                                  <CardTitle className="text-lg flex items-center gap-2">
+                                    {item.course.name}
+                                  </CardTitle>
+                                  <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                                    <Badge variant="secondary" className="h-5">
+                                      {item.course.credit}学分
+                                    </Badge>
+                                    <span className="flex items-center gap-1">
+                                      <IconUsers className="h-3 w-3" />
+                                      {item.teacherName}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                              <Badge variant="outline" className="text-xs">
-                                {
-                                  CourseTypeDescriptions[
-                                    course.courseType as CourseType
-                                  ]
-                                }
+                              <Badge variant="outline" className="text-[10px]">
+                                {CourseTypeDescriptions[item.course.courseType]}
                               </Badge>
                             </div>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {course.description}
-                        </p>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <p className="text-sm text-muted-foreground line-clamp-2 min-h-10">
+                              {item.course.description || "暂无课程详细描述。"}
+                            </p>
 
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div className="flex items-center gap-2">
-                            <IconUsers className="h-4 w-4 text-muted-foreground" />
-                            <span>教师: {course.teacher}</span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <IconMapPin className="h-4 w-4 text-muted-foreground" />
-                            <span>教室: {course.classroom}</span>
-                          </div>
-
-                          <div className="flex items-center gap-2 col-span-2">
-                            <IconClock className="h-4 w-4 text-muted-foreground" />
-                            <span>{course.time}</span>
-                          </div>
-                        </div>
-
-                        {/* 选课状态 */}
-                        <div className="space-y-2 pt-2 border-t">
-                          <div className="flex justify-between items-center text-sm">
-                            <span>课程容量:</span>
-                            <span
-                              className={getAvailabilityColor(
-                                course.available,
-                                course.capacity,
-                              )}
-                            >
-                              <strong>{course.available}</strong>/
-                              {course.capacity} 可选
-                            </span>
-                          </div>
-
-                          {/* 先修课程 */}
-                          {course.prerequisites.length > 0 && (
-                            <div className="text-sm">
-                              <span className="text-muted-foreground">
-                                先修课程:{" "}
-                              </span>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {course.prerequisites.map((prereq, index) => (
-                                  <Badge
-                                    key={index}
-                                    variant="outline"
-                                    className="text-xs"
-                                  >
-                                    {prereq}
-                                  </Badge>
-                                ))}
+                            <div className="grid grid-cols-2 gap-3 text-sm border-t pt-4">
+                              <div className="flex items-center gap-2">
+                                <IconMapPin className="h-4 w-4 text-primary/60" />
+                                <span>{item.classroom}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <IconClock className="h-4 w-4 text-primary/60" />
+                                <span className="truncate">
+                                  {item.timeSchedule}
+                                </span>
                               </div>
                             </div>
-                          )}
 
-                          {/* 时间冲突提醒 */}
-                          {course.conflicts.length > 0 && (
-                            <div className="text-sm text-orange-600">
-                              <span className="flex items-center gap-1">
-                                <IconAlertCircle className="h-3 w-3" />
-                                与以下课程时间冲突:
-                              </span>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {course.conflicts.map((conflict, index) => (
-                                  <Badge
-                                    key={index}
-                                    variant="destructive"
-                                    className="text-xs"
-                                  >
-                                    {conflict}
-                                  </Badge>
-                                ))}
+                            {/* 选课状态栏 */}
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">
+                                  选课容量
+                                </span>
+                                <span className={`font-bold ${avail.color}`}>
+                                  {avail.text} ({item.enrolled}/{item.capacity})
+                                </span>
+                              </div>
+                              <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className={`h-full transition-all ${item.enrolled >= item.capacity ? "bg-red-500" : "bg-primary"}`}
+                                  style={{
+                                    width: `${(item.enrolled / item.capacity) * 100}%`,
+                                  }}
+                                />
                               </div>
                             </div>
-                          )}
 
-                          {/* 不可选原因 */}
-                          {!course.canSelect && course.selectReason && (
-                            <div className="text-sm text-red-600">
-                              <span className="flex items-center gap-1">
-                                <IconX className="h-3 w-3" />
-                                {course.selectReason}
-                              </span>
+                            {/* 冲突提醒 (逻辑预留) */}
+                            {isConflict && (
+                              <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-2 rounded">
+                                <IconX className="h-3 w-3" />{" "}
+                                与“数据结构”时间冲突
+                              </div>
+                            )}
+
+                            <div className="flex justify-end gap-2 pt-2">
+                              <Button
+                                size="sm"
+                                className="w-full sm:w-auto"
+                                disabled={
+                                  item.enrolled >= item.capacity || isLoading
+                                }
+                                onClick={() => handleSelectOne(item.id)}
+                              >
+                                {item.enrolled >= item.capacity
+                                  ? "已选满"
+                                  : "立即选课"}
+                              </Button>
                             </div>
-                          )}
-                        </div>
-
-                        {/* 操作按钮 */}
-                        <div className="flex justify-end pt-2">
-                          {course.isSelected ? (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button {...getSelectButtonProps(course)} />
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>退选课程</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    确定要退选《{course.name}
-                                    》吗？退选后需要重新选课。
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>取消</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() =>
-                                      handleSelectCourse(course.id)
-                                    }
-                                    className="bg-red-700 hover:bg-red-900"
-                                  >
-                                    确认退选
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          ) : (
-                            <Button
-                              {...getSelectButtonProps(course)}
-                              onClick={() =>
-                                course.canSelect &&
-                                handleSelectCourse(course.id)
-                              }
-                            />
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                {filteredCourses.length === 0 && (
-                  <Card className="bg-card border-border shadow-sm">
-                    <CardContent className="flex flex-col items-center justify-center py-12">
-                      <IconBook2 className="h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground text-center">
-                        没有找到符合条件的课程
-                      </p>
-                    </CardContent>
-                  </Card>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
                 )}
               </TabsContent>
 
-              <TabsContent value="selected" className="space-y-4">
-                <Card className="bg-card border-border shadow-sm">
-                  <CardHeader>
-                    <CardTitle>已选课程清单</CardTitle>
-                    <CardDescription>
-                      本学期已选择的课程列表，总计 {selectedCredits} 学分
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {selectedCourses.length > 0 ? (
-                      <div className="space-y-4">
-                        {selectedCourses.map((course) => (
-                          <div
-                            key={course.id}
-                            className="flex items-center justify-between p-4 border rounded-lg bg-muted/30 dark:bg-muted/50 border-border"
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3">
-                                <h4 className="font-medium">{course.name}</h4>
-                                <Badge variant="outline">
-                                  {
-                                    CourseTypeDescriptions[
-                                      course.courseType as CourseType
-                                    ]
-                                  }
-                                </Badge>
-                                <Badge className="bg-green-100 text-green-800">
-                                  {course.credit}学分
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {course.teacher} | {course.time} |{" "}
-                                {course.classroom}
-                              </p>
-                            </div>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleSelectCourse(course.id)}
-                            >
-                              退选
-                            </Button>
-                          </div>
+              <TabsContent value="selected">
+                <Card className="border-none shadow-sm">
+                  <Table>
+                    <TableHeader className="bg-muted/50">
+                      <TableRow>
+                        <TableHead>课程名称</TableHead>
+                        <TableHead>时间</TableHead>
+                        <TableHead>地点</TableHead>
+                        <TableHead>教师</TableHead>
+                        <TableHead>学分</TableHead>
+                        <TableHead className="text-right">操作</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {availableCourses
+                        .filter((c) => c.status === "ongoing")
+                        .map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">
+                              {item.course.name}
+                              <Badge
+                                variant="outline"
+                                className="ml-2 text-[10px]"
+                              >
+                                已入选
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {item.timeSchedule}
+                            </TableCell>
+                            <TableCell>{item.classroom}</TableCell>
+                            <TableCell>{item.teacherName}</TableCell>
+                            <TableCell>{item.course.credit}</TableCell>
+                            <TableCell className="text-right">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <IconMinus className="h-4 w-4 mr-1" /> 退选
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      确认退选课程？
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      您正在申请退选《{item.course.name}
+                                      》。退选后，该名额将立即释放给其他同学。
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>取消</AlertDialogCancel>
+                                    <AlertDialogAction className="bg-red-600 hover:bg-red-700">
+                                      确认释放名额
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        还没有选择任何课程
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="cart" className="space-y-4">
-                <Card className="bg-card border-border shadow-sm">
-                  <CardHeader>
-                    <CardTitle>选课购物车</CardTitle>
-                    <CardDescription>
-                      临时保存感兴趣的课程，可以批量操作
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      购物车功能开发中...
-                    </div>
-                  </CardContent>
+                      {availableCourses.filter((c) => c.status === "ongoing")
+                        .length === 0 && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={6}
+                            className="text-center py-10 text-muted-foreground"
+                          >
+                            暂无已选定的课程，快去“可选课程库”看看吧
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </Card>
               </TabsContent>
             </Tabs>

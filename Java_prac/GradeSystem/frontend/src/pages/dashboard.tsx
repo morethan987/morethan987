@@ -2,7 +2,11 @@ import { useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { GeneralView } from "./general";
 import { SettingsView } from "./settings";
-import { CourseView, GradeView, SelectCourseView } from "./student";
+import {
+  StudentCourseView,
+  StudentGradeView,
+  StudentSelectCourseView,
+} from "./student";
 import { TeacherCourses, TeacherGradeInput, TeacherGradeView } from "./teacher";
 import { NotFoundPage } from "./not-found";
 import { SiteHeader } from "@/components/site-header";
@@ -155,11 +159,11 @@ export function Dashboard() {
       case PAGE_IDS.SETTINGS:
         return <SettingsView />;
       case PAGE_IDS.STU_GRADES:
-        return <GradeView />;
+        return <StudentGradeView />;
       case PAGE_IDS.STU_COURSES:
-        return <CourseView />;
+        return <StudentCourseView />;
       case PAGE_IDS.STU_SELECT_COURSES:
-        return <SelectCourseView />;
+        return <StudentSelectCourseView />;
       case PAGE_IDS.TEA_COURSES:
         return <TeacherCourses />;
       case PAGE_IDS.TEA_GRADE_INPUT:

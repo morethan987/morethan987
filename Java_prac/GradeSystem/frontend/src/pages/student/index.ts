@@ -1,3 +1,3 @@
-export { CourseView } from "./course";
-export { GradeView } from "./grade";
-export { SelectCourseView } from "./select_course";
+export { StudentCourseView } from "./course";
+export { StudentGradeView } from "./grade";
+export { StudentSelectCourseView } from "./select_course";
