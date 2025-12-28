@@ -1,0 +1,53 @@
+# 测试环境配置文件
+spring:
+  # 数据源配置 - 使用H2内存数据库进行测试
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # 测试时自动创建和删除表
+    show-sql: true          # 显示SQL语句便于调试
+    properties:
+      hibernate:
+        format_sql: true    # 格式化SQL输出
+        dialect: org.hibernate.dialect.H2Dialect
+    database-platform: org.hibernate.dialect.H2Dialect
+
+  # H2控制台配置（可选，用于调试）
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # 测试时禁用安全配置的某些特性
+  security:
+    user:
+      name: test
+      password: test
+      roles: USER
+
+# 日志配置
+logging:
+  level:
+    com.example.GradeSystemBackend: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    root: INFO
+
+# 服务器配置
+server:
+  port: 0  # 随机端口，避免端口冲突
+
+# 测试专用配置
+test:
+  # 可以添加测试专用的配置项
+  mock-data:
+    enabled: true
+  performance:
+    timeout: 5000
