@@ -224,6 +224,9 @@ public class PermissionDiscoveryService {
                     case "role":
                         groups.rolePermissions.add(permission);
                         break;
+                    case "teaching_class":
+                        groups.teachingClassPermissions.add(permission);
+                        break;
                     default:
                         groups.otherPermissions.add(permission);
                         break;
@@ -269,6 +272,7 @@ public class PermissionDiscoveryService {
         public Set<String> coursePermissions = new HashSet<>();
         public Set<String> gradePermissions = new HashSet<>();
         public Set<String> rolePermissions = new HashSet<>();
+        public Set<String> teachingClassPermissions = new HashSet<>();
         public Set<String> otherPermissions = new HashSet<>();
 
         public Set<String> getAllPermissions() {
@@ -280,6 +284,7 @@ public class PermissionDiscoveryService {
             allPermissions.addAll(coursePermissions);
             allPermissions.addAll(gradePermissions);
             allPermissions.addAll(rolePermissions);
+            allPermissions.addAll(teachingClassPermissions);
             allPermissions.addAll(otherPermissions);
             return allPermissions;
         }
@@ -300,6 +305,7 @@ public class PermissionDiscoveryService {
                 coursePermissions.size(),
                 gradePermissions.size(),
                 rolePermissions.size(),
+                teachingClassPermissions.size(),
                 otherPermissions.size()
             );
         }

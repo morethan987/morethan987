@@ -22,7 +22,7 @@ public class GradeController {
     /**
      * 获取学生成绩列表
      */
-    @PreAuthorize("hasAuthority('grade:view')")
+    @PreAuthorize("hasAnyAuthority('grade:view')")
     @GetMapping("/student/{studentId}")
     public ResponseEntity<List<GradeDTO>> getStudentGrades(
         @PathVariable UUID studentId,
@@ -41,7 +41,7 @@ public class GradeController {
     /**
      * 获取学生成绩统计信息
      */
-    @PreAuthorize("hasAuthority('grade:view')")
+    @PreAuthorize("hasAnyAuthority('grade:view')")
     @GetMapping("/student/{studentId}/stats")
     public ResponseEntity<Map<String, Object>> getStudentGradeStats(
         @PathVariable UUID studentId
@@ -56,7 +56,7 @@ public class GradeController {
     /**
      * 获取学生指定学期的成绩统计
      */
-    @PreAuthorize("hasAuthority('grade:view')")
+    @PreAuthorize("hasAnyAuthority('grade:view')")
     @GetMapping("/student/{studentId}/semester/{semester}/stats")
     public ResponseEntity<Map<String, Object>> getStudentSemesterStats(
         @PathVariable UUID studentId,
@@ -73,7 +73,7 @@ public class GradeController {
     /**
      * 获取学生所有学期列表
      */
-    @PreAuthorize("hasAuthority('grade:view')")
+    @PreAuthorize("hasAnyAuthority('grade:view')")
     @GetMapping("/student/{studentId}/semesters")
     public ResponseEntity<List<String>> getStudentSemesters(
         @PathVariable UUID studentId
@@ -86,7 +86,7 @@ public class GradeController {
     /**
      * 获取单个成绩详情
      */
-    @PreAuthorize("hasAuthority('grade:view')")
+    @PreAuthorize("hasAnyAuthority('grade:view')")
     @GetMapping("/{gradeId}")
     public ResponseEntity<GradeDTO> getGradeById(@PathVariable UUID gradeId) {
         printCurrentUser("getGradeById");
@@ -101,7 +101,7 @@ public class GradeController {
     /**
      * 教师录入/更新成绩
      */
-    @PreAuthorize("hasAuthority('grade:edit')")
+    @PreAuthorize("hasAnyAuthority('grade:edit')")
     @PutMapping("/{gradeId}")
     public ResponseEntity<GradeDTO> updateGrade(
         @PathVariable UUID gradeId,

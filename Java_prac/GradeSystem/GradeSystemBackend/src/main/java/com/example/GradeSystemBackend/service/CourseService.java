@@ -2,13 +2,16 @@ package com.example.GradeSystemBackend.service;
 
 import com.example.GradeSystemBackend.domain.course.Course;
 import com.example.GradeSystemBackend.domain.course.CourseType;
+import com.example.GradeSystemBackend.domain.info.UserProfile;
 import com.example.GradeSystemBackend.domain.student.Student;
 import com.example.GradeSystemBackend.domain.teachingclass.TeachingClass;
+import com.example.GradeSystemBackend.domain.teachingclass.TeachingClassStatus;
 import com.example.GradeSystemBackend.dto.CourseDTO;
 import com.example.GradeSystemBackend.dto.TeachingClassDTO;
 import com.example.GradeSystemBackend.repository.CourseRepository;
 import com.example.GradeSystemBackend.repository.StudentRepository;
 import com.example.GradeSystemBackend.repository.TeachingClassRepository;
+import com.example.GradeSystemBackend.repository.UserProfileRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +30,9 @@ public class CourseService {
 
     @Autowired
     private TeachingClassRepository teachingClassRepository;
+
+    @Autowired
+    private UserProfileRepository userProfileRepository;
 
     /**
      * 查询某学生当前学期可选课程数量
@@ -137,63 +143,57 @@ public class CourseService {
     /**
      * 学生选课
      */
-    public boolean selectCourse(UUID studentId, UUID teachingClassId) {
-        // 查找学生和教学班
-        Student student = studentRepository.findById(studentId).orElse(null);
+    public void selectCourse(UUID studentId, UUID teachingClassId) {
+        // 1. 查找学生和教学班
+        Student student = studentRepository
+            .findById(studentId)
+            .orElseThrow(() -> new BusinessException("找不到该学生信息"));
         TeachingClass teachingClass = teachingClassRepository
             .findById(teachingClassId)
-            .orElse(null);
+            .orElseThrow(() -> new BusinessException("该教学班不存在"));
 
-        if (student == null || teachingClass == null) {
-            return false;
+        // 2. 检查人数是否已满 (你原代码漏掉了这个关键逻辑，建议加上)
+        if (teachingClass.getEnrolledCount() >= teachingClass.getCapacity()) {
+            throw new BusinessException("该课程选课人数已满");
         }
 
-        // 检查学生是否已经选修了该教学班
+        // 3. 检查学生是否已经选修了该教学班
         boolean alreadyEnrolled = teachingClassRepository
             .findByStudentIdDirect(studentId)
             .stream()
             .anyMatch(tc -> tc.getId().equals(teachingClassId));
 
         if (alreadyEnrolled) {
-            return false;
+            throw new BusinessException("你已经选过这门课了，请勿重复选择");
         }
 
-        // 添加学生到教学班（使用TeachingClass的addStudent方法维护双向关系）
+        // 4. 执行选课逻辑
         teachingClass.addStudent(student);
         teachingClassRepository.save(teachingClass);
-
-        return true;
     }
 
     /**
      * 学生退课
      */
-    public boolean dropCourse(UUID studentId, UUID teachingClassId) {
-        // 查找学生和教学班
-        Student student = studentRepository.findById(studentId).orElse(null);
+    public void dropCourse(UUID studentId, UUID teachingClassId) {
+        Student student = studentRepository
+            .findById(studentId)
+            .orElseThrow(() -> new BusinessException("找不到学生信息"));
         TeachingClass teachingClass = teachingClassRepository
             .findById(teachingClassId)
-            .orElse(null);
+            .orElseThrow(() -> new BusinessException("找不到课程信息"));
 
-        if (student == null || teachingClass == null) {
-            return false;
-        }
-
-        // 检查学生是否选修了该教学班
         boolean isEnrolled = teachingClassRepository
             .findByStudentIdDirect(studentId)
             .stream()
             .anyMatch(tc -> tc.getId().equals(teachingClassId));
 
         if (!isEnrolled) {
-            return false;
+            throw new BusinessException("你并未选修该课程，无法退课");
         }
 
-        // 从教学班中移除学生（使用TeachingClass的removeStudent方法维护双向关系）
         teachingClass.removeStudent(student);
         teachingClassRepository.save(teachingClass);
-
-        return true;
     }
 
     /**
@@ -219,11 +219,13 @@ public class CourseService {
         dto.setName(teachingClass.getName());
         dto.setCourse(convertToCourseDTO(teachingClass.getCourse()));
 
-        if (teachingClass.getTeacher() != null) {
-            dto.setTeacherName(
-                teachingClass.getTeacher().getUser().getUsername()
-            );
-        }
+        UserProfile teacherProfile = userProfileRepository
+            .findByUser(teachingClass.getTeacher().getUser())
+            .orElse(null);
+
+        dto.setTeacherName(
+            teacherProfile != null ? teacherProfile.getRealName() : "未知教师"
+        );
 
         dto.setClassroom(teachingClass.getClassroom());
         dto.setTimeSchedule(teachingClass.getTimeSchedule());
@@ -232,9 +234,9 @@ public class CourseService {
 
         // 转换状态枚举为字符串
         if (teachingClass.getStatus() != null) {
-            dto.setStatus(teachingClass.getStatus().name().toLowerCase());
+            dto.setStatus(teachingClass.getStatus());
         } else {
-            dto.setStatus("ongoing");
+            dto.setStatus(TeachingClassStatus.ACTIVE);
         }
 
         // 根据学期和入学年份生成学期名称
@@ -278,5 +280,13 @@ public class CourseService {
         dto.setSemester(course.getSemester());
         dto.setCourseType(course.getCourseType());
         return dto;
+    }
+
+    // 业务异常类
+    public class BusinessException extends RuntimeException {
+
+        public BusinessException(String message) {
+            super(message);
+        }
     }
 }

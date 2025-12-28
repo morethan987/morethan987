@@ -234,7 +234,8 @@ public class RolePermissionInit implements ApplicationRunner {
         addPermissionsToSet(
             studentPermissions,
             groups.coursePermissions,
-            "view"
+            "view",
+            "select"
         );
         addPermissionsToSet(
             studentPermissions,
@@ -324,6 +325,8 @@ public class RolePermissionInit implements ApplicationRunner {
                 return "成绩";
             case "role":
                 return "角色";
+            case "teaching_class":
+                return "教学班";
             default:
                 return module;
         }

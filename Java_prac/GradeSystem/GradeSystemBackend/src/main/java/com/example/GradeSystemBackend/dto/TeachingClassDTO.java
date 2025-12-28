@@ -1,8 +1,10 @@
 package com.example.GradeSystemBackend.dto;
 
+import com.example.GradeSystemBackend.domain.teachingclass.TeachingClassStatus;
 import java.util.UUID;
 
 public class TeachingClassDTO {
+
     private UUID id;
     private String name;
     private CourseDTO course;
@@ -11,15 +13,24 @@ public class TeachingClassDTO {
     private String timeSchedule;
     private Integer capacity;
     private Integer enrolled;
-    private String status; // "ongoing", "completed", "upcoming"
+    private TeachingClassStatus status;
     private String semesterName;
 
     // Constructors
     public TeachingClassDTO() {}
 
-    public TeachingClassDTO(UUID id, String name, CourseDTO course, String teacherName,
-                           String classroom, String timeSchedule, Integer capacity,
-                           Integer enrolled, String status, String semesterName) {
+    public TeachingClassDTO(
+        UUID id,
+        String name,
+        CourseDTO course,
+        String teacherName,
+        String classroom,
+        String timeSchedule,
+        Integer capacity,
+        Integer enrolled,
+        TeachingClassStatus status,
+        String semesterName
+    ) {
         this.id = id;
         this.name = name;
         this.course = course;
@@ -97,11 +108,11 @@ public class TeachingClassDTO {
         this.enrolled = enrolled;
     }
 
-    public String getStatus() {
+    public TeachingClassStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(TeachingClassStatus status) {
         this.status = status;
     }
 

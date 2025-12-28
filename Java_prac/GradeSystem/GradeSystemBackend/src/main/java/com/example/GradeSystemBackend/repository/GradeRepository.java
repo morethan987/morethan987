@@ -263,7 +263,7 @@ public interface GradeRepository extends JpaRepository<Grade, UUID> {
 
     // 获取学生所有学期列表
     @Query(
-        "SELECT DISTINCT CAST(c.semester AS string) FROM Grade g JOIN g.course c WHERE g.student.id = :studentId ORDER BY c.semester"
+        "SELECT DISTINCT CAST(c.semester AS string) FROM Grade g JOIN g.course c WHERE g.student.id = :studentId ORDER BY CAST(c.semester AS string)"
     )
     List<String> findDistinctSemestersByStudentId(
         @Param("studentId") UUID studentId
