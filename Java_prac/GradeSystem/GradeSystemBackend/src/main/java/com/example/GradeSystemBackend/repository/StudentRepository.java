@@ -87,49 +87,6 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
     // 查找在读学生
     List<Student> findByStatusOrderByStudentCodeAsc(StudentStatus status);
 
-    // === GPA相关查询 ===
-
-    // 根据GPA范围查找学生
-    List<Student> findByGpaBetween(Double minGpa, Double maxGpa);
-
-    // 查找GPA大于等于指定值的学生
-    List<Student> findByGpaGreaterThanEqual(Double gpa);
-
-    // 查找GPA小于指定值的学生
-    List<Student> findByGpaLessThan(Double gpa);
-
-    // 按GPA降序排序查找学生
-    @Query(
-        "SELECT s FROM Student s WHERE s.gpa IS NOT NULL ORDER BY s.gpa DESC"
-    )
-    List<Student> findAllOrderByGpaDesc();
-
-    // 查找优秀学生（GPA >= 3.5）
-    @Query("SELECT s FROM Student s WHERE s.gpa >= 3.5 ORDER BY s.gpa DESC")
-    List<Student> findExcellentStudents();
-
-    // === 学分相关查询 ===
-
-    // 根据完成学分范围查找学生
-    List<Student> findByCompletedCreditsBetween(
-        Integer minCredits,
-        Integer maxCredits
-    );
-
-    // 查找符合毕业条件的学生
-    @Query(
-        "SELECT s FROM Student s WHERE s.status = 'ENROLLED' AND s.completedCredits >= s.totalCredits AND s.gpa >= 2.0"
-    )
-    List<Student> findGraduationEligibleStudents();
-
-    // 查找学分进度低于指定百分比的学生
-    @Query(
-        "SELECT s FROM Student s WHERE s.totalCredits > 0 AND (s.completedCredits * 1.0 / s.totalCredits) < :progressThreshold"
-    )
-    List<Student> findStudentsWithLowProgress(
-        @Param("progressThreshold") Double progressThreshold
-    );
-
     // === 导师相关查询 ===
 
     // 根据导师查找学生
@@ -161,30 +118,6 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
         "SELECT COUNT(s) FROM Student s WHERE s.status IN ('ENROLLED', 'EXCHANGE', 'DEFERRED')"
     )
     long countActiveStudents();
-
-    // === 平均值计算 ===
-
-    // 计算所有学生的平均GPA
-    @Query("SELECT AVG(s.gpa) FROM Student s WHERE s.gpa IS NOT NULL")
-    Double calculateAverageGpa();
-
-    // 根据专业计算平均GPA
-    @Query(
-        "SELECT AVG(s.gpa) FROM Student s WHERE s.major = :major AND s.gpa IS NOT NULL"
-    )
-    Double calculateAverageGpaByMajor(@Param("major") String major);
-
-    // 根据班级计算平均GPA
-    @Query(
-        "SELECT AVG(s.gpa) FROM Student s WHERE s.className = :className AND s.gpa IS NOT NULL"
-    )
-    Double calculateAverageGpaByClass(@Param("className") String className);
-
-    // 计算平均完成学分
-    @Query(
-        "SELECT AVG(s.completedCredits) FROM Student s WHERE s.completedCredits IS NOT NULL"
-    )
-    Double calculateAverageCompletedCredits();
 
     // === 排序查询 ===
 
@@ -224,15 +157,6 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
         StudentStatus status
     );
 
-    // 查找指定专业中GPA优秀的学生
-    @Query(
-        "SELECT s FROM Student s WHERE s.major = :major AND s.gpa >= :minGpa ORDER BY s.gpa DESC"
-    )
-    List<Student> findExcellentStudentsByMajor(
-        @Param("major") String major,
-        @Param("minGpa") Double minGpa
-    );
-
     // === 时间相关查询 ===
 
     // 查找在指定时间之后创建的学生记录
@@ -250,19 +174,9 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
 
     // === 特殊查询 ===
 
-    // 查找没有设置GPA的学生
-    @Query("SELECT s FROM Student s WHERE s.gpa IS NULL")
-    List<Student> findStudentsWithoutGpa();
-
     // 查找没有设置导师的学生
     @Query("SELECT s FROM Student s WHERE s.advisor IS NULL OR s.advisor = ''")
     List<Student> findStudentsWithoutAdvisor();
-
-    // 查找学分进度为100%的学生
-    @Query(
-        "SELECT s FROM Student s WHERE s.totalCredits > 0 AND s.completedCredits >= s.totalCredits"
-    )
-    List<Student> findStudentsWithCompleteCredits();
 
     // 检查用户是否已经是学生
     boolean existsByUser(User user);
@@ -270,4 +184,78 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
     // 检查用户ID是否已经是学生
     @Query("SELECT COUNT(s) > 0 FROM Student s WHERE s.user.id = :userId")
     boolean existsByUserId(@Param("userId") UUID userId);
+
+    // === 教学班相关查询 ===
+
+    // 根据教学班ID查找学生
+    @Query(
+        "SELECT s FROM Student s JOIN s.teachingClasses tc WHERE tc.id = :teachingClassId"
+    )
+    List<Student> findByTeachingClassId(
+        @Param("teachingClassId") UUID teachingClassId
+    );
+
+    // 根据多个教学班ID查找学生
+    @Query(
+        "SELECT s FROM Student s JOIN s.teachingClasses tc WHERE tc.id IN :teachingClassIds"
+    )
+    List<Student> findByTeachingClassIds(
+        @Param("teachingClassIds") List<UUID> teachingClassIds
+    );
+
+    // 查找选修了某课程教学班的学生
+    @Query(
+        "SELECT DISTINCT s FROM Student s " +
+            "JOIN s.teachingClasses tc " +
+            "WHERE tc.course.id = :courseId"
+    )
+    List<Student> findByCourseId(@Param("courseId") UUID courseId);
+
+    // 查找选修了某教师课程的学生
+    @Query(
+        "SELECT DISTINCT s FROM Student s " +
+            "JOIN s.teachingClasses tc " +
+            "WHERE tc.teacher.id = :teacherId"
+    )
+    List<Student> findByTeacherId(@Param("teacherId") UUID teacherId);
+
+    // 根据教学班ID统计学生数量
+    @Query(
+        "SELECT COUNT(s) FROM Student s JOIN s.teachingClasses tc WHERE tc.id = :teachingClassId"
+    )
+    long countByTeachingClassId(@Param("teachingClassId") UUID teachingClassId);
+
+    // 查找没有选修任何教学班的学生
+    @Query(
+        "SELECT s FROM Student s WHERE SIZE(s.teachingClasses) = 0 OR s.teachingClasses IS NULL"
+    )
+    List<Student> findStudentsWithoutTeachingClasses();
+
+    // 查找选修了特定数量教学班的学生
+    @Query("SELECT s FROM Student s WHERE SIZE(s.teachingClasses) >= :minCount")
+    List<Student> findStudentsWithMinTeachingClasses(
+        @Param("minCount") int minCount
+    );
+
+    // 检查学生是否选修了某教学班
+    @Query(
+        "SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END " +
+            "FROM Student s " +
+            "JOIN s.teachingClasses tc " +
+            "WHERE s.id = :studentId AND tc.id = :teachingClassId"
+    )
+    boolean isStudentInTeachingClass(
+        @Param("studentId") UUID studentId,
+        @Param("teachingClassId") UUID teachingClassId
+    );
+
+    // 根据学号查找学生的教学班列表
+    @Query(
+        "SELECT tc FROM TeachingClass tc JOIN tc.students s WHERE s.studentCode = :studentCode"
+    )
+    List<
+        com.example.GradeSystemBackend.domain.teachingclass.TeachingClass
+    > findTeachingClassesByStudentCode(
+        @Param("studentCode") String studentCode
+    );
 }

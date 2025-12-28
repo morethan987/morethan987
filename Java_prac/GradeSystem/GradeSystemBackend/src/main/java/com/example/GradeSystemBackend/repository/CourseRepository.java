@@ -1,6 +1,7 @@
 package com.example.GradeSystemBackend.repository;
 
 import com.example.GradeSystemBackend.domain.course.Course;
+import com.example.GradeSystemBackend.domain.course.CourseType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,4 +32,14 @@ public interface CourseRepository
 
     // 根据名称统计课程数量
     long countByNameContainingIgnoreCase(String name);
+
+    // 根据学期统计课程数量
+    long countBySemester(int semester);
+
+    // 根据课程类型统计课程数量
+    long countByCourseType(CourseType courseType);
+
+    // 统计某学期的总学分
+    @Query("SELECT SUM(c.credit) FROM Course c WHERE c.semester = :semester")
+    Double sumCreditsBySemester(int semester);
 }

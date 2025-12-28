@@ -113,4 +113,159 @@ public interface GradeRepository extends JpaRepository<Grade, UUID> {
 
     // 查找某课程中缺少期末成绩的记录
     List<Grade> findByCourseAndFinalScoreIsNull(Course course);
+
+    // 计算某学生总学分
+    @Query(
+        """
+            select
+                sum(c.credit)
+            from Grade g
+            join g.course c
+            where g.student.id = :studentId
+              and g.finalScore is not null
+        """
+    )
+    Double calculateStudentTotalCredits(@Param("studentId") UUID studentId);
+
+    // 计算某学生某学期总学分
+    @Query(
+        """
+            select
+                sum(c.credit)
+            from Grade g
+            join g.course c
+            where g.student.id = :studentId
+              and c.semester = :semester
+              and g.finalScore is not null
+        """
+    )
+    Double calculateStudentTotalCreditsBySemester(
+        @Param("studentId") UUID studentId,
+        @Param("semester") String semester
+    );
+
+    // 计算某学生某学期之前的学期的总学分
+    @Query(
+        """
+            select
+                sum(c.credit)
+            from Grade g
+            join g.course c
+            where g.student.id = :studentId
+              and c.semester < :semester
+              and g.finalScore is not null
+        """
+    )
+    Double calculateStudentTotalCreditsBeforeSemester(
+        @Param("studentId") UUID studentId,
+        @Param("semester") String semester
+    );
+
+    // 计算某学生加权总分
+    @Query(
+        """
+            select
+                sum(g.finalScore * c.credit)
+            from Grade g
+            join g.course c
+            where g.student.id = :studentId
+              and g.finalScore is not null
+        """
+    )
+    Double calculateStudentWeightedScore(@Param("studentId") UUID studentId);
+
+    // 计算某学生某学期加权总分
+    @Query(
+        """
+            select
+                sum(g.finalScore * c.credit)
+            from Grade g
+            join g.course c
+            where g.student.id = :studentId
+              and c.semester = :semester
+              and g.finalScore is not null
+        """
+    )
+    Double calculateStudentWeightedScoreBySemester(
+        @Param("studentId") UUID studentId,
+        @Param("semester") String semester
+    );
+
+    // 计算某学生某学期之前的学期的加权总分
+    @Query(
+        """
+            select
+                sum(g.finalScore * c.credit)
+            from Grade g
+            join g.course c
+            where g.student.id = :studentId
+              and c.semester < :semester
+              and g.finalScore is not null
+        """
+    )
+    Double calculateStudentWeightedScoreBeforeSemester(
+        @Param("studentId") UUID studentId,
+        @Param("semester") String semester
+    );
+
+    // 计算某学生的加权总GPA
+    @Query(
+        """
+            select
+                sum(g.gpa * c.credit)
+            from Grade g
+            join g.course c
+            where g.student.id = :studentId
+              and g.gpa is not null
+        """
+    )
+    Double calculateStudentWeightedGpa(@Param("studentId") UUID studentId);
+
+    // 计算某学生某学期加权总gpa
+    @Query(
+        """
+            select
+                sum(g.gpa * c.credit)
+            from Grade g
+            join g.course c
+            where g.student.id = :studentId
+              and c.semester = :semester
+              and g.gpa is not null
+        """
+    )
+    Double calculateStudentWeightedGpaBySemester(
+        @Param("studentId") UUID studentId,
+        @Param("semester") String semester
+    );
+
+    // 计算某学生某学期之前的学期的加权总gpa
+    @Query(
+        """
+            select
+                sum(g.gpa * c.credit)
+            from Grade g
+            join g.course c
+            where g.student.id = :studentId
+              and c.semester < :semester
+              and g.gpa is not null
+        """
+    )
+    Double calculateStudentWeightedGpaBeforeSemester(
+        @Param("studentId") UUID studentId,
+        @Param("semester") String semester
+    );
+
+    // 统计某学生通过的课程数
+    @Query(
+        "SELECT COUNT(g) FROM Grade g WHERE g.student.id = :studentId AND g.finalScore >= 60"
+    )
+    Long countPassedCoursesByStudentId(@Param("studentId") UUID studentId);
+
+    // 获取学生所有学期列表
+    @Query(
+        "SELECT DISTINCT CAST(c.semester AS string) FROM Grade g JOIN g.course c WHERE g.student.id = :studentId ORDER BY c.semester"
+    )
+    List<String> findDistinctSemestersByStudentId(
+        @Param("studentId") UUID studentId
+    );
 }
