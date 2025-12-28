@@ -1,8 +1,10 @@
 package com.example.GradeSystemBackend.domain.student;
 
 import com.example.GradeSystemBackend.domain.auth.User;
+import com.example.GradeSystemBackend.domain.teachingclass.TeachingClass;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -26,8 +28,8 @@ public class Student {
     @Column(nullable = true, length = 50)
     private String className;
 
-    @Column(nullable = true)
-    private Integer enrollmentYear;
+    @Column(nullable = false)
+    private Integer enrollmentYear = 2023;
 
     @Column(nullable = false)
     private Integer currentSemester = 1;
@@ -36,14 +38,8 @@ public class Student {
     @Column(nullable = false)
     private StudentStatus status = StudentStatus.ENROLLED;
 
-    @Column(nullable = true, precision = 3)
-    private Double gpa;
-
     @Column(nullable = true)
-    private Integer totalCredits = 128;
-
-    @Column(nullable = true)
-    private Integer completedCredits = 0;
+    private Double totalCredits = 128.0;
 
     @Column(nullable = true, length = 100)
     private String advisor;
@@ -56,6 +52,9 @@ public class Student {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @ManyToMany(mappedBy = "students")
+    private Set<TeachingClass> teachingClasses;
 
     // Constructors
     public Student() {}
@@ -144,28 +143,12 @@ public class Student {
         this.status = status;
     }
 
-    public Double getGpa() {
-        return gpa;
-    }
-
-    public void setGpa(Double gpa) {
-        this.gpa = gpa;
-    }
-
-    public Integer getTotalCredits() {
+    public Double getTotalCredits() {
         return totalCredits;
     }
 
-    public void setTotalCredits(Integer totalCredits) {
+    public void setTotalCredits(Double totalCredits) {
         this.totalCredits = totalCredits;
-    }
-
-    public Integer getCompletedCredits() {
-        return completedCredits;
-    }
-
-    public void setCompletedCredits(Integer completedCredits) {
-        this.completedCredits = completedCredits;
     }
 
     public String getAdvisor() {
@@ -202,23 +185,12 @@ public class Student {
         this.updatedAt = updatedAt;
     }
 
-    // Utility methods
-    public Double getCreditsProgress() {
-        if (totalCredits == null || totalCredits == 0) {
-            return 0.0;
-        }
-        return ((double) completedCredits / totalCredits) * 100;
+    public Set<TeachingClass> getTeachingClasses() {
+        return teachingClasses;
     }
 
-    public boolean isGraduationEligible() {
-        return (
-            status == StudentStatus.ENROLLED &&
-            completedCredits != null &&
-            totalCredits != null &&
-            completedCredits >= totalCredits &&
-            gpa != null &&
-            gpa >= 2.0
-        ); // 假设最低毕业GPA为2.0
+    public void setTeachingClasses(Set<TeachingClass> teachingClasses) {
+        this.teachingClasses = teachingClasses;
     }
 
     @PreUpdate

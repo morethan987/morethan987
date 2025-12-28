@@ -36,6 +36,9 @@ public class Grade {
     @Column(nullable = true)
     private Double finalScore;
 
+    @Column(nullable = true)
+    private Double gpa;
+
     // getters / setters
     public UUID getId() {
         return id;
@@ -97,28 +100,47 @@ public class Grade {
         return finalScore;
     }
 
-    @PrePersist
-    @PreUpdate
-    public void calculateFinalScore() {
-        double usual = (usualScore != null) ? usualScore : 0.0;
-        double mid = (midScore != null) ? midScore : 0.0;
-        double experiment = (experimentScore != null) ? experimentScore : 0.0;
-        double finalExam = (finalExamScore != null) ? finalExamScore : 0.0;
-
-        this.finalScore =
-            usual * 0.2 + mid * 0.3 + experiment * 0.1 + finalExam * 0.4;
+    public Double getGpa() {
+        return gpa;
     }
 
-    public Double getGPA() {
-        if (finalScore == null) {
-            return null;
+    @PrePersist
+    @PreUpdate
+    public void calculateScores() {
+        calculateFinalScoreInternal();
+        calculateGPAInternal();
+    }
+
+    private void calculateFinalScoreInternal() {
+        if (
+            usualScore == null ||
+            midScore == null ||
+            experimentScore == null ||
+            finalExamScore == null
+        ) {
+            this.finalScore = null;
+            return;
         }
+
+        this.finalScore =
+            usualScore * 0.2 +
+            midScore * 0.3 +
+            experimentScore * 0.1 +
+            finalExamScore * 0.4;
+    }
+
+    private void calculateGPAInternal() {
+        if (this.finalScore == null) {
+            this.gpa = null;
+            return;
+        }
+
         if (finalScore >= 90) {
-            return 4.0;
+            this.gpa = 4.0;
         } else if (finalScore < 60) {
-            return 0.0;
+            this.gpa = 0.0;
         } else {
-            return 1.0 + (finalScore - 60) * 0.1;
+            this.gpa = 1.0 + (finalScore - 60) * 0.1;
         }
     }
 }
