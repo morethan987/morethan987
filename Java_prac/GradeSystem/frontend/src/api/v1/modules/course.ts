@@ -53,13 +53,10 @@ export const courseApi = {
     studentId: string,
     teachingClassId: string,
   ): Promise<string> => {
-    const params = new URLSearchParams();
-    params.append("studentId", studentId);
-    params.append("teachingClassId", teachingClassId);
-
-    return await client.post("/courses/select", params, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+    return await client.post("/courses/select", null, {
+      params: {
+        studentId,
+        teachingClassId,
       },
     });
   },
@@ -75,11 +72,11 @@ export const courseApi = {
     params.append("studentId", studentId);
     params.append("teachingClassId", teachingClassId);
 
-    return await client.delete("/courses/drop", {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+    return await client.post("/courses/drop", null, {
+      params: {
+        studentId,
+        teachingClassId,
       },
-      data: params,
     });
   },
 

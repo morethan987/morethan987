@@ -36,16 +36,21 @@ import {
   IconAlertCircle,
   IconLoader2,
 } from "@tabler/icons-react";
-import { CourseType, CourseTypeDescriptions } from "@/types/course";
+import {
+  CourseType,
+  CourseTypeDescriptions,
+  TeachingClassStatus,
+  TeachingClassStatusDescriptions,
+} from "@/types/course";
 import { SectionCards } from "@/components/section-cards";
 import { TrendDirection } from "@/types/card-data";
 import { useCourses } from "@/hooks/use-courses";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthContext } from "@/contexts/auth-context";
 import { useStudent } from "@/hooks/use-student";
 
 export function StudentCourseView() {
   // --- 数据 Hook ---
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { student, getStudentByUserId } = useStudent();
   const {
     courses,
@@ -62,8 +67,13 @@ export function StudentCourseView() {
 
   // --- 1. 获取学生档案 ---
   useEffect(() => {
-    if (user?.id) getStudentByUserId(user.id);
+    if (user?.id) {
+      getStudentByUserId(user.id);
+    }
   }, [user?.id, getStudentByUserId]);
+
+  // --- 调试：监听学生档案变化 ---
+  useEffect(() => {}, [student]);
 
   // --- 2. 加载课程数据 ---
   useEffect(() => {
@@ -93,8 +103,12 @@ export function StudentCourseView() {
 
   // --- 4. 统计计算 ---
   const stats = useMemo(() => {
-    const ongoing = courses.filter((c) => c.status === "ongoing").length;
-    const completed = courses.filter((c) => c.status === "completed").length;
+    const ongoing = courses.filter(
+      (c) => c.status === TeachingClassStatus.ACTIVE,
+    ).length;
+    const completed = courses.filter(
+      (c) => c.status === TeachingClassStatus.COMPLETED,
+    ).length;
     const totalCredits = courses.reduce((sum, c) => sum + c.course.credit, 0);
     return { ongoing, completed, totalCredits };
   }, [courses]);
@@ -142,20 +156,54 @@ export function StudentCourseView() {
   ];
 
   // --- 辅助函数 ---
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: TeachingClassStatus) => {
     switch (status) {
-      case "ongoing":
+      case TeachingClassStatus.ACTIVE:
         return (
           <Badge className="bg-green-100 text-green-800 border-none">
-            进行中
+            {TeachingClassStatusDescriptions[status]}
           </Badge>
         );
-      case "completed":
-        return <Badge variant="secondary">已完成</Badge>;
-      case "upcoming":
+      case TeachingClassStatus.COMPLETED:
+        return (
+          <Badge className="bg-gray-100 text-gray-800 border-none">
+            {TeachingClassStatusDescriptions[status]}
+          </Badge>
+        );
+      case TeachingClassStatus.OPEN_FOR_ENROLLMENT:
         return (
           <Badge className="bg-blue-100 text-blue-800 border-none">
-            即将开始
+            {TeachingClassStatusDescriptions[status]}
+          </Badge>
+        );
+      case TeachingClassStatus.PLANNED:
+        return (
+          <Badge className="bg-purple-100 text-purple-800 border-none">
+            {TeachingClassStatusDescriptions[status]}
+          </Badge>
+        );
+      case TeachingClassStatus.ENROLLMENT_CLOSED:
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 border-none">
+            {TeachingClassStatusDescriptions[status]}
+          </Badge>
+        );
+      case TeachingClassStatus.SUSPENDED:
+        return (
+          <Badge className="bg-orange-100 text-orange-800 border-none">
+            {TeachingClassStatusDescriptions[status]}
+          </Badge>
+        );
+      case TeachingClassStatus.CANCELLED:
+        return (
+          <Badge className="bg-red-100 text-red-800 border-none">
+            {TeachingClassStatusDescriptions[status]}
+          </Badge>
+        );
+      case TeachingClassStatus.MERGED:
+        return (
+          <Badge variant="outline">
+            {TeachingClassStatusDescriptions[status]}
           </Badge>
         );
       default:
@@ -170,14 +218,23 @@ export function StudentCourseView() {
     return "text-green-600";
   };
 
-  // 课表解析逻辑 (匹配 "周一 1-2节")
+  // 课表解析逻辑 (匹配 "周一7-8节" 格式)
   const getCourseAt = (day: string, period: number) => {
-    return courses.find(
-      (c) =>
-        c.status === "ongoing" &&
-        c.timeSchedule.includes(day) &&
-        c.timeSchedule.includes(`${period}`),
-    );
+    return courses.find((c) => {
+      if (c.status !== TeachingClassStatus.ACTIVE) return false;
+
+      // 匹配格式如 "周一7-8节，周三7-8节"
+      const pattern = new RegExp(`${day}(\\d+)-(\\d+)节`);
+      const match = c.timeSchedule.match(pattern);
+
+      if (!match || !match[1] || !match[2]) return false;
+
+      const startPeriod = parseInt(match[1]);
+      const endPeriod = parseInt(match[2]);
+
+      // 检查当前节次是否在课程时间范围内
+      return period >= startPeriod && period <= endPeriod;
+    });
   };
 
   const isInitialLoading = !student && user?.id;
@@ -336,7 +393,7 @@ export function StudentCourseView() {
                               <IconCalendarEvent className="h-4 w-4 text-primary/60" />
                               <span>学期: {item.semesterName}</span>
                             </div>
-                            {item.status === "ongoing" && (
+                            {item.status === TeachingClassStatus.ACTIVE && (
                               <div className="flex items-center justify-between pt-2 border-t mt-2">
                                 <span className="text-xs text-muted-foreground">
                                   班级选课率
@@ -379,7 +436,9 @@ export function StudentCourseView() {
                     </TableHeader>
                     <TableBody>
                       {courses
-                        .filter((c) => c.status === "completed")
+                        .filter(
+                          (c) => c.status === TeachingClassStatus.COMPLETED,
+                        )
                         .map((item) => (
                           <TableRow key={item.id}>
                             <TableCell className="font-medium">
@@ -396,8 +455,9 @@ export function StudentCourseView() {
                             <TableCell>{getStatusBadge(item.status)}</TableCell>
                           </TableRow>
                         ))}
-                      {courses.filter((c) => c.status === "completed")
-                        .length === 0 && (
+                      {courses.filter(
+                        (c) => c.status === TeachingClassStatus.COMPLETED,
+                      ).length === 0 && (
                         <TableRow>
                           <TableCell
                             colSpan={6}
@@ -439,8 +499,8 @@ export function StudentCourseView() {
                           </div>
                         ))}
 
-                        {/* 课表行 1-6节 */}
-                        {[1, 2, 3, 4, 5, 6].map((period) => (
+                        {/* 课表行 1-10节 */}
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((period) => (
                           <>
                             <div
                               key={`period-${period}`}

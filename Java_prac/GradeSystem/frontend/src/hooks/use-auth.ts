@@ -89,11 +89,16 @@ export function useAuth(): UseAuthReturn {
    * 检查当前登录状态
    */
   const checkAuthStatus = useCallback(async () => {
+    // 防止重复调用
+    if (isLoading) return;
+
     try {
       setIsLoading(true);
       const response = await authApi.checkAuth();
 
-      if (!response.success) {
+      if (response.success && response.user) {
+        setUser(response.user);
+      } else {
         setUser(null);
       }
     } catch (err) {
@@ -102,14 +107,43 @@ export function useAuth(): UseAuthReturn {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isLoading]);
 
-  // 这里加上之后会在登陆界面产生死循环，简单点直接不要检查了
-  // 唯一的影响就是用户强制刷新页面会回到登录页，即便 session 还没有过期
-  // 组件挂载时检查登录状态
-  // useEffect(() => {
-  //   checkAuthStatus();
-  // }, [checkAuthStatus]);
+  // 组件挂载时检查登录状态，只执行一次
+  useEffect(() => {
+    let isMounted = true;
+
+    const initAuth = async () => {
+      try {
+        setIsLoading(true);
+        const response = await authApi.checkAuth();
+
+        if (isMounted) {
+          if (response.success && response.user) {
+            setUser(response.user);
+          } else {
+            setUser(null);
+          }
+        }
+      } catch (err) {
+        // 检查登录状态失败，可能是未登录
+        if (isMounted) {
+          setUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initAuth();
+
+    // 清理函数
+    return () => {
+      isMounted = false;
+    };
+  }, []); // 空依赖数组，只在挂载时执行
 
   return {
     user,

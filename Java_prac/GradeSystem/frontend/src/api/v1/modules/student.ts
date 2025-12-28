@@ -9,6 +9,6 @@ export const studentApi = {
    * 用户登录
    */
   getStudentByUserId: async (userId: string): Promise<StudentDTO> => {
-    return await client.post(`/student/by-user/${userId}`);
+    return await client.get(`/student/by-user/${userId}`);
   },
 };

@@ -44,11 +44,15 @@ import {
   IconRefresh,
   IconLoader2,
 } from "@tabler/icons-react";
-import { CourseType, CourseTypeDescriptions } from "@/types/course";
+import {
+  CourseType,
+  CourseTypeDescriptions,
+  TeachingClassStatus,
+} from "@/types/course";
 import { SectionCards } from "@/components/section-cards";
 import { TrendDirection } from "@/types/card-data";
 import { useCourses } from "@/hooks/use-courses";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthContext } from "@/contexts/auth-context";
 import { useStudent } from "@/hooks/use-student";
 import {
   Table,
@@ -61,7 +65,7 @@ import {
 
 export function StudentSelectCourseView() {
   // --- 数据 Hooks ---
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { student, getStudentByUserId } = useStudent();
   const {
     courses: availableCourses,
@@ -108,7 +112,9 @@ export function StudentSelectCourseView() {
 
   const stats = useMemo(() => {
     const selected = availableCourses.filter(
-      (c) => c.status === "ongoing" || c.status === "completed",
+      (c) =>
+        c.status === TeachingClassStatus.ACTIVE ||
+        c.status === TeachingClassStatus.COMPLETED,
     ); // 假设逻辑
     const credits = selected.reduce((sum, c) => sum + c.course.credit, 0);
     return { count: selected.length, credits };
@@ -452,7 +458,7 @@ export function StudentSelectCourseView() {
                     </TableHeader>
                     <TableBody>
                       {availableCourses
-                        .filter((c) => c.status === "ongoing")
+                        .filter((c) => c.status === TeachingClassStatus.ACTIVE)
                         .map((item) => (
                           <TableRow key={item.id}>
                             <TableCell className="font-medium">
@@ -502,8 +508,9 @@ export function StudentSelectCourseView() {
                             </TableCell>
                           </TableRow>
                         ))}
-                      {availableCourses.filter((c) => c.status === "ongoing")
-                        .length === 0 && (
+                      {availableCourses.filter(
+                        (c) => c.status === TeachingClassStatus.ACTIVE,
+                      ).length === 0 && (
                         <TableRow>
                           <TableCell
                             colSpan={6}

@@ -18,6 +18,7 @@ export function useStudent(): UseStudentReturn {
       const studentData = await studentApi.getStudentByUserId(userId);
       setStudent(studentData);
     } catch (err) {
+      console.error("获取学生信息失败:", err);
       setStudent(null);
     }
   }, []);

@@ -35,11 +35,11 @@ import { CourseType, CourseTypeDescriptions } from "@/types/course";
 import { SectionCards } from "@/components/section-cards";
 import { TrendDirection, type CardData } from "@/types/card-data";
 import { useGrades } from "@/hooks/use-grades";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthContext } from "@/contexts/auth-context";
 import { useStudent } from "@/hooks/use-student";
 
 export function StudentGradeView() {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { student, getStudentByUserId } = useStudent();
   const {
     grades,

@@ -35,35 +35,38 @@ client.interceptors.request.use((config) => {
  */
 client.interceptors.response.use(
   (response: AxiosResponse) => {
-    // 业务失败
-    if (response.status !== 200) {
-      return Promise.reject(new Error("业务异常"));
-    }
-
-    // 返回完整的响应对象，而不是只有 data 字段
     return response.data;
   },
-
   async (error: AxiosError) => {
     if (!error.response) {
-      console.error("网络异常");
       return Promise.reject(new Error("无法连接服务器"));
     }
 
     const status = error.response.status;
+    // 获取后端返回的错误消息
+    // 注意：如果后端直接返回字符串，data 就是该字符串；如果返回 JSON，data 就是对象
+    const backendMessage = error.response.data;
 
-    // ====== Session 失效处理 ======
     switch (status) {
+      case 400:
+        // 如果后端传回了具体消息，则抛出该消息
+        return Promise.reject(
+          new Error(
+            typeof backendMessage === "string"
+              ? backendMessage
+              : "请求参数错误",
+          ),
+        );
       case 401:
-        console.warn("Session 已失效，跳转登录页");
-        window.location.href = ROUTES.LOGIN;
+        const currentPath = window.location.pathname;
+        if (currentPath !== ROUTES.LOGIN && currentPath !== ROUTES.SIGNUP) {
+          window.location.href = ROUTES.LOGIN;
+        }
         break;
       case 403:
-        console.warn("无权限访问该资源");
-        break;
+        return Promise.reject(new Error("无权限访问该资源"));
       case 500:
-        console.error("服务器错误");
-        break;
+        return Promise.reject(new Error("服务器内部错误"));
     }
 
     return Promise.reject(error);
