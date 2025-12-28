@@ -53,7 +53,7 @@ export function StudentCourseView() {
   const { user } = useAuthContext();
   const { student, getStudentByUserId } = useStudent();
   const {
-    courses,
+    studentCourses,
     isLoading: isCoursesLoading,
     error,
     fetchStudentCourses,
@@ -93,25 +93,28 @@ export function StudentCourseView() {
 
   // --- 3. 数据过滤逻辑 ---
   const filteredCourses = useMemo(() => {
-    return courses.filter((c) => {
+    return studentCourses.filter((c) => {
       const matchesSearch =
         c.course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.teacherName.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
-  }, [courses, searchQuery]);
+  }, [studentCourses, searchQuery]);
 
   // --- 4. 统计计算 ---
   const stats = useMemo(() => {
-    const ongoing = courses.filter(
+    const ongoing = studentCourses.filter(
       (c) => c.status === TeachingClassStatus.ACTIVE,
     ).length;
-    const completed = courses.filter(
+    const completed = studentCourses.filter(
       (c) => c.status === TeachingClassStatus.COMPLETED,
     ).length;
-    const totalCredits = courses.reduce((sum, c) => sum + c.course.credit, 0);
+    const totalCredits = studentCourses.reduce(
+      (sum, c) => sum + c.course.credit,
+      0,
+    );
     return { ongoing, completed, totalCredits };
-  }, [courses]);
+  }, [studentCourses]);
 
   const statsCardsData = [
     {
@@ -220,7 +223,7 @@ export function StudentCourseView() {
 
   // 课表解析逻辑 (匹配 "周一7-8节" 格式)
   const getCourseAt = (day: string, period: number) => {
-    return courses.find((c) => {
+    return studentCourses.find((c) => {
       if (c.status !== TeachingClassStatus.ACTIVE) return false;
 
       // 匹配格式如 "周一7-8节，周三7-8节"
@@ -435,7 +438,7 @@ export function StudentCourseView() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {courses
+                      {studentCourses
                         .filter(
                           (c) => c.status === TeachingClassStatus.COMPLETED,
                         )
@@ -455,7 +458,7 @@ export function StudentCourseView() {
                             <TableCell>{getStatusBadge(item.status)}</TableCell>
                           </TableRow>
                         ))}
-                      {courses.filter(
+                      {studentCourses.filter(
                         (c) => c.status === TeachingClassStatus.COMPLETED,
                       ).length === 0 && (
                         <TableRow>
@@ -477,7 +480,7 @@ export function StudentCourseView() {
                 <Card className="p-0 overflow-hidden border-none shadow-sm">
                   <CardHeader className="bg-muted/30 border-b">
                     <CardTitle className="text-base">
-                      2024秋季学期 周课程表
+                      2025秋季学期 周课程表
                     </CardTitle>
                     <CardDescription>
                       当前选课状态下的标准教学周排表

@@ -4,6 +4,7 @@ import { courseApi, type CourseFilters, type TeachingClass } from "@/api/v1";
 interface UseCoursesReturn {
   // 状态
   courses: TeachingClass[];
+  studentCourses: TeachingClass[];
   isLoading: boolean;
   error: string | null;
 
@@ -30,12 +31,15 @@ interface UseCoursesReturn {
  */
 export function useCourses(): UseCoursesReturn {
   const [courses, setCourses] = useState<TeachingClass[]>([]);
+  const [studentCourses, setStudentCourses] = useState<TeachingClass[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastFetch, setLastFetch] = useState<{
-    type: "student" | "available";
     studentId?: string;
-    filters?: CourseFilters;
+    studentFilters?: CourseFilters;
+    availableFilters?: CourseFilters;
+    hasStudentData: boolean;
+    hasAvailableData: boolean;
   } | null>(null);
 
   /**
@@ -55,13 +59,19 @@ export function useCourses(): UseCoursesReturn {
         setError(null);
 
         const data = await courseApi.getStudentCourses(studentId, filters);
-        setCourses(data);
-        setLastFetch({ type: "student", studentId, filters });
+        setStudentCourses(data);
+        setLastFetch((prev) => ({
+          studentId,
+          studentFilters: filters,
+          availableFilters: prev?.availableFilters,
+          hasStudentData: true,
+          hasAvailableData: prev?.hasAvailableData || false,
+        }));
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "获取课程列表失败";
         setError(errorMessage);
-        setCourses([]);
+        setStudentCourses([]);
       } finally {
         setIsLoading(false);
       }
@@ -80,7 +90,13 @@ export function useCourses(): UseCoursesReturn {
 
         const data = await courseApi.getAvailableCourses(studentId, filters);
         setCourses(data);
-        setLastFetch({ type: "available", studentId, filters });
+        setLastFetch((prev) => ({
+          studentId,
+          studentFilters: prev?.studentFilters,
+          availableFilters: filters,
+          hasStudentData: prev?.hasStudentData || false,
+          hasAvailableData: true,
+        }));
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "获取可选课程失败";
@@ -103,12 +119,22 @@ export function useCourses(): UseCoursesReturn {
         await courseApi.selectCourse(studentId, teachingClassId);
 
         // 选课成功后刷新课程列表
-        if (lastFetch) {
-          if (lastFetch.type === "student" && lastFetch.studentId) {
-            await fetchStudentCourses(lastFetch.studentId, lastFetch.filters);
-          } else if (lastFetch.type === "available" && lastFetch.studentId) {
-            await fetchAvailableCourses(lastFetch.studentId, lastFetch.filters);
-          }
+        if (lastFetch?.studentId) {
+          // 同时刷新两个列表
+          await Promise.all([
+            lastFetch.hasStudentData
+              ? fetchStudentCourses(
+                  lastFetch.studentId,
+                  lastFetch.studentFilters,
+                )
+              : Promise.resolve(),
+            lastFetch.hasAvailableData
+              ? fetchAvailableCourses(
+                  lastFetch.studentId,
+                  lastFetch.availableFilters,
+                )
+              : Promise.resolve(),
+          ]);
         }
 
         return true;
@@ -131,12 +157,22 @@ export function useCourses(): UseCoursesReturn {
         await courseApi.dropCourse(studentId, teachingClassId);
 
         // 退课成功后刷新课程列表
-        if (lastFetch) {
-          if (lastFetch.type === "student" && lastFetch.studentId) {
-            await fetchStudentCourses(lastFetch.studentId, lastFetch.filters);
-          } else if (lastFetch.type === "available" && lastFetch.studentId) {
-            await fetchAvailableCourses(lastFetch.studentId, lastFetch.filters);
-          }
+        if (lastFetch?.studentId) {
+          // 同时刷新两个列表
+          await Promise.all([
+            lastFetch.hasStudentData
+              ? fetchStudentCourses(
+                  lastFetch.studentId,
+                  lastFetch.studentFilters,
+                )
+              : Promise.resolve(),
+            lastFetch.hasAvailableData
+              ? fetchAvailableCourses(
+                  lastFetch.studentId,
+                  lastFetch.availableFilters,
+                )
+              : Promise.resolve(),
+          ]);
         }
 
         return true;
@@ -153,17 +189,22 @@ export function useCourses(): UseCoursesReturn {
    * 刷新当前课程列表
    */
   const refreshCourses = useCallback(async () => {
-    if (!lastFetch) return;
+    if (!lastFetch?.studentId) return;
 
-    if (lastFetch.type === "student" && lastFetch.studentId) {
-      await fetchStudentCourses(lastFetch.studentId, lastFetch.filters);
-    } else if (lastFetch.type === "available" && lastFetch.studentId) {
-      await fetchAvailableCourses(lastFetch.studentId, lastFetch.filters);
-    }
+    // 同时刷新两个已加载的列表
+    await Promise.all([
+      lastFetch.hasStudentData
+        ? fetchStudentCourses(lastFetch.studentId, lastFetch.studentFilters)
+        : Promise.resolve(),
+      lastFetch.hasAvailableData
+        ? fetchAvailableCourses(lastFetch.studentId, lastFetch.availableFilters)
+        : Promise.resolve(),
+    ]);
   }, [lastFetch, fetchStudentCourses, fetchAvailableCourses]);
 
   return {
     courses,
+    studentCourses,
     isLoading,
     error,
     fetchStudentCourses,

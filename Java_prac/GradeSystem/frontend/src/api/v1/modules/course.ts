@@ -68,11 +68,7 @@ export const courseApi = {
     studentId: string,
     teachingClassId: string,
   ): Promise<string> => {
-    const params = new URLSearchParams();
-    params.append("studentId", studentId);
-    params.append("teachingClassId", teachingClassId);
-
-    return await client.post("/courses/drop", null, {
+    return await client.delete("/courses/drop", {
       params: {
         studentId,
         teachingClassId,

@@ -73,8 +73,12 @@ export function StudentSelectCourseView() {
     error,
     fetchAvailableCourses,
     selectCourse,
+    dropCourse,
     refreshCourses,
     clearError,
+    fetchStudentCourses,
+    courses,
+    studentCourses,
   } = useCourses();
 
   // --- 状态管理 ---
@@ -95,8 +99,24 @@ export function StudentSelectCourseView() {
       if (selectedCourseType !== "全部类型")
         filters.courseType = selectedCourseType;
       fetchAvailableCourses(student.id, filters);
+      // 获取学生已选课程
+      fetchStudentCourses(student.id);
     }
-  }, [student?.id, selectedCourseType, fetchAvailableCourses]);
+  }, [
+    student?.id,
+    selectedCourseType,
+    fetchAvailableCourses,
+    fetchStudentCourses,
+  ]);
+
+  // --- 获取已选课程ID集合 ---
+  const enrolledCourseIds = useMemo(() => {
+    return new Set(
+      studentCourses
+        .filter((c) => c.status === TeachingClassStatus.ACTIVE)
+        .map((c) => c.id),
+    );
+  }, [studentCourses]);
 
   // --- 逻辑计算 ---
   const filteredCourses = useMemo(() => {
@@ -106,9 +126,11 @@ export function StudentSelectCourseView() {
         item.teacherName.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesAvailable =
         !filterAvailableOnly || item.enrolled < item.capacity;
-      return matchesSearch && matchesAvailable;
+      // 排除已选的课程
+      const notEnrolled = !enrolledCourseIds.has(item.id);
+      return matchesSearch && matchesAvailable && notEnrolled;
     });
-  }, [availableCourses, searchQuery, filterAvailableOnly]);
+  }, [availableCourses, searchQuery, filterAvailableOnly, enrolledCourseIds]);
 
   const stats = useMemo(() => {
     const selected = availableCourses.filter(
@@ -179,6 +201,9 @@ export function StudentSelectCourseView() {
       next.delete(courseId);
       return next;
     });
+    // await fetchStudentCourses(student.id);
+    // await fetchAvailableCourses(student.id);
+    refreshCourses();
   };
 
   const handleBatchSubmit = async () => {
@@ -187,6 +212,15 @@ export function StudentSelectCourseView() {
       await selectCourse(student.id, id);
     }
     setBatchSelection(new Set());
+    refreshCourses();
+  };
+
+  const handleDropCourse = async (teachingClassId: string) => {
+    if (!student?.id) return;
+    const success = await dropCourse(student.id, teachingClassId);
+    if (success) {
+      refreshCourses();
+    }
   };
 
   // --- 样式辅助 ---
@@ -253,11 +287,11 @@ export function StudentSelectCourseView() {
                 <IconAlertCircle className="h-5 w-5 text-orange-600" />
                 <div className="flex-1">
                   <p className="text-sm font-bold text-orange-800 dark:text-orange-300">
-                    2024 秋季学期正选阶段
+                    2025 秋季学期正选阶段
                   </p>
                   <p className="text-xs text-orange-700 dark:text-orange-400">
-                    截止时间：2024-12-15
-                    18:00。请确保已完成先修课程认定，避免因时间冲突导致选课失败。
+                    截止时间：2025-12-28
+                    23:00。请确保已完成先修课程认定，避免因时间冲突导致选课失败。
                   </p>
                 </div>
               </CardContent>
@@ -457,7 +491,7 @@ export function StudentSelectCourseView() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {availableCourses
+                      {studentCourses
                         .filter((c) => c.status === TeachingClassStatus.ACTIVE)
                         .map((item) => (
                           <TableRow key={item.id}>
@@ -480,7 +514,7 @@ export function StudentSelectCourseView() {
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button
-                                    variant="ghost"
+                                    variant="secondary"
                                     size="sm"
                                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                   >
@@ -499,7 +533,13 @@ export function StudentSelectCourseView() {
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>取消</AlertDialogCancel>
-                                    <AlertDialogAction className="bg-red-600 hover:bg-red-700">
+                                    <AlertDialogAction
+                                      className="bg-red-600 hover:bg-red-700"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        handleDropCourse(item.id);
+                                      }}
+                                    >
                                       确认释放名额
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
@@ -508,7 +548,7 @@ export function StudentSelectCourseView() {
                             </TableCell>
                           </TableRow>
                         ))}
-                      {availableCourses.filter(
+                      {studentCourses.filter(
                         (c) => c.status === TeachingClassStatus.ACTIVE,
                       ).length === 0 && (
                         <TableRow>
