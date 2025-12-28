@@ -8,42 +8,42 @@ public enum TeachingClassStatus {
     /**
      * 计划中 - 教学班已创建但尚未开始
      */
-    PLANNED("计划中"),
+    PLANNED("planned"),
 
     /**
      * 开放选课 - 学生可以选择此教学班
      */
-    OPEN_FOR_ENROLLMENT("开放选课"),
+    OPEN_FOR_ENROLLMENT("open_for_enrollment"),
 
     /**
      * 选课结束 - 停止选课，准备开课
      */
-    ENROLLMENT_CLOSED("选课结束"),
+    ENROLLMENT_CLOSED("enrollment_closed"),
 
     /**
      * 进行中 - 教学班正在进行中
      */
-    ACTIVE("进行中"),
+    ACTIVE("active"),
 
     /**
      * 已完成 - 教学班已结束
      */
-    COMPLETED("已完成"),
+    COMPLETED("completed"),
 
     /**
      * 已取消 - 教学班被取消（如人数不足）
      */
-    CANCELLED("已取消"),
+    CANCELLED("cancelled"),
 
     /**
      * 暂停 - 教学班暂时停止（如教师请假）
      */
-    SUSPENDED("暂停"),
+    SUSPENDED("suspended"),
 
     /**
      * 合并 - 教学班与其他班级合并
      */
-    MERGED("合并");
+    MERGED("merged");
 
     private final String description;
 
