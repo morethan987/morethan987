@@ -2,10 +2,13 @@ package com.example.GradeSystemBackend.controller;
 
 import com.example.GradeSystemBackend.dto.GradeDTO;
 import com.example.GradeSystemBackend.service.GradeService;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -99,20 +102,61 @@ public class GradeController {
     }
 
     /**
-     * 教师录入/更新成绩
+     * 教师录入/更新成绩 - 支持乐观锁控制
      */
     @PreAuthorize("hasAnyAuthority('grade:edit')")
     @PutMapping("/{gradeId}")
-    public ResponseEntity<GradeDTO> updateGrade(
+    public ResponseEntity<?> updateGrade(
         @PathVariable UUID gradeId,
         @RequestBody GradeDTO gradeDTO
     ) {
         printCurrentUser("updateGrade");
-        GradeDTO updatedGrade = gradeService.updateGrade(gradeId, gradeDTO);
-        if (updatedGrade != null) {
-            return ResponseEntity.ok(updatedGrade);
-        } else {
-            return ResponseEntity.notFound().build();
+        try {
+            GradeDTO updatedGrade = gradeService.updateGrade(gradeId, gradeDTO);
+            if (updatedGrade != null) {
+                return ResponseEntity.ok(updatedGrade);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (OptimisticLockingFailureException e) {
+            // 返回409 Conflict状态码，表示并发冲突
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "CONCURRENT_MODIFICATION");
+            error.put("message", e.getMessage());
+            error.put("suggestion", "请刷新数据后重新提交");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        } catch (Exception e) {
+            // 返回500 Internal Server Error
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "UPDATE_FAILED");
+            error.put("message", "更新成绩时发生错误: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                error
+            );
+        }
+    }
+
+    /**
+     * 批量更新成绩
+     */
+    @PreAuthorize("hasAnyAuthority('grade:edit')")
+    @PutMapping("/batch")
+    public ResponseEntity<Map<String, Object>> batchUpdateGrades(
+        @RequestBody List<GradeDTO> gradeDTOs
+    ) {
+        printCurrentUser("batchUpdateGrades");
+        try {
+            Map<String, Object> result = gradeService.batchUpdateGrades(
+                gradeDTOs
+            );
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "BATCH_UPDATE_FAILED");
+            error.put("message", "批量更新成绩时发生错误: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                error
+            );
         }
     }
 

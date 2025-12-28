@@ -1,8 +1,10 @@
 package com.example.GradeSystemBackend.dto;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class GradeDTO {
+
     private UUID id;
     private StudentDTO student;
     private CourseDTO course;
@@ -12,13 +14,27 @@ public class GradeDTO {
     private Double experimentScore;
     private Double finalScore;
     private Double gpa;
+    private Long version;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     // Constructors
     public GradeDTO() {}
 
-    public GradeDTO(UUID id, StudentDTO student, CourseDTO course,
-                   Double usualScore, Double midtermScore, Double finalExamScore,
-                   Double experimentScore, Double finalScore, Double gpa) {
+    public GradeDTO(
+        UUID id,
+        StudentDTO student,
+        CourseDTO course,
+        Double usualScore,
+        Double midtermScore,
+        Double finalExamScore,
+        Double experimentScore,
+        Double finalScore,
+        Double gpa,
+        Long version,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
+    ) {
         this.id = id;
         this.student = student;
         this.course = course;
@@ -28,6 +44,9 @@ public class GradeDTO {
         this.experimentScore = experimentScore;
         this.finalScore = finalScore;
         this.gpa = gpa;
+        this.version = version;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     // Getters and Setters
@@ -101,5 +120,29 @@ public class GradeDTO {
 
     public void setGpa(Double gpa) {
         this.gpa = gpa;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

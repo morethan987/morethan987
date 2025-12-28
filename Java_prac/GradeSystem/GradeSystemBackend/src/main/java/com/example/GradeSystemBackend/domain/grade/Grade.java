@@ -3,6 +3,7 @@ package com.example.GradeSystemBackend.domain.grade;
 import com.example.GradeSystemBackend.domain.course.Course;
 import com.example.GradeSystemBackend.domain.student.Student;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -38,6 +39,16 @@ public class Grade {
 
     @Column(nullable = true)
     private Double gpa;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     // getters / setters
     public UUID getId() {
@@ -104,9 +115,42 @@ public class Grade {
         return gpa;
     }
 
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     @PrePersist
+    public void prePersist() {
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+        calculateFinalScoreInternal();
+        calculateGPAInternal();
+    }
+
     @PreUpdate
-    public void calculateScores() {
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
         calculateFinalScoreInternal();
         calculateGPAInternal();
     }

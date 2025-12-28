@@ -3,10 +3,12 @@ package com.example.GradeSystemBackend.repository;
 import com.example.GradeSystemBackend.domain.course.Course;
 import com.example.GradeSystemBackend.domain.grade.Grade;
 import com.example.GradeSystemBackend.domain.student.Student;
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -268,4 +270,75 @@ public interface GradeRepository extends JpaRepository<Grade, UUID> {
     List<String> findDistinctSemestersByStudentId(
         @Param("studentId") UUID studentId
     );
+
+    // ==================== 并发控制相关查询方法 ====================
+
+    /**
+     * 使用悲观锁查询成绩（独占锁）
+     * 适用于需要严格并发控制的场景，如成绩录入
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT g FROM Grade g WHERE g.id = :gradeId")
+    Optional<Grade> findByIdWithPessimisticLock(@Param("gradeId") UUID gradeId);
+
+    /**
+     * 使用悲观读锁查询成绩
+     * 适用于需要确保读取期间数据不被修改的场景
+     */
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("SELECT g FROM Grade g WHERE g.id = :gradeId")
+    Optional<Grade> findByIdWithPessimisticReadLock(
+        @Param("gradeId") UUID gradeId
+    );
+
+    /**
+     * 使用悲观锁批量查询学生成绩
+     * 适用于批量成绩操作场景
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT g FROM Grade g WHERE g.student.id = :studentId")
+    List<Grade> findByStudentIdWithPessimisticLock(
+        @Param("studentId") UUID studentId
+    );
+
+    /**
+     * 使用悲观锁查询课程所有成绩
+     * 适用于教师批量录入成绩的场景
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT g FROM Grade g WHERE g.course.id = :courseId")
+    List<Grade> findByCourseIdWithPessimisticLock(
+        @Param("courseId") UUID courseId
+    );
+
+    /**
+     * 使用乐观锁查询成绩（通过版本号）
+     * 这是默认行为，明确声明以便理解
+     */
+    @Query(
+        "SELECT g FROM Grade g WHERE g.id = :gradeId AND g.version = :version"
+    )
+    Optional<Grade> findByIdAndVersion(
+        @Param("gradeId") UUID gradeId,
+        @Param("version") Long version
+    );
+
+    /**
+     * 查询指定时间范围内被修改的成绩
+     * 用于冲突检测和数据同步
+     */
+    @Query(
+        "SELECT g FROM Grade g WHERE g.updatedAt >= :startTime AND g.updatedAt <= :endTime"
+    )
+    List<Grade> findByUpdatedAtBetween(
+        @Param("startTime") java.time.LocalDateTime startTime,
+        @Param("endTime") java.time.LocalDateTime endTime
+    );
+
+    /**
+     * 查询最近修改的成绩记录
+     * 用于监控最近的成绩变更
+     */
+    @Query("SELECT g FROM Grade g ORDER BY g.updatedAt DESC")
+    List<Grade> findRecentlyModifiedGrades();
 }

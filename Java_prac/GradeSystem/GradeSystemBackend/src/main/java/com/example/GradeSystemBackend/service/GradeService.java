@@ -11,7 +11,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class GradeService {
@@ -254,28 +257,97 @@ public class GradeService {
     }
 
     /**
-     * 更新成绩
+     * 更新成绩 - 使用乐观锁控制并发
      */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public GradeDTO updateGrade(UUID gradeId, GradeDTO gradeDTO) {
-        Grade grade = gradeRepository.findById(gradeId).orElse(null);
-        if (grade != null) {
+        try {
+            Grade grade = gradeRepository.findById(gradeId).orElse(null);
+            if (grade == null) {
+                return null;
+            }
+
+            // 检查版本号，确保没有并发修改
+            if (
+                gradeDTO.getVersion() != null &&
+                !gradeDTO.getVersion().equals(grade.getVersion())
+            ) {
+                throw new OptimisticLockingFailureException(
+                    "成绩已被其他用户修改，请刷新后重试。当前版本: " +
+                        grade.getVersion() +
+                        ", 提交版本: " +
+                        gradeDTO.getVersion()
+                );
+            }
+
             // 更新成绩字段
             grade.setUsualScore(gradeDTO.getUsualScore());
             grade.setMidScore(gradeDTO.getMidtermScore());
             grade.setExperimentScore(gradeDTO.getExperimentScore());
             grade.setFinalExamScore(gradeDTO.getFinalExamScore());
-            // finalScore 和 gpa 会通过 @PrePersist/@PreUpdate 自动计算
+            // finalScore 和 gpa 会通过 @PreUpdate 自动计算
 
             Grade savedGrade = gradeRepository.save(grade);
             return convertToGradeDTO(savedGrade);
+        } catch (OptimisticLockingFailureException e) {
+            // 记录并发冲突日志
+            System.err.println("乐观锁冲突: " + e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            // 记录其他异常
+            System.err.println("更新成绩时发生异常: " + e.getMessage());
+            throw new RuntimeException("更新成绩失败", e);
         }
-        return null;
+    }
+
+    /**
+     * 批量更新成绩 - 支持并发控制
+     */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public Map<String, Object> batchUpdateGrades(List<GradeDTO> gradeDTOs) {
+        Map<String, Object> result = new HashMap<>();
+        int successCount = 0;
+        int failureCount = 0;
+        List<String> errors = new java.util.ArrayList<>();
+
+        for (GradeDTO gradeDTO : gradeDTOs) {
+            try {
+                GradeDTO updated = updateGrade(gradeDTO.getId(), gradeDTO);
+                if (updated != null) {
+                    successCount++;
+                } else {
+                    failureCount++;
+                    errors.add("成绩ID " + gradeDTO.getId() + " 不存在");
+                }
+            } catch (OptimisticLockingFailureException e) {
+                failureCount++;
+                errors.add(
+                    "成绩ID " +
+                        gradeDTO.getId() +
+                        " 并发冲突: " +
+                        e.getMessage()
+                );
+            } catch (Exception e) {
+                failureCount++;
+                errors.add(
+                    "成绩ID " +
+                        gradeDTO.getId() +
+                        " 更新失败: " +
+                        e.getMessage()
+                );
+            }
+        }
+
+        result.put("successCount", successCount);
+        result.put("failureCount", failureCount);
+        result.put("errors", errors);
+        return result;
     }
 
     /**
      * 将Grade实体转换为DTO
      */
-    private GradeDTO convertToGradeDTO(Grade grade) {
+    public GradeDTO convertToGradeDTO(Grade grade) {
         GradeDTO dto = new GradeDTO();
         dto.setId(grade.getId());
 
@@ -319,6 +391,11 @@ public class GradeService {
         dto.setExperimentScore(grade.getExperimentScore());
         dto.setFinalScore(grade.getFinalScore());
         dto.setGpa(grade.getGpa());
+
+        // 设置版本和时间戳信息（用于乐观锁控制）
+        dto.setVersion(grade.getVersion());
+        dto.setCreatedAt(grade.getCreatedAt());
+        dto.setUpdatedAt(grade.getUpdatedAt());
 
         return dto;
     }
