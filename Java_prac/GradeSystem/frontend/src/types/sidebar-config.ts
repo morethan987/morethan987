@@ -90,7 +90,7 @@ export const ui_config = {
 export const getUiData = (uiType: string) => {
   switch (uiType) {
     case "DEFAULT":
-      return ui_config.teacher_basic;
+      return ui_config.student_basic;
     case "STUDENT":
       return ui_config.student_basic;
     case "TEACHER":

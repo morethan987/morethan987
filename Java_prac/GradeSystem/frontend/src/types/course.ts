@@ -20,5 +20,19 @@ export interface Course {
   description?: string;
   credit: number;
   semester: number;
-  courseType: string;
+  courseType: CourseType;
+}
+
+// Extended course interface for teaching class information
+export interface TeachingClass {
+  id: string;
+  name?: string;
+  course: Course;
+  teacherName: string;
+  classroom: string;
+  timeSchedule: string;
+  capacity: number;
+  enrolled: number; // 当前已选人数
+  status: "ongoing" | "completed" | "upcoming";
+  semesterName: string;
 }

@@ -120,3 +120,18 @@ export interface Student {
   createdAt: string; // ISO datetime string
   updatedAt: string; // ISO datetime string
 }
+
+export interface StudentDTO {
+  id: string;
+  studentCode: string;
+  major?: string;
+  className?: string;
+  enrollmentYear?: number;
+  currentSemester: number;
+  status: StudentStatus;
+  totalCredits?: number;
+  advisor?: string;
+  expectedGraduationDate?: string; // ISO date string (YYYY-MM-DD)
+  createdAt: string; // ISO datetime string
+  updatedAt: string; // ISO datetime string
+}
