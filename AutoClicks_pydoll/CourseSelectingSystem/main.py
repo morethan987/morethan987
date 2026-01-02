@@ -1,6 +1,6 @@
 import asyncio
 
-from config import (
+from .config import (
     COURSE_SELECTION_URL,
     INTERVAL,
     MAX_RETRY,
@@ -14,7 +14,7 @@ from config import (
     TargetCourses,
     get_chromium_options,
 )
-from notification import sc_send
+from .notification import sc_send
 from pydoll.browser.chromium import Chrome
 from pydoll.browser.tab import Tab
 from pydoll.decorators import retry

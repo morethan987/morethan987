@@ -3,9 +3,7 @@ import re
 import requests
 
 
-def sc_send(sendkey, title, desp="", options=None):
-    if options is None:
-        options = {}
+def sc_send(sendkey: str, title: str, desp: str = "", options: dict = {}):
     # 判断 sendkey 是否以 'sctp' 开头，并提取数字构造 URL
     if sendkey.startswith("sctp"):
         match = re.match(r"sctp(\d+)t", sendkey)
