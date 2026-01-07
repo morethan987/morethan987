@@ -1,0 +1,11 @@
+[Interface]
+Address    = 10.100.0.3/32
+PrivateKey = your_local_private_key
+
+[Peer]   # VPS
+PublicKey  = K3MPrdGI9k/GcrXp+sA7BnmQAhFVL98MOg9b5/laGm8=
+Endpoint   = your_vps_ip:you_vps_port
+# 需要走隧道的网段：WG 内网 + 校园 GPU 服务器
+AllowedIPs = 10.100.0.0/24, 10.233.78.159/32, 10.242.1.215/32
+PersistentKeepalive = 25
+

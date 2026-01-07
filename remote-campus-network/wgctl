@@ -1,0 +1,376 @@
+#!/usr/bin/env bash
+#
+# /usr/local/sbin/wgusers
+#
+# WireGuard user manager for VPS side.
+#
+# Usage:
+#   sudo wgusers add <name> [ip1 ip2 ...]
+#   sudo wgusers del <name>
+#   sudo wgusers list
+#
+# NOTE:
+#  - Must be run as root.
+#  - wg0.conf must contain a section starting with line "### 跳板机 Peer".
+#  - The script wraps each client peer block with:
+#       # === wgusers:<name>:BEGIN ===
+#         ...
+#       # === wgusers:<name>:END ===
+#    so we can safely delete it later.
+#
+
+set -euo pipefail
+[[ -n "${WGUSERS_DEBUG:-}" ]] && set -x
+
+# ======= Config =======
+WG_IF="wg0"
+WG_DIR="/etc/wireguard"
+CONF="$WG_DIR/${WG_IF}.conf"
+
+PEER_DIR="$WG_DIR/peers.d"             # metadata dir
+LOCK_FILE="$WG_DIR/.wgusers.lock"
+
+# IP pool (only /24 handled for simplicity)
+POOL_NET_BASE="10.100.0"               # A.B.C
+POOL_START=10                          # reserve .1-.9
+POOL_END=250
+
+# VPS (server) info for client config
+VPS_PUBKEY="K3MPrdGI9k/GcrXp+sA7BnmQAhFVL98MOg9b5/laGm8="
+VPS_ENDPOINT="132.232.155.4:51820"
+WG_LAN_CIDR="10.100.0.0/24"
+
+# Keepalive
+CLIENT_PKA=25
+
+# Command to apply conf without dropping tunnel
+RELOAD_CMD="wg syncconf ${WG_IF} <(wg-quick strip ${CONF})"
+
+# ======= Helpers =======
+die() { echo "ERROR: $*" >&2; exit 1; }
+
+need_root() {
+  [[ $EUID -eq 0 ]] || die "Please run as root."
+}
+
+ensure_dirs() {
+  mkdir -p "$PEER_DIR"
+}
+
+lock()   { exec 9>"$LOCK_FILE"; flock -n 9 || die "Another wgusers is running."; }
+unlock() { flock -u 9; }
+
+# Check name format
+check_name() {
+  local n="$1"
+  [[ "$n" =~ ^[a-zA-Z0-9._-]+$ ]] || die "Name '$n' invalid. Use [a-zA-Z0-9._-]."
+}
+
+# Generate keypair
+gen_keys() {
+  local priv pub
+  priv=$(wg genkey)
+  pub=$(printf "%s" "$priv" | wg pubkey)
+  echo "$priv" "$pub"
+}
+
+# Find next free IP in pool
+alloc_ip() {
+  local used ip
+  used="$(awk -F= '/^IP=/{print $2}' "$PEER_DIR"/*.meta 2>/dev/null || true)"
+  for i in $(seq $POOL_START $POOL_END); do
+    ip="${POOL_NET_BASE}.${i}"
+    if ! grep -qE "^${ip}/32$" <<<"$used"; then
+      echo "${ip}/32"
+      return 0
+    fi
+  done
+  die "No free IP in pool ${POOL_NET_BASE}.0/24"
+}
+
+# Read meta file
+meta_file() { echo "$PEER_DIR/$1.meta"; }
+
+# Get meta value
+meta_get() {
+  local file="$1" key="$2"
+  grep -E "^${key}=" "$file" | cut -d= -f2-
+}
+
+# Update Jump Peer AllowedIPs to include extra IPs
+update_jump_allowed() {
+  local ips_to_add=("$@")
+  [[ ${#ips_to_add[@]} -eq 0 ]] && return 0
+
+  local tmp
+  tmp=$(mktemp)
+  cp "$CONF" "$tmp"
+
+  # 找到 AllowedIPs 所在的真实行号
+  local allow_ln
+  allow_ln=$(awk '
+    /^### 跳板机 Peer$/ { inblk=1; next }
+    inblk && /^\\[Peer\\]/ { inblk=0 }        # 下一个 [Peer] 开始，退出块
+    inblk && /^AllowedIPs[[:space:]]*=/ { print NR; exit }
+  ' "$tmp")
+
+  [[ -n "$allow_ln" ]] || die "AllowedIPs not found in Jump Peer block."
+
+  # 取当前列表
+  local cur_csv
+  cur_csv=$(sed -n "${allow_ln}p" "$tmp" | sed 's/^AllowedIPs *= *//; s/ //g')
+
+  # 去重合并
+  declare -A set
+  IFS=',' read -ra arr <<<"$cur_csv"
+  for a in "${arr[@]}"; do [[ -n "$a" ]] && set["$a"]=1; done
+  for a in "${ips_to_add[@]}"; do set["$a"]=1; done
+
+  local new_csv=""
+  for k in "${!set[@]}"; do
+    [[ -z "$new_csv" ]] && new_csv="$k" || new_csv="$new_csv, $k"
+  done
+
+  # 写回
+  sed -i "${allow_ln}s|^AllowedIPs *=.*$|AllowedIPs = ${new_csv}|" "$tmp"
+
+  mv "$tmp" "$CONF"
+}
+
+# Insert client block
+insert_client_block() {
+  local name="$1" pub="$2" ip_cidr="$3"
+  cat >>"$CONF" <<EOF
+
+# === wgusers:${name}:BEGIN ===
+[Peer]
+PublicKey = ${pub}
+AllowedIPs = ${ip_cidr}
+PersistentKeepalive = ${CLIENT_PKA}
+# === wgusers:${name}:END ===
+EOF
+}
+
+# Remove client block
+remove_client_block() {
+  local name="$1"
+  local tmp="$(mktemp)"
+  awk "/^# === wgusers:${name}:BEGIN ===/{flag=1} !flag; /^# === wgusers:${name}:END ===/{flag=0;next}" "$CONF" >"$tmp"
+  mv "$tmp" "$CONF"
+}
+
+reload_wg() {
+  # shellcheck disable=SC2086
+  eval $RELOAD_CMD
+}
+
+# 删除 Jump Peer 的 AllowedIPs 中的若干 IP
+remove_jump_allowed() {
+  local ips_to_del=("$@")
+  [[ ${#ips_to_del[@]} -gt 0 ]] || return 0
+
+  local tmp
+  tmp=$(mktemp)
+  cp "$CONF" "$tmp"
+
+  # 找到 AllowedIPs 行号
+  local allow_ln
+  allow_ln=$(awk '
+    /^### 跳板机 Peer$/ { inblk=1; next }
+    inblk && /^\\[Peer\\]/ { inblk=0 }
+    inblk && /^AllowedIPs[[:space:]]*=/ { print NR; exit }
+  ' "$tmp")
+
+  [[ -n "$allow_ln" ]] || die "AllowedIPs not found in Jump Peer block."
+
+  # 当前列表
+  local cur_csv
+  cur_csv=$(sed -n "${allow_ln}p" "$tmp" | sed 's/^AllowedIPs *= *//; s/ //g')
+
+  # 要删除集合
+  declare -A delset
+  for ip in "${ips_to_del[@]}"; do delset["$ip"]=1; done
+
+  IFS=',' read -ra arr <<<"$cur_csv"
+  local new_list=()
+  for a in "${arr[@]}"; do
+    [[ -n "$a" ]] || continue
+    # 不在删除集合才保留
+    [[ -n "${delset[$a]:-}" ]] && continue
+    new_list+=("$a")
+  done
+
+  # 重新拼接
+  local new_csv=""
+  for k in "${new_list[@]}"; do
+    [[ -z "$new_csv" ]] && new_csv="$k" || new_csv="$new_csv, $k"
+  done
+
+  sed -i "${allow_ln}s|^AllowedIPs *=.*$|AllowedIPs = ${new_csv}|" "$tmp"
+  mv "$tmp" "$CONF"
+}
+
+# ======= Commands =======
+# 直接向跳板机 Peer 的 AllowedIPs 增加服务器 IP
+cmd_addip() {
+  local ips=("$@")
+  [[ ${#ips[@]} -ge 1 ]] || die "Usage: wgusers addip <ip1/32> [ip2/32 ...]"
+  # 调用已有的函数，把 IP 列表合并到跳板机 AllowedIPs 中
+  update_jump_allowed "${ips[@]}"
+  # 重新加载 WireGuard 配置
+  reload_wg
+  echo "Server IP(s) ${ips[*]} added to jump peer AllowedIPs."
+}
+
+cmd_delip() {
+  local ips=("$@")
+  [[ ${#ips[@]} -ge 1 ]] || die "Usage: wgusers delip <ip1/32> [ip2/32 ...]"
+  remove_jump_allowed "${ips[@]}"
+  reload_wg
+  echo "Server IP(s) ${ips[*]} removed from jump peer AllowedIPs."
+}
+
+cmd_add() {
+  local name="$1"; shift
+  local extra_ips=("$@")
+  check_name "$name"
+
+  local mf
+  mf=$(meta_file "$name")
+  [[ -e "$mf" ]] && die "User '$name' already exists."
+
+  read -r priv pub < <(gen_keys)
+  local ip_cidr
+  ip_cidr=$(alloc_ip)
+
+  # Update jump peer AllowedIPs
+  update_jump_allowed "${extra_ips[@]}"
+
+  # Insert client peer block
+  insert_client_block "$name" "$pub" "$ip_cidr"
+
+  # Write meta
+  {
+    echo "NAME=$name"
+    echo "IP=$ip_cidr"
+    echo "PUB=$pub"
+    echo "PRIV=$priv"
+    echo "EXTRA_IPS=$(IFS=,; echo "${extra_ips[*]}")"
+    echo "CREATED=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  } >"$mf"
+  chmod 600 "$mf"
+
+  # Reload WG
+  reload_wg
+
+  # Write client conf
+  local out="~/${name}.conf"
+  local home_dir
+  home_dir=$(eval echo ~)
+  out="${home_dir}/${name}.conf"
+
+  {
+    echo "[Interface]"
+    echo "Address    = ${ip_cidr}"
+    echo "PrivateKey = ${priv}"
+    echo ""
+    echo "[Peer]  # VPS"
+    echo "PublicKey  = ${VPS_PUBKEY}"
+    echo "Endpoint   = ${VPS_ENDPOINT}"
+    local ips_csv="${WG_LAN_CIDR}"
+    if [[ ${#extra_ips[@]} -gt 0 ]]; then
+      ips_csv="${ips_csv}, $(IFS=,; echo "${extra_ips[*]}")"
+    fi
+    echo "AllowedIPs = ${ips_csv}"
+    echo "PersistentKeepalive = ${CLIENT_PKA}"
+  } >"$out"
+  chmod 600 "$out"
+
+  echo "User '$name' added."
+  echo "  IP:      $ip_cidr"
+  echo "  PubKey:  $pub"
+  echo "  Client conf: $out"
+}
+
+cmd_del() {
+  local name="$1"
+  check_name "$name"
+  local mf
+  mf=$(meta_file "$name")
+  [[ -e "$mf" ]] || die "User '$name' not found."
+
+  remove_client_block "$name"
+  rm -f "$mf"
+
+  reload_wg
+  echo "User '$name' removed. Jump peer AllowedIPs kept unchanged."
+}
+
+cmd_list() {
+  printf "%-16s   %-18s   %-44s   %s\n" "NAME" "IP" "PUBKEY" "EXTRA_IPS"
+
+  shopt -s nullglob               # 没有匹配时让通配符展开为空
+  local files=("$PEER_DIR"/*.meta)
+  shopt -u nullglob
+
+  if [[ ${#files[@]} -eq 0 ]]; then
+    echo "(no users)"
+    return 0
+  fi
+
+  for f in "${files[@]}"; do
+    local n ip pub ex
+    n=$(meta_get "$f" NAME)
+    ip=$(meta_get "$f" IP)
+    pub=$(meta_get "$f" PUB)
+    ex=$(meta_get "$f" EXTRA_IPS)
+    printf "%-16s   %-18s   %-44s   %s\n" "$n" "$ip" "$pub" "$ex"
+  done
+}
+
+# ======= Main =======
+main() {
+  need_root
+  ensure_dirs
+  lock
+
+  case "${1-}" in
+    addip)
+      [[ $# -ge 2 ]] || die "Usage: wgusers addip <ip1/32> [ip2/32 ...]"
+      shift
+      cmd_addip "$@"
+      ;;
+    delip|removeip|rmip)
+      [[ $# -ge 2 ]] || die "Usage: wgusers delip <ip1/32> [ip2/32 ...]"
+      shift
+      cmd_delip "$@"
+      ;;
+    add)
+      [[ $# -ge 2 ]] || die "Usage: wgusers add <name> [ip1 ip2 ...]"
+      local name="$2"; shift 2
+      cmd_add "$name" "$@"
+      ;;
+    del|remove)
+      [[ $# -eq 2 ]] || die "Usage: wgusers del <name>"
+      cmd_del "$2"
+      ;;
+    list|show)
+      cmd_list
+      ;;
+    *)
+      cat <<EOF
+Usage:
+  sudo wgctl add <name> [ip1/32 ip2/32 ...]       # 新增用户，列表中填写目标GPU服务器IP
+  sudo wgctl addip <ip1/32> [ip2/32 ...]          # 直接新增服务器IP，无需用户名
+  sudo wgctl rmip <ip1/32> [ip2/32 ...]           # 从跳板机 AllowedIPs 中删除 IP
+  sudo wgctl del <name>                           # 删除用户
+  sudo wgctl list                                 # 列出已添加用户
+EOF
+      ;;
+  esac
+
+  unlock
+}
+
+main "$@"
+

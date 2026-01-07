@@ -1,0 +1,47 @@
+[Interface]
+Address    = 10.100.0.1/24
+ListenPort = 51820
+PrivateKey = vps_private_key
+
+# 仅做转发，不做 NAT
+PostUp   = sysctl -w net.ipv4.ip_forward=1 && iptables -A FORWARD -i wg0 -j ACCEPT && iptables -A FORWARD -o wg0 -j ACCEPT
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT && iptables -D FORWARD -o wg0 -j ACCEPT
+
+### 跳板机 Peer
+[Peer]
+PublicKey  = ngDfEwy1qMjdjKNQ8EE6ys2CRxgpRY0r/nEf7+ZeiWM=
+# 新增服务器只需要在下面继续添加：10.xx.xx.xx/32就行
+AllowedIPs = 10.242.1.215/32, 10.246.1.16/32, 10.100.0.2/32, 10.233.78.159/32
+PersistentKeepalive = 15  # 15秒一次心跳，没有公网IP就需要 
+
+### 客户端 Peer
+[Peer] # mr20230674
+PublicKey  = acndcHy8iprQonQ50ztJj/kTef3qTkLSFtBZxkWLJ1o=
+AllowedIPs = 10.100.0.3/32
+PersistentKeepalive = 25   # 同理
+
+[Peer] # lyh20230320
+PublicKey = 4ZucHeMXIrlpWX+knJP8kVuS6RwCbLhsRysRCnFdlGE=
+AllowedIPs = 10.100.0.4/32
+PersistentKeepalive = 25
+
+[Peer] # yry20231178
+PublicKey = ikGqyJekmq8r09IlKLFdJeN9/Pwd/IYKEqSzhi5YKxc=
+AllowedIPs = 10.100.0.5/32
+PersistentKeepalive = 25
+
+
+
+# === wgusers:morethan-windows:BEGIN ===
+[Peer]
+PublicKey = CxK4DKlAWK1OjpYo5lSo5TS9fNYcgJjbyvCiI1MZig4=
+AllowedIPs = 10.100.0.10/32
+PersistentKeepalive = 25
+# === wgusers:morethan-windows:END ===
+
+# === wgusers:lyh-windows:BEGIN ===
+[Peer]
+PublicKey = 5eeWxUbkRJ9YFpbSNKuGOrGvmJ7LnSo2Q9G986AD8S8=
+AllowedIPs = 10.100.0.11/32
+PersistentKeepalive = 25
+# === wgusers:lyh-windows:END ===
