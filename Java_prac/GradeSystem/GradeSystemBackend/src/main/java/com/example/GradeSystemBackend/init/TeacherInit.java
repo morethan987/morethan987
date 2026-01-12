@@ -2,6 +2,7 @@ package com.example.GradeSystemBackend.init;
 
 import com.example.GradeSystemBackend.domain.auth.Role;
 import com.example.GradeSystemBackend.domain.auth.RoleConstants;
+import com.example.GradeSystemBackend.domain.auth.UIType;
 import com.example.GradeSystemBackend.domain.auth.User;
 import com.example.GradeSystemBackend.domain.info.Gender;
 import com.example.GradeSystemBackend.domain.info.UserProfile;
@@ -169,6 +170,7 @@ public class TeacherInit implements ApplicationRunner {
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode("123456")); // 默认密码
         user.setRoles(Set.of(teacherRole));
+        user.setUiType(UIType.TEACHER);
         userRepository.save(user);
 
         // 创建用户资料

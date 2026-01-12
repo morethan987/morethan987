@@ -2,6 +2,7 @@ package com.example.GradeSystemBackend.init;
 
 import com.example.GradeSystemBackend.domain.auth.Role;
 import com.example.GradeSystemBackend.domain.auth.RoleConstants;
+import com.example.GradeSystemBackend.domain.auth.UIType;
 import com.example.GradeSystemBackend.domain.auth.User;
 import com.example.GradeSystemBackend.domain.info.Gender;
 import com.example.GradeSystemBackend.domain.info.UserProfile;
@@ -52,6 +53,7 @@ public class UserInit implements ApplicationRunner {
         if (adminRoleOpt.isPresent()) {
             adminUser.setRoles(Set.of(adminRoleOpt.get()));
         }
+        adminUser.setUiType(UIType.ADMIN);
         userRepository.save(adminUser);
 
         // 创建关联的用户资料
