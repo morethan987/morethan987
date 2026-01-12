@@ -434,3 +434,22 @@ export class TeacherUtils {
     return colorMap[status] || "gray";
   }
 }
+
+export interface TeacherDTO {
+  id: string;
+  employeeCode: string;
+  department?: string;
+  title?: TeacherTitle;
+  specialization?: string;
+  hireDate?: string;
+  status: TeacherStatus;
+  workload?: number;
+  maxCourses?: number;
+  office?: string;
+  officePhone?: string;
+  officeHours?: string;
+  qualifications?: string;
+  researchInterests?: string;
+  createdAt: string;
+  updatedAt: string;
+}
