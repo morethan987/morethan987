@@ -1,0 +1,210 @@
+package com.example.auth.controller;
+
+import com.example.auth.domain.Role;
+import com.example.auth.service.RoleService;
+import java.util.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/v1/role")
+public class RoleController {
+
+    @Autowired
+    private RoleService roleService;
+
+    @PreAuthorize("hasAnyAuthority('role:add', 'admin:all')")
+    @PostMapping
+    public ResponseEntity<?> createRole(@RequestBody Role role) {
+        printCurrentUser("createRole");
+
+        try {
+            Role savedRole = roleService.createRole(role);
+            return ResponseEntity.ok(savedRole);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('role:delete', 'admin:all')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteRole(@PathVariable UUID id) {
+        printCurrentUser("deleteRole");
+
+        try {
+            Optional<Role> roleOpt = roleService.findRoleById(id);
+            if (roleOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            String roleName = roleOpt.get().getName();
+            roleService.deleteRole(id);
+            return ResponseEntity.ok("Role '" + roleName + "' deleted successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('role:update', 'admin:all')")
+    @PostMapping("/{roleId}/permissions")
+    public ResponseEntity<?> addPermissionToRole(
+        @PathVariable UUID roleId,
+        @RequestBody Map<String, String> request
+    ) {
+        printCurrentUser("addPermissionToRole");
+
+        String permissionName = request.get("permissionName");
+        try {
+            String result = roleService.addPermissionToRole(roleId, permissionName);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('role:update', 'admin:all')")
+    @DeleteMapping("/{roleId}/permissions/{permissionName}")
+    public ResponseEntity<?> removePermissionFromRole(
+        @PathVariable UUID roleId,
+        @PathVariable String permissionName
+    ) {
+        printCurrentUser("removePermissionFromRole");
+
+        try {
+            String result = roleService.removePermissionFromRole(roleId, permissionName);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('role:update', 'admin:all')")
+    @PutMapping("/{roleId}/permissions")
+    public ResponseEntity<?> setRolePermissions(
+        @PathVariable UUID roleId,
+        @RequestBody List<String> permissionNames
+    ) {
+        printCurrentUser("setRolePermissions");
+
+        try {
+            Map<String, Object> result = roleService.setRolePermissions(roleId, permissionNames);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('role:view', 'admin:all')")
+    @GetMapping
+    public ResponseEntity<?> getAllRoles() {
+        printCurrentUser("getAllRoles");
+
+        Map<String, Object> result = roleService.getAllRoles();
+        return ResponseEntity.ok(result);
+    }
+
+    @PreAuthorize("hasAnyAuthority('role:view', 'admin:all')")
+    @GetMapping("/search")
+    public ResponseEntity<?> searchRolesByName(@RequestParam String name) {
+        printCurrentUser("searchRolesByName");
+
+        try {
+            Map<String, Object> result = roleService.searchRolesByName(name);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('role:view', 'admin:all')")
+    @GetMapping("/{roleId}/permissions")
+    public ResponseEntity<?> getRolePermissions(@PathVariable UUID roleId) {
+        printCurrentUser("getRolePermissions");
+
+        try {
+            Map<String, Object> result = roleService.getRolePermissions(roleId);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('role:view', 'admin:all')")
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getRoleById(@PathVariable UUID id) {
+        printCurrentUser("getRoleById");
+
+        try {
+            Map<String, Object> result = roleService.getRoleById(id);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('role:view', 'admin:all')")
+    @GetMapping("/stats")
+    public ResponseEntity<?> getRoleStats() {
+        printCurrentUser("getRoleStats");
+
+        Map<String, Object> result = roleService.getRoleStats();
+        return ResponseEntity.ok(result);
+    }
+
+    @PreAuthorize("hasAnyAuthority('role:view', 'admin:all')")
+    @GetMapping("/exists/{name}")
+    public ResponseEntity<?> checkRoleExists(@PathVariable String name) {
+        printCurrentUser("checkRoleExists");
+
+        try {
+            Map<String, Object> result = roleService.checkRoleExists(name);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    private void printCurrentUser(String method) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("[" + method + "] Current user: " + auth.getName());
+        System.out.println("[" + method + "] User authorities: " + auth.getAuthorities());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<?> handleAccessDeniedException(AccessDeniedException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+            Map.of(
+                "error", "Access denied",
+                "message", "You don't have permission for this operation: " + e.getMessage(),
+                "timestamp", System.currentTimeMillis()
+            )
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<?> handleException(Exception e) {
+        System.err.println("RoleController exception: " + e.getMessage());
+        e.printStackTrace();
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+            Map.of(
+                "error", "Internal server error",
+                "message", e.getMessage(),
+                "timestamp", System.currentTimeMillis()
+            )
+        );
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(
+            Map.of("error", "Parameter error", "message", e.getMessage())
+        );
+    }
+}

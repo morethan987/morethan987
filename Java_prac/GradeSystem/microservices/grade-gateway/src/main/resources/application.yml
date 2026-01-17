@@ -1,0 +1,101 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: grade-gateway
+
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:localhost}
+      port: ${CONSUL_PORT:8500}
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-interval: 10s
+        instance-id: ${spring.application.name}:${random.value}
+
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: auth-service
+          uri: lb://grade-auth-service
+          predicates:
+            - Path=/api/v1/auth/**, /api/v1/role/**
+          filters:
+            - StripPrefix=0
+
+        - id: user-service
+          uri: lb://grade-user-service
+          predicates:
+            - Path=/api/v1/user/**, /api/v1/student/**, /api/v1/teacher/**
+          filters:
+            - StripPrefix=0
+
+        - id: academic-service
+          uri: lb://grade-academic-service
+          predicates:
+            - Path=/api/v1/courses/**
+          filters:
+            - StripPrefix=0
+
+        - id: grade-service
+          uri: lb://grade-grade-service
+          predicates:
+            - Path=/api/v1/grades/**, /api/v1/concurrency/**
+          filters:
+            - StripPrefix=0
+
+        - id: analytics-service
+          uri: lb://grade-analytics-service
+          predicates:
+            - Path=/api/v1/dashboard/**
+          filters:
+            - StripPrefix=0
+
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://localhost:5173"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
+  session:
+    store-type: redis
+    redis:
+      namespace: grade:session
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    gateway:
+      enabled: true
+    health:
+      show-details: when_authorized
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web: DEBUG

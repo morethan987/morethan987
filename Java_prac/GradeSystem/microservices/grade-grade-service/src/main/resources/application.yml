@@ -1,0 +1,62 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: grade-grade-service
+
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:localhost}
+      port: ${CONSUL_PORT:8500}
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-interval: 10s
+        instance-id: ${spring.application.name}:${random.value}
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/grade_system?currentSchema=grade_schema
+    username: ${DB_USER:grade_admin}
+    password: ${DB_PASSWORD:grade_password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: grade_schema
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+
+  session:
+    store-type: redis
+    redis:
+      namespace: grade:session
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:admin}
+    password: ${RABBITMQ_PASSWORD:admin123}
+    virtual-host: grade
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.example.grade: DEBUG

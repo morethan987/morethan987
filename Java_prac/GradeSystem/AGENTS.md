@@ -22,6 +22,20 @@ bun run build  # Production build
 bun start      # Production start
 ```
 
+### Infrastructure (nacos-docker/)
+```bash
+# Start Nacos (standalone mode with Derby)
+docker compose -f nacos-docker/example/standalone-derby.yaml up -d
+
+# Stop Nacos
+docker compose -f nacos-docker/example/standalone-derby.yaml down
+
+# View logs
+docker logs nacos-standalone -f
+```
+Nacos console: http://localhost:8848/nacos (default: nacos/nacos)
+Ports: 8848 (HTTP API), 9848 (gRPC), 8080 (management)
+
 ## Project Structure
 
 ### Backend

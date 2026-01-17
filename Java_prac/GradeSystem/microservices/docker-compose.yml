@@ -1,0 +1,311 @@
+version: "3.8"
+
+# Grade System Microservices - Development Environment
+# Usage: docker compose up -d
+
+services:
+  # ===========================================
+  # Service Discovery & Configuration
+  # ===========================================
+  consul:
+    image: hashicorp/consul:1.19
+    container_name: grade-consul
+    ports:
+      - "8500:8500"    # HTTP API & UI
+      - "8600:8600/udp" # DNS
+    command: agent -server -ui -bootstrap-expect=1 -client=0.0.0.0
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+    volumes:
+      - consul-data:/consul/data
+    networks:
+      - grade-network
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # Message Queue
+  # ===========================================
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: grade-rabbitmq
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+      RABBITMQ_DEFAULT_VHOST: grade
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - grade-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # Session Store & Cache
+  # ===========================================
+  redis:
+    image: redis:7.4-alpine
+    container_name: grade-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - grade-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # Database
+  # ===========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: grade-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: grade_admin
+      POSTGRES_PASSWORD: grade_password
+      POSTGRES_DB: grade_system
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-schemas.sql:/docker-entrypoint-initdb.d/01-init-schemas.sql:ro
+    networks:
+      - grade-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grade_admin -d grade_system"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # API Gateway
+  # ===========================================
+  gateway:
+    build:
+      context: ./grade-gateway
+      dockerfile: Dockerfile
+    container_name: grade-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      CONSUL_HOST: consul
+      CONSUL_PORT: 8500
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    networks:
+      - grade-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      academic-service:
+        condition: service_started
+      grade-service:
+        condition: service_started
+      analytics-service:
+        condition: service_started
+
+  # ===========================================
+  # Frontend
+  # ===========================================
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: grade-frontend
+    ports:
+      - "80:80"
+    networks:
+      - grade-network
+    depends_on:
+      - gateway
+
+  # ===========================================
+  # Backend Services
+  # ===========================================
+  auth-service:
+    build:
+      context: ./grade-auth-service
+      dockerfile: Dockerfile
+    container_name: grade-auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      CONSUL_HOST: consul
+      CONSUL_PORT: 8500
+      DB_HOST: postgres
+      DB_USER: grade_admin
+      DB_PASSWORD: grade_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: admin
+      RABBITMQ_PASSWORD: admin123
+    networks:
+      - grade-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  user-service:
+    build:
+      context: ./grade-user-service
+      dockerfile: Dockerfile
+    container_name: grade-user-service
+    ports:
+      - "8082:8082"
+    environment:
+      CONSUL_HOST: consul
+      CONSUL_PORT: 8500
+      DB_HOST: postgres
+      DB_USER: grade_admin
+      DB_PASSWORD: grade_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: admin
+      RABBITMQ_PASSWORD: admin123
+    networks:
+      - grade-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+
+  academic-service:
+    build:
+      context: ./grade-academic-service
+      dockerfile: Dockerfile
+    container_name: grade-academic-service
+    ports:
+      - "8083:8083"
+    environment:
+      CONSUL_HOST: consul
+      CONSUL_PORT: 8500
+      DB_HOST: postgres
+      DB_USER: grade_admin
+      DB_PASSWORD: grade_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: admin
+      RABBITMQ_PASSWORD: admin123
+    networks:
+      - grade-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+
+  grade-service:
+    build:
+      context: ./grade-grade-service
+      dockerfile: Dockerfile
+    container_name: grade-grade-service
+    ports:
+      - "8084:8084"
+    environment:
+      CONSUL_HOST: consul
+      CONSUL_PORT: 8500
+      DB_HOST: postgres
+      DB_USER: grade_admin
+      DB_PASSWORD: grade_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: admin
+      RABBITMQ_PASSWORD: admin123
+    networks:
+      - grade-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      academic-service:
+        condition: service_started
+
+  analytics-service:
+    build:
+      context: ./grade-analytics-service
+      dockerfile: Dockerfile
+    container_name: grade-analytics-service
+    ports:
+      - "8085:8085"
+    environment:
+      CONSUL_HOST: consul
+      CONSUL_PORT: 8500
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    networks:
+      - grade-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      grade-service:
+        condition: service_started
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  grade-network:
+    driver: bridge
+    name: grade-network
+
+# ===========================================
+# Volumes
+# ===========================================
+volumes:
+  consul-data:
+    name: grade-consul-data
+  rabbitmq-data:
+    name: grade-rabbitmq-data
+  redis-data:
+    name: grade-redis-data
+  postgres-data:
+    name: grade-postgres-data

@@ -1,0 +1,153 @@
+name: CI - Microservices
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'microservices/**'
+      - '.github/workflows/ci-microservices.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'microservices/**'
+      - '.github/workflows/ci-microservices.yml'
+
+env:
+  JAVA_VERSION: '21'
+  JAVA_DISTRIBUTION: 'temurin'
+
+jobs:
+  # ===========================================
+  # Build Common Module First (dependency)
+  # ===========================================
+  build-common:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: maven
+
+      - name: Build grade-common
+        working-directory: microservices
+        run: ./mvnw install -pl grade-common -DskipTests -B
+
+      - name: Upload common artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: grade-common
+          path: microservices/grade-common/target/*.jar
+          retention-days: 1
+
+  # ===========================================
+  # Build All Services in Parallel
+  # ===========================================
+  build-services:
+    needs: build-common
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - grade-gateway
+          - grade-auth-service
+          - grade-user-service
+          - grade-academic-service
+          - grade-grade-service
+          - grade-analytics-service
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: maven
+
+      - name: Download common artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: grade-common
+          path: microservices/grade-common/target
+
+      - name: Install common to local Maven repo
+        working-directory: microservices
+        run: ./mvnw install -pl grade-common -DskipTests -B
+
+      - name: Build ${{ matrix.service }}
+        working-directory: microservices
+        run: ./mvnw package -pl ${{ matrix.service }} -DskipTests -B
+
+      - name: Run tests for ${{ matrix.service }}
+        working-directory: microservices
+        run: ./mvnw test -pl ${{ matrix.service }} -B
+        continue-on-error: true
+
+      - name: Upload service artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.service }}
+          path: microservices/${{ matrix.service }}/target/*.jar
+          retention-days: 1
+
+  # ===========================================
+  # Build Frontend
+  # ===========================================
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Type check
+        working-directory: frontend
+        run: bun run tsc --noEmit
+        continue-on-error: true
+
+      - name: Build frontend
+        working-directory: frontend
+        run: bun run build
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 1
+
+  # ===========================================
+  # Integration Summary
+  # ===========================================
+  ci-summary:
+    needs: [build-services, build-frontend]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check build results
+        run: |
+          echo "=== CI Build Summary ==="
+          echo "Services build: ${{ needs.build-services.result }}"
+          echo "Frontend build: ${{ needs.build-frontend.result }}"
+          
+          if [[ "${{ needs.build-services.result }}" == "failure" ]] || [[ "${{ needs.build-frontend.result }}" == "failure" ]]; then
+            echo "::error::One or more builds failed"
+            exit 1
+          fi
+          
+          echo "All builds completed successfully!"

@@ -1,0 +1,46 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: grade-analytics-service
+
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:localhost}
+      port: ${CONSUL_PORT:8500}
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-interval: 10s
+        instance-id: ${spring.application.name}:${random.value}
+
+  session:
+    store-type: redis
+    redis:
+      namespace: grade:session
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:admin}
+    password: ${RABBITMQ_PASSWORD:admin123}
+    virtual-host: grade
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.example.analytics: DEBUG
