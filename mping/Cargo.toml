@@ -1,0 +1,16 @@
+[package]
+name = "mping"
+version = "0.1.0"
+edition = "2024"
+authors = ["morethan <morethan987.cn@gmail.com>"]
+description = "A tool to monitor email inbox and send HTTP requests based on email content."
+
+[dependencies]
+anyhow = "1.0.100"
+chrono = "0.4.43"
+imap = "2.4.1"
+mail-parser = "0.11.1"
+native-tls = "0.2.14"
+regex = "1.12.2"
+reqwest = { version = "0.13.1", features = ["json", "form"] }
+tokio = { version = "1.49.0", features = ["full"] }
