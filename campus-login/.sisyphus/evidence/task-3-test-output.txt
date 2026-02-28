@@ -1,0 +1,10 @@
+=== RUN   TestCheckConnectivity204
+--- PASS: TestCheckConnectivity204 (0.00s)
+=== RUN   TestCheckConnectivity302
+--- PASS: TestCheckConnectivity302 (0.00s)
+=== RUN   TestCheckConnectivityError
+--- PASS: TestCheckConnectivityError (0.00s)
+=== RUN   TestGetLocalIP
+--- PASS: TestGetLocalIP (0.00s)
+PASS
+ok  	github.com/morethan987/campus-login/internal/network	(cached)

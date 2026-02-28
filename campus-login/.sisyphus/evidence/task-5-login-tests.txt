@@ -1,0 +1,16 @@
+=== RUN   TestParseJSONP
+--- PASS: TestParseJSONP (0.00s)
+=== RUN   TestParseJSONPEmpty
+--- PASS: TestParseJSONPEmpty (0.00s)
+=== RUN   TestParseJSONPMalformed
+--- PASS: TestParseJSONPMalformed (0.00s)
+=== RUN   TestParseJSONPNoCallback
+--- PASS: TestParseJSONPNoCallback (0.00s)
+=== RUN   TestURLEncoding
+--- PASS: TestURLEncoding (0.00s)
+=== RUN   TestPerformLoginSuccess
+--- PASS: TestPerformLoginSuccess (0.00s)
+=== RUN   TestPerformLoginFailure
+--- PASS: TestPerformLoginFailure (0.00s)
+PASS
+ok  	github.com/morethan987/campus-login/internal/login	(cached)

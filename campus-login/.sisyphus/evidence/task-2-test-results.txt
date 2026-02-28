@@ -1,0 +1,18 @@
+=== RUN   TestAddAccount
+--- PASS: TestAddAccount (0.00s)
+=== RUN   TestRemoveAccount
+--- PASS: TestRemoveAccount (0.00s)
+=== RUN   TestRemoveDefaultAccount
+--- PASS: TestRemoveDefaultAccount (0.00s)
+=== RUN   TestListAccounts
+--- PASS: TestListAccounts (0.00s)
+=== RUN   TestCredentialsWithColon
+--- PASS: TestCredentialsWithColon (0.00s)
+=== RUN   TestSetDefaultNotFound
+--- PASS: TestSetDefaultNotFound (0.00s)
+=== RUN   TestGetDefaultEmpty
+--- PASS: TestGetDefaultEmpty (0.00s)
+=== RUN   TestXDGConfigHome
+--- PASS: TestXDGConfigHome (0.00s)
+PASS
+ok  	github.com/morethan987/campus-login/internal/config	(cached)
