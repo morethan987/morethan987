@@ -15,7 +15,11 @@ go build -o campus-login ./cmd/campus-login
 将编译产物移动到 `$PATH` 下即可：
 
 ```bash
+# 移动到系统根目录
 sudo mv campus-login /usr/local/bin/
+
+# 或者移动到用户目录
+mv campus-login ~/.local/bin/
 ```
 
 ## 快速开始
