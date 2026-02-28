@@ -19,15 +19,16 @@ const PortalHost = "login.cqu.edu.cn:801"
 var portalBaseURL = "http://login.cqu.edu.cn:801/eportal/portal/login"
 
 // jsonpResponse represents the JSON payload inside a JSONP callback.
+// Result is json.RawMessage to handle both string ("1") and number (1) from the server.
 type jsonpResponse struct {
-	Result string `json:"result"`
-	Msg    string `json:"msg"`
+	Result json.RawMessage `json:"result"`
+	Msg    string          `json:"msg"`
 }
 
 // ParseJSONP extracts the result and msg fields from a JSONP response
 // with a "dr1004" callback wrapper. It uses strings.Index (not regex).
 //
-// Expected format: dr1004({"result":"...","msg":"..."})
+// Expected format: dr1004({"result":"...","msg":"..."}) or dr1004({"result":1,"msg":"..."})
 func ParseJSONP(body string) (result, msg string, err error) {
 	prefix := "dr1004("
 	start := strings.Index(body, prefix)
@@ -47,7 +48,15 @@ func ParseJSONP(body string) (result, msg string, err error) {
 		return "", "", fmt.Errorf("failed to parse JSON from JSONP: %w", err)
 	}
 
-	return resp.Result, resp.Msg, nil
+	// Normalize result: strip surrounding quotes if it's a JSON string,
+	// otherwise use the raw value (e.g. number).
+	var resultStr string
+	if err := json.Unmarshal(resp.Result, &resultStr); err != nil {
+		// Not a JSON string — use the raw text (e.g. "1" from number literal).
+		resultStr = strings.TrimSpace(string(resp.Result))
+	}
+
+	return resultStr, resp.Msg, nil
 }
 
 // PerformLogin sends a login request to the campus portal and returns the result.

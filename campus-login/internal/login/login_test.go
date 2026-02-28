@@ -23,6 +23,34 @@ func TestParseJSONP(t *testing.T) {
 	}
 }
 
+func TestParseJSONPNumericResult(t *testing.T) {
+	body := `dr1004({"result":1,"msg":"登录成功"})`
+	result, msg, err := ParseJSONP(body)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result != "1" {
+		t.Errorf("expected result %q, got %q", "1", result)
+	}
+	if msg != "登录成功" {
+		t.Errorf("expected msg %q, got %q", "登录成功", msg)
+	}
+}
+
+func TestParseJSONPNumericResultZero(t *testing.T) {
+	body := `dr1004({"result":0,"msg":"密码错误"})`
+	result, msg, err := ParseJSONP(body)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result != "0" {
+		t.Errorf("expected result %q, got %q", "0", result)
+	}
+	if msg != "密码错误" {
+		t.Errorf("expected msg %q, got %q", "密码错误", msg)
+	}
+}
+
 func TestParseJSONPEmpty(t *testing.T) {
 	_, _, err := ParseJSONP("")
 	if err == nil {
@@ -94,5 +122,27 @@ func TestPerformLoginFailure(t *testing.T) {
 	}
 	if msg != "密码错误" {
 		t.Errorf("expected msg %q, got %q", "密码错误", msg)
+	}
+}
+
+func TestPerformLoginNumericResult(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `dr1004({"result":1,"msg":"登录成功"})`)
+	}))
+	defer server.Close()
+
+	original := portalBaseURL
+	portalBaseURL = server.URL
+	defer func() { portalBaseURL = original }()
+
+	success, msg, err := PerformLogin("20230001", "testpass", "10.0.0.1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !success {
+		t.Error("expected success=true, got false")
+	}
+	if msg != "登录成功" {
+		t.Errorf("expected msg %q, got %q", "登录成功", msg)
 	}
 }
