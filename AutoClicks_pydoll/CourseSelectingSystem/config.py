@@ -24,8 +24,6 @@ def get_chromium_options() -> ChromiumOptions:
     # 网络优化
     options.add_argument("--disable-features=NetworkPrediction")
     options.add_argument("--dns-prefetch-disable")
-    # 代理配置（可选）
-    options.add_argument("--proxy-server=127.0.0.1:7890")
     # root 用户需要添加的参数
     # options.add_argument("--no-sandbox")
 
