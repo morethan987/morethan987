@@ -176,8 +176,8 @@ func ListAccounts() ([]Account, error) {
 // getDefaultFromLines extracts the default_account value from config lines.
 func getDefaultFromLines(lines []string) (string, bool) {
 	for _, line := range lines {
-		if strings.HasPrefix(line, "default_account=") {
-			val := strings.TrimPrefix(line, "default_account=")
+		if after, ok := strings.CutPrefix(line, "default_account="); ok {
+			val := after
 			if val != "" {
 				return val, true
 			}

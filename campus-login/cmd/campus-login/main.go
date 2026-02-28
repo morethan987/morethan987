@@ -238,7 +238,7 @@ func showHelp() {
   # 使用默认账号登录
   campus-login
 
-  # 使用另一个名为 otheracc 的账号临时登录
+  # 使用另一个名为 otheracc 的账号登录（不改变默认设置）
   campus-login otheracc
 `,
 		color.Yellow, color.NC,
