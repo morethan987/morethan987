@@ -9,7 +9,14 @@
 需要 Go 1.25+：
 
 ```bash
+# 动态链接编译
 go build -o campus-login ./cmd/campus-login
+
+# 静态链接编译
+CGO_ENABLED=0 go build -o campus-login ./cmd/campus-login
+
+# 交叉编译 for windows
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o campus-login.exe ./cmd/campus-login
 ```
 
 将编译产物移动到 `$PATH` 下即可：
@@ -22,6 +29,8 @@ sudo mv campus-login /usr/local/bin/
 mv campus-login ~/.local/bin/
 ```
 
+> 根目录中有两个已经预编译完成的文件，针对 Linux/Windows + AMD64
+
 ## 快速开始
 
 ```bash
@@ -29,7 +38,7 @@ mv campus-login ~/.local/bin/
 campus-login add myacc 20230001
 
 # 2. 设置为默认账号
-campus-login default myacc
+campus-login set myacc
 
 # 3. 一键登录
 campus-login
@@ -54,7 +63,7 @@ campus-login <别名>       # 使用指定账号登录
 campus-login add <别名> <账号> [密码]   # 添加账号，不提供密码则安全输入
 campus-login remove <别名>              # 删除账号（rm 同义）
 campus-login list                       # 列出所有账号（ls 同义）
-campus-login default <别名>             # 设置默认账号
+campus-login set <别名>             # 设置默认账号
 ```
 
 ### 其他

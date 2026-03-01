@@ -237,8 +237,8 @@ func GetCredentials(alias string) (account, password string, err error) {
 
 	prefix := alias + "="
 	for _, line := range lines {
-		if strings.HasPrefix(line, prefix) {
-			val := strings.TrimPrefix(line, prefix)
+		if after, ok := strings.CutPrefix(line, prefix); ok {
+			val := after
 			parts := strings.SplitN(val, ":", 2)
 			if len(parts) != 2 {
 				return "", "", fmt.Errorf("invalid credential format for alias %q", alias)

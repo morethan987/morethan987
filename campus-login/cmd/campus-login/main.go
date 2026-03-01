@@ -37,7 +37,7 @@ func main() {
 		cmdRemove(args[1:])
 	case "list", "ls":
 		cmdList()
-	case "default":
+	case "default", "def", "set":
 		cmdDefault(args[1:])
 	case "status":
 		cmdStatus()
@@ -222,7 +222,7 @@ func showHelp() {
   %sadd <别名> <账号> [密码]%s   添加或更新账号, 若不提供密码, 将提示安全输入
   %sremove, rm <别名>%s          删除一个已保存的账号
   %slist, ls%s                   列出所有已保存的账号
-  %sdefault <别名>%s             设置一个默认登录账号
+  %sset, def, default <别名>%s             设置一个默认登录账号
 
 %s其他:%s
   %sstatus%s                   检测当前网络连通性
@@ -233,7 +233,7 @@ func showHelp() {
   campus-login add myacc 20230001
 
   # 将 myacc 设置为默认账号
-  campus-login default myacc
+  campus-login set myacc
 
   # 使用默认账号登录
   campus-login
