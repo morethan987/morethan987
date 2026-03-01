@@ -1,14 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"golang.org/x/term"
 
 	"github.com/morethan987/campus-login/internal/color"
 	"github.com/morethan987/campus-login/internal/config"
+	"github.com/morethan987/campus-login/internal/daemon"
 	"github.com/morethan987/campus-login/internal/login"
 	"github.com/morethan987/campus-login/internal/network"
 )
@@ -41,6 +46,8 @@ func main() {
 		cmdDefault(args[1:])
 	case "status":
 		cmdStatus()
+	case "daemon":
+		cmdDaemon(args[1:])
 	case "help", "--help", "-h":
 		showHelp()
 	default:
@@ -226,6 +233,7 @@ func showHelp() {
 
 %s其他:%s
   %sstatus%s                   检测当前网络连通性
+  %sdaemon [别名] [间隔]%s     守护进程模式，周期性检测并自动登录 (默认间隔 60s)
   %shelp, -h, --help%s         显示此帮助信息
 
 %s示例:%s
@@ -240,6 +248,12 @@ func showHelp() {
 
   # 使用另一个名为 otheracc 的账号登录（不改变默认设置）
   campus-login otheracc
+
+  # 启动守护进程，使用默认账号，每 60 秒检测一次
+  campus-login daemon
+
+  # 启动守护进程，指定账号和检测间隔
+  campus-login daemon myacc 5m
 `,
 		color.Yellow, color.NC,
 		color.Yellow, color.NC,
@@ -251,6 +265,79 @@ func showHelp() {
 		color.Yellow, color.NC,
 		color.Green, color.NC,
 		color.Green, color.NC,
+		color.Green, color.NC,
 		color.Yellow, color.NC,
 	)
+}
+
+// cmdDaemon handles the "daemon" subcommand.
+// Usage: campus-login daemon [alias] [interval]
+// Default interval is 60s. The alias defaults to the configured default account.
+func cmdDaemon(args []string) {
+	alias := ""
+	interval := 60 * time.Second
+
+	// Parse positional args: [alias] [interval]
+	// If the first arg parses as a duration, treat it as interval (no alias).
+	// Otherwise treat it as alias, and the second arg (if any) as interval.
+	switch len(args) {
+	case 0:
+		// defaults
+	case 1:
+		if d, err := time.ParseDuration(args[0]); err == nil {
+			interval = d
+		} else {
+			alias = args[0]
+		}
+	case 2:
+		alias = args[0]
+		d, err := time.ParseDuration(args[1])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s错误: 无效的时间间隔 '%s': %s%s\n", color.Red, args[1], err, color.NC)
+			fmt.Fprintln(os.Stderr, "示例: 30s, 1m, 5m")
+			os.Exit(1)
+		}
+		interval = d
+	default:
+		fmt.Fprintln(os.Stderr, "用法: campus-login daemon [别名] [间隔]")
+		os.Exit(1)
+	}
+
+	// Resolve alias to default if not specified.
+	if alias == "" {
+		defaultAlias, err := config.GetDefault()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s错误: 读取默认账号失败: %s%s\n", color.Red, err, color.NC)
+			os.Exit(1)
+		}
+		if defaultAlias == "" {
+			fmt.Fprintf(os.Stderr, "%s错误: 未设置默认账号。%s\n", color.Red, color.NC)
+			fmt.Fprintln(os.Stderr, "请先使用 'campus-login add' 添加账号并用 'campus-login default' 设置默认账号，")
+			fmt.Fprintln(os.Stderr, "或使用 'campus-login daemon <别名>' 指定账号。")
+			os.Exit(1)
+		}
+		alias = defaultAlias
+	}
+
+	account, password, err := config.GetCredentials(alias)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s错误: 账号别名 [%s%s%s] 未找到。%s\n", color.Red, color.Yellow, alias, color.Red, color.NC)
+		fmt.Fprintln(os.Stderr, "使用 'campus-login list' 查看所有已保存的账号。")
+		os.Exit(1)
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	cfg := daemon.Config{
+		Account:  account,
+		Password: password,
+		Alias:    alias,
+		Interval: interval,
+	}
+
+	if err := daemon.Run(ctx, cfg); err != nil {
+		fmt.Fprintf(os.Stderr, "%s错误: 守护进程异常退出: %s%s\n", color.Red, err, color.NC)
+		os.Exit(1)
+	}
 }
