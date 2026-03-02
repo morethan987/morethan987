@@ -19,12 +19,22 @@ from pydoll.browser.chromium import Chrome
 from pydoll.browser.tab import Tab
 from pydoll.decorators import retry
 from pydoll.elements.web_element import WebElement
-from pydoll.exceptions import NetworkError, PageLoadTimeout, WaitElementTimeout
+from pydoll.exceptions import (
+    NetworkError,
+    PageLoadTimeout,
+    WaitElementTimeout,
+)
+from utils import wait_for_network_idle
 
 
 async def login(tab: Tab):
     await tab.go_to(COURSE_SELECTION_URL, timeout=50)
-    print("页面加载完成，开始执行脚本...")
+    print("HTML框架加载完成，开始等待网络完全空闲...")
+
+    # 👇 核心在这里：耐心等待页面上的 API 请求、JS、图片等全都下载完毕
+    # 设置 idle_time=1.0 意味着：只要页面在 2 秒内没有发起新请求，就认为它加载完了
+    await wait_for_network_idle(tab, idle_time=3.0, timeout=50.0)
+    print("页面 DOM 彻底稳定，开始定位元素并输入...")
 
     # 登录页面元素定位
     username_input = await tab.find(
@@ -43,10 +53,8 @@ async def login(tab: Tab):
         class_name=LoginSelectors.login_button["class_name"],
         timeout=10,
     )
-    print("登录页面元素定位完成，准备输入用户名和密码...")
-    await asyncio.sleep(3)
 
-    # 输入用户名和密码并点击登录按钮
+    # 输入密码并点击登录按钮
     await username_input.type_text(USERNAME, interval=0.05)
     await password_input.type_text(PASSWORD, interval=0.05)
     await login_button.click()
