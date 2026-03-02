@@ -229,7 +229,7 @@ func showHelp() {
   %sadd <别名> <账号> [密码]%s   添加或更新账号, 若不提供密码, 将提示安全输入
   %sremove, rm <别名>%s          删除一个已保存的账号
   %slist, ls%s                   列出所有已保存的账号
-  %sset, def, default <别名>%s             设置一个默认登录账号
+  %sset, def, default <别名>%s   设置一个默认登录账号
 
 %s其他:%s
   %sstatus%s                   检测当前网络连通性
