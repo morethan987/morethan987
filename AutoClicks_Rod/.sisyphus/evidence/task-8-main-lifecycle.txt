@@ -1,0 +1,22 @@
+=== T8: cmd/main.go ===
+go build -o /tmp/autoclicks ./cmd/... → BUILD OK
+go vet ./... → VET OK
+
+=== SIGINT lifecycle test ===
+Config loaded: url, courses=1, interval=3, headless=true
+Browser launched (headless=true)
+Navigated to course URL
+WaitLoad timed out as expected (SPA) → continued to element wait
+Login elements located → credentials submitted
+SIGINT received → 'Shutdown signal received, stopping poll loop'
+Browser closed and cleaned up
+Exit code: 0
+Residual chrome processes: 0 (after cleanup)
+
+=== CLI flags verified ===
+--config: reads config.yaml path
+--headless: overrides headless mode to true
+
+=== Two-tier error strategy verified ===
+- Infrastructure errors (WaitLoad timeout) → logged as Warn, continues
+- Shutdown signal → returns nil (not an error), loop exits cleanly

@@ -1,0 +1,28 @@
+=== T9: Integration Verification ===
+go build -o autoclicks ./cmd/... → BUILD OK (ELF 64-bit executable)
+go vet ./... → VET OK
+
+=== Python → Go Function Mapping ===
+login()                → Login()               internal/browser/login.go:15
+wait_for_course_page() → WaitForCoursePage()   internal/browser/course.go:15
+find_target_courses()  → FindTargetCourses()   internal/browser/course.go:27
+select_course()        → SelectCourse()        internal/browser/course.go:71
+_is_available()        → isAvailable()         internal/browser/course.go:164
+confirm_selection()    → confirmSelection()    internal/browser/course.go:186
+sc_send()              → Send()                internal/notification/serverchan.go:17
+
+=== Must-NOT-Have checks ===
+time.Sleep in internal/: NONE (only in cmd/main.go for retry/poll as allowed)
+interface{} types: NONE
+Must* API for element ops: NONE (only router.MustAdd - acceptable)
+
+=== Deliverables ===
+go.mod + go.sum ✓
+config.yaml ✓
+cmd/main.go ✓
+internal/config/config.go ✓
+internal/browser/browser.go ✓
+internal/browser/login.go ✓
+internal/browser/course.go ✓
+internal/notification/serverchan.go ✓
+binary: autoclicks (ELF 64-bit) ✓

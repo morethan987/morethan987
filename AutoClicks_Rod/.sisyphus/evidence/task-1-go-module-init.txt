@@ -1,0 +1,4 @@
+go build -o /tmp/autoclicks_test ./cmd/... → BUILD OK
+go.mod module: github.com/morethan987/AutoClicks_Rod
+deps: github.com/go-rod/rod v0.116.2, gopkg.in/yaml.v3 v3.0.1
+dirs: cmd/ internal/config/ internal/browser/ internal/notification/

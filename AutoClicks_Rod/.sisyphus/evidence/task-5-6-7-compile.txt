@@ -1,0 +1,14 @@
+=== T5: login.go ===
+Compiles: BUILD OK
+No Must* API for element ops (grep confirms only comment + router.MustAdd)
+Selectors read from cfg.Selectors.Login.*
+WaitLoad + WaitStable chained before element locate
+proto.InputMouseButtonLeft used correctly
+
+=== T6+T7: course.go ===
+BUILD OK, VET OK
+Functions: WaitForCoursePage, FindTargetCourses, SelectCourse, isAvailable, confirmSelection
+isAvailable uses row.Has() — non-Must
+confirmSelection uses page.Has() — non-Must  
+Sidebar close logic: only closes manually if selectFlag==false (matches Python main.py:141-143)
+notification.Send called inside confirmSelection when serverKey != empty

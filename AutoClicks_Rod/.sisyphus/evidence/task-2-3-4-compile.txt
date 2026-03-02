@@ -1,0 +1,15 @@
+=== T2: Config Module ===
+go build ./... → BUILD OK
+go vet ./...   → VET OK
+config.Load() with config.yaml: parses username, courses, all selectors
+FullFlag selector: span.text-error | SelectedFlag: span.text-success
+
+=== T3: Notification Module ===
+Standard key URL: https://sctapi.ftqq.com/SCT1234.send ✓
+SCTP key URL: https://123.push.ft07.com/send/sctp123t456.send ✓
+Regex: sctp(\d+)t extracts digits correctly
+
+=== T4: Browser Module ===
+go build ./... → BUILD OK
+LaunchBrowser/NewPage/SetupImageBlocking all defined
+HijackRequests used for image blocking with go router.Run()
