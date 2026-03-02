@@ -1,0 +1,75 @@
+# AutoClicks Rod 配置文件模板
+# 请填写你的实际信息后使用
+
+# ===== 账号信息 =====
+username: "your_username"
+password: "your_password"
+
+# ===== 选课系统 URL =====
+url: "https://my.cqu.edu.cn/enroll/CourseStuSelectionList"
+
+# ===== 轮询与重试设置 =====
+# 每次轮询间隔（秒）
+interval: 3
+# 最大重试次数（基础设施故障时触发指数退避重试）
+max_retry: 9999
+
+# ===== 浏览器模式 =====
+# true = 无头模式（后台运行），false = 可见模式（调试用）
+headless: true
+
+# ===== Server酱微信通知 =====
+# 填写你的 Server酱 SCKEY 以启用选课成功微信通知，不需要则留空
+server_key: ""
+
+# ===== 目标课程列表 =====
+courses:
+  - name: "边缘计算"
+    id: "CST31220"
+    teachers:
+      - "汪成亮"
+  # 可添加更多课程，例如：
+  # - name: "机器学习"
+  #   id: "CST12345"
+  #   teachers:
+  #     - "张三"
+  #     - "李四"
+
+# ===== CSS 选择器配置 =====
+# 当目标网站改版时，只需更新此处的选择器，无需重新编译程序
+
+selectors:
+  # 登录页面选择器
+  login:
+    username_input: "input[name='username']"
+    password_input: "input[type='password']"
+    login_button: "button[type='submit'].login-button.ant-btn"
+
+  # 选课列表页面选择器
+  course:
+    # 页面加载完成标志元素
+    flag: "span.ant-table-column-title"
+    # 课程行
+    data_row: "tr.ant-table-row.ant-table-row-level-0"
+
+  # 课程详情侧边栏选择器
+  sidebar:
+    # 侧边栏加载完成标志
+    sidebar_flag: "div.ant-drawer-body tbody.ant-table-tbody"
+    # 选课复选框
+    checkbox: "input[type='checkbox']"
+    # 关闭按钮
+    close_button: "div.drawer-close-wrap-right svg"
+    # 教师数据行
+    data_row: "div.ant-drawer-body tbody.ant-table-tbody tr.ant-table-row.ant-table-row-level-0"
+    # 课程已满标志（span.text-error）
+    full_flag: "span.text-error"
+    # 课程已选标志（span.text-success）
+    selected_flag: "span.text-success"
+
+  # 选课确认流程选择器
+  selection:
+    # 选课按钮
+    select_button: "div.ant-drawer-body button"
+    # 确认对话框中的确认按钮
+    confirm_button: ".ant-modal button.ant-btn.ant-btn-primary"
