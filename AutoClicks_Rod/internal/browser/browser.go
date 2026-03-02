@@ -14,7 +14,7 @@ import (
 // The caller is responsible for calling browser.Close() and launcher.Cleanup().
 func LaunchBrowser(cfg *config.Config) (*rod.Browser, *launcher.Launcher, error) {
 	l := launcher.New().
-		Headless(cfg.Headless).
+		HeadlessNew(cfg.Headless).
 		Set("disable-extensions", "").
 		Set("disable-dev-shm-usage", "").
 		Set("disable-background-networking", "").
@@ -23,7 +23,8 @@ func LaunchBrowser(cfg *config.Config) (*rod.Browser, *launcher.Launcher, error)
 		Set("disable-notifications", "").
 		Set("blink-settings", "imagesEnabled=false").
 		Set("disable-features", "NetworkPrediction").
-		Set("dns-prefetch-disable", "")
+		Set("dns-prefetch-disable", "").
+		Set("ozone-platform-hint", "auto")
 
 	controlURL, err := l.Launch()
 	if err != nil {

@@ -3,6 +3,7 @@ package browser
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/go-rod/rod"
@@ -108,11 +109,8 @@ func SelectCourse(page *rod.Page, courseLink *rod.Element, cfg *config.Config) e
 		// Match teacher against all targets
 		matched := false
 		for _, target := range cfg.Courses {
-			for _, t := range target.Teachers {
-				if teacherName == t {
-					matched = true
-					break
-				}
+			if slices.Contains(target.Teachers, teacherName) {
+				matched = true
 			}
 			if matched {
 				break

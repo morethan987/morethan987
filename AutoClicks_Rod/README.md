@@ -8,6 +8,9 @@
 
 ## 功能特性
 
+- **一键初始化** `autoclicks init` 生成默认配置文件模板
+- **后台守护模式** `autoclicks daemon` 不阻塞终端，日志写入文件
+- **优雅停止** `autoclicks stop` 终止后台守护进程
 - **自动登录** 重庆大学选课系统
 - **轮询选课** 按设定间隔刷新页面，持续检测目标课程
 - **三重匹配** 课程名 + 课程号 + 教师姓名，精确匹配避免误选
@@ -16,6 +19,7 @@
 - **图片屏蔽** 自动屏蔽页面图片请求，加速加载
 - **优雅退出** 收到 `Ctrl+C` 后正确关闭浏览器，不留残留进程
 - **指数退避重试** 网络/浏览器崩溃时自动重试，退避上限 30 秒
+- **缓存清理** `autoclicks clean` 清理 Rod 会话缓存及浏览器二进制
 - **YAML 配置** 所有参数（包括 CSS 选择器）外置到配置文件，网站改版只需改配置
 
 ---
@@ -25,7 +29,9 @@
 ```
 AutoClicks_Rod/
 ├── cmd/
-│   └── main.go                  # 程序入口：CLI、信号处理、重试循环
+│   ├── main.go                  # 程序入口：CLI、信号处理、重试循环、daemon/stop
+│   ├── proc_unix.go             # Unix/macOS 进程分离与终止
+│   └── proc_windows.go          # Windows 进程分离与终止
 ├── internal/
 │   ├── config/
 │   │   └── config.go            # YAML 配置加载与验证
@@ -47,7 +53,14 @@ AutoClicks_Rod/
 ### 1. 编译
 
 ```bash
-go build -o autoclicks ./cmd/...
+# 动态编译
+go build -o output/autoclicks ./cmd/...
+
+# 静态链接编译
+CGO_ENABLED=0 go build -o output/autoclicks ./cmd/...
+
+# 交叉编译 for windows
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o output/autoclicks.exe ./cmd/...
 ```
 
 > Rod 会在首次运行时自动下载适配版本的 Chromium，请确保网络畅通。下载完成后无需重复下载。
@@ -75,7 +88,7 @@ courses:
 ### 3. 运行
 
 ```bash
-# 使用配置文件中的 headless 设置
+# 前台运行（Ctrl+C 退出）
 ./autoclicks
 
 # 指定配置文件路径
@@ -85,10 +98,56 @@ courses:
 ./autoclicks --headless
 ```
 
-### 4. 停止
+### 4. 后台运行（daemon 模式）
+
+不阻塞终端，日志自动写入文件：
+
+```bash
+# 启动守护进程（日志默认写入 autoclicks.log）
+./autoclicks daemon
+
+# 指定配置文件和日志路径
+./autoclicks daemon --config /path/to/config.yaml --log /var/log/ac.log
+```
+
+启动后输出：
+```
+守护进程已启动
+  PID:  12345
+  日志: /path/to/autoclicks.log
+  配置: /path/to/config.yaml
+
+停止方法：
+  autoclicks stop
+  autoclicks stop --pid 12345
+```
+
+### 5. 停止后台进程
+
+```bash
+# 自动读取 .pid 文件终止
+./autoclicks stop
+
+# 指定 PID 终止
+./autoclicks stop --pid 12345
+
+# 指定日志路径查找 .pid 文件
+./autoclicks stop --log /var/log/ac.log
+```
+
+### 6. 缓存清理
+
+```bash
+# 清理 Rod 会话缓存
+./autoclicks clean
+
+# 同时删除已下载的 Chromium 浏览器（约 500MB）
+./autoclicks clean --all
+```
+
+### 7. 停止前台运行
 
 按 `Ctrl+C`，程序会优雅关闭浏览器后退出。
-
 ---
 
 ## 手动测试指南
@@ -309,3 +368,15 @@ A: 可能不在选课时间段内（`confirm_selection` 找不到选课按钮）
 
 **Q: 如何同时监控多门课？**  
 A: 在 `config.yaml` 的 `courses` 列表中添加多个条目即可，程序每轮都会扫描全部目标课程。
+
+**Q: daemon 模式启动后如何查看日志？**  
+A: 日志默认写入 `autoclicks.log`（可用 `--log` 指定路径）。使用 `tail -f autoclicks.log` 实时查看。PID 文件存储在 `<日志路径>.pid`。
+
+**Q: daemon 进程意外退出了怎么办？**  
+A: 查看日志文件末尾的错误信息。如果 `.pid` 文件残留，`autoclicks stop` 会自动清理。重新运行 `autoclicks daemon` 即可。
+
+**Q: Windows 上如何使用 daemon 模式？**  
+A: 使用方法完全相同。Windows 上 `stop` 命令会强制终止进程（Windows 不支持 SIGTERM），效果等同于 `taskkill /PID`。
+
+**Q: `autoclicks clean --all` 后需要重新下载浏览器吗？**  
+A: 是的。`--all` 会删除 Rod 缓存的 Chromium 二进制（约 500MB），下次运行时会重新自动下载。不加 `--all` 只清理会话缓存，不影响浏览器。
