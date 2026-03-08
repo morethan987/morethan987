@@ -18,6 +18,14 @@ const PortalHost = "login.cqu.edu.cn:801"
 // It can be overridden in tests to point to a local httptest server.
 var portalBaseURL = "http://login.cqu.edu.cn:801/eportal/portal/login"
 
+// portalUnbindURL is the base URL for the MAC unbind endpoint.
+// It can be overridden in tests to point to a local httptest server.
+var portalUnbindURL = "http://login.cqu.edu.cn:801/eportal/portal/mac/unbind"
+
+// portalLogoutURL is the base URL for the logout endpoint.
+// It can be overridden in tests to point to a local httptest server.
+var portalLogoutURL = "http://login.cqu.edu.cn:801/eportal/portal/logout"
+
 // jsonpResponse represents the JSON payload inside a JSONP callback.
 // Result is json.RawMessage to handle both string ("1") and number (1) from the server.
 type jsonpResponse struct {
@@ -25,23 +33,33 @@ type jsonpResponse struct {
 	Msg    string          `json:"msg"`
 }
 
-// ParseJSONP extracts the result and msg fields from a JSONP response
-// with a "dr1004" callback wrapper. It uses strings.Index (not regex).
+// ParseJSONP extracts the result and msg fields from a JSONP response.
+// It supports multiple callback wrappers used by the campus portal:
+// "dr1004" (login) and "jsonpReturn" (logout/unbind).
+// It uses strings.Index (not regex).
 //
-// Expected format: dr1004({"result":"...","msg":"..."}) or dr1004({"result":1,"msg":"..."})
+// Expected format: callback({"result":"...","msg":"..."}) or callback({"result":1,"msg":"..."})
 func ParseJSONP(body string) (result, msg string, err error) {
-	prefix := "dr1004("
-	start := strings.Index(body, prefix)
+	prefixes := []string{"dr1004(", "jsonpReturn("}
+	var start int = -1
+	var prefixLen int
+	for _, p := range prefixes {
+		if idx := strings.Index(body, p); idx != -1 {
+			start = idx
+			prefixLen = len(p)
+			break
+		}
+	}
 	if start == -1 {
-		return "", "", fmt.Errorf("JSONP callback 'dr1004(' not found in response")
+		return "", "", fmt.Errorf("JSONP callback not found in response: %s", body)
 	}
 
 	end := strings.LastIndex(body, ")")
-	if end == -1 || end <= start+len(prefix) {
+	if end == -1 || end <= start+prefixLen {
 		return "", "", fmt.Errorf("closing ')' not found in JSONP response")
 	}
 
-	jsonStr := body[start+len(prefix) : end]
+	jsonStr := body[start+prefixLen : end]
 
 	var resp jsonpResponse
 	if err := json.Unmarshal([]byte(jsonStr), &resp); err != nil {
@@ -123,4 +141,80 @@ func PerformLogin(account, password, localIP string) (success bool, msg string, 
 	}
 
 	return result == "1", respMsg, nil
+}
+
+// newPortalClient returns an http.Client configured for the campus portal.
+func newPortalClient() *http.Client {
+	return &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+}
+
+// PerformLogout sends an unbind request followed by a logout request to the
+// campus portal. The account is the raw student ID (e.g. "20230674").
+func PerformLogout(account, localIP string) error {
+	client := newPortalClient()
+
+	// Step 1: Unbind MAC
+	unbindURL := portalUnbindURL + "?" +
+		"user_account=" + url.QueryEscape(account) +
+		"&wlan_user_ip=" + localIP +
+		"&wlan_user_mac=000000000000" +
+		"&jsVersion=4.2.2"
+
+	unbindReq, err := http.NewRequest("GET", unbindURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create unbind request: %w", err)
+	}
+	unbindReq.Header.Set("Referer", "http://login.cqu.edu.cn/")
+
+	unbindResp, err := client.Do(unbindReq)
+	if err != nil {
+		return fmt.Errorf("unbind request failed: %w", err)
+	}
+	unbindResp.Body.Close()
+
+	// Step 2: Logout
+	logoutURL := portalLogoutURL + "?" +
+		"login_method=1" +
+		"&user_account=drcom" +
+		"&user_password=123" +
+		"&ac_logout=1" +
+		"&wlan_user_ip=" + localIP +
+		"&wlan_user_mac=000000000000" +
+		"&jsVersion=4.2.2"
+
+	logoutReq, err := http.NewRequest("GET", logoutURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create logout request: %w", err)
+	}
+	logoutReq.Header.Set("Referer", "http://login.cqu.edu.cn/")
+
+	logoutResp, err := client.Do(logoutReq)
+	if err != nil {
+		return fmt.Errorf("logout request failed: %w", err)
+	}
+	defer logoutResp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(logoutResp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read logout response: %w", err)
+	}
+
+	result, _, err := ParseJSONP(string(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("failed to parse logout response: %w", err)
+	}
+
+	if result != "1" {
+		return fmt.Errorf("logout failed with result: %s", result)
+	}
+
+	return nil
 }

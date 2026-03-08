@@ -7,10 +7,10 @@ Go 1.25+, pure stdlib + `golang.org/x/term`. Single static binary, zero config.
 
 ```bash
 # Build
-go build -o campus-login ./cmd/campus-login
+go build -o output/campus-login ./cmd/campus-login
 
 # Static build (cross-compile friendly)
-CGO_ENABLED=0 go build -o campus-login ./cmd/campus-login
+CGO_ENABLED=0 go build -o output/campus-login ./cmd/campus-login
 
 # Vet (lint — the ONLY linter used)
 go vet ./...

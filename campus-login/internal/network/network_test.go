@@ -88,3 +88,34 @@ func TestGetLocalIP(t *testing.T) {
 		t.Fatalf("returned string %q is not a valid IP address", ip)
 	}
 }
+
+func TestGetLocalIPForHost(t *testing.T) {
+	// Use a known public DNS server to test.
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		t.Skip("skipping: no network available")
+	}
+	conn.Close()
+
+	ip := GetLocalIPForHost("8.8.8.8:80")
+	if ip == "" {
+		t.Fatal("expected non-empty IP string, got empty")
+	}
+	if ip == "0.0.0.0" {
+		t.Fatal("expected valid IP, got fallback 0.0.0.0")
+	}
+
+	parsed := net.ParseIP(ip)
+	if parsed == nil {
+		t.Fatalf("returned string %q is not a valid IP address", ip)
+	}
+}
+
+func TestGetLocalIPForHostUnreachable(t *testing.T) {
+	// Use an unroutable address to test fallback.
+	ip := GetLocalIPForHost("192.0.2.1:1")
+	// Should either return 0.0.0.0 or a valid IP depending on routing.
+	if ip == "" {
+		t.Fatal("expected non-empty IP string, got empty")
+	}
+}

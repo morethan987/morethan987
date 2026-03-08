@@ -42,7 +42,7 @@ func Run(ctx context.Context, cfg Config) error {
 
 		select {
 		case <-ctx.Done():
-			logf("收到退出信号，守护进程停止。")
+			logf("收到退出信号，守护进程停止")
 			return nil
 		case <-ticker.C:
 			// If we're in backoff, skip this tick and wait longer.
@@ -63,9 +63,9 @@ func check(cfg Config, failures int) int {
 	connected, err := network.CheckConnectivity()
 	if err == nil && connected {
 		if failures > 0 {
-			logf("%s[探查] 网络已恢复连通。%s", color.Green, color.NC)
+			logf("%s[探查] 网络已恢复连通%s", color.Green, color.NC)
 		} else {
-			logf("%s[探查] 网络已连通，无需登录。%s", color.Green, color.NC)
+			logf("%s[探查] 网络已连通，无需登录%s", color.Green, color.NC)
 		}
 		return 0
 	}
@@ -77,7 +77,7 @@ func check(cfg Config, failures int) int {
 		logf("%s[探查] 未连通，尝试登录...%s", color.Yellow, color.NC)
 	}
 
-	localIP := network.GetLocalIP()
+	localIP := network.GetLocalIPForHost(login.PortalHost)
 	success, msg, err := login.PerformLogin(cfg.Account, cfg.Password, localIP)
 	if err != nil {
 		logf("%s[登录] 请求失败: %s%s", color.Red, err, color.NC)

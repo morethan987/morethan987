@@ -48,12 +48,14 @@ func main() {
 		cmdStatus()
 	case "daemon":
 		cmdDaemon(args[1:])
+	case "logout":
+		cmdLogout(args[1:])
 	case "help", "--help", "-h":
 		showHelp()
 	default:
 		if strings.HasPrefix(command, "-") {
-			fmt.Fprintf(os.Stderr, "%s错误: 未知选项 '%s'。%s\n", color.Red, command, color.NC)
-			fmt.Fprintf(os.Stderr, "使用 'campus-login help' 查看可用命令。\n")
+			fmt.Fprintf(os.Stderr, "%s错误: 未知选项 '%s'%s\n", color.Red, command, color.NC)
+			fmt.Fprintf(os.Stderr, "使用 'campus-login help' 查看可用命令\n")
 			os.Exit(1)
 		}
 		handleLogin(command)
@@ -69,8 +71,8 @@ func handleLogin(alias string) {
 			os.Exit(1)
 		}
 		if defaultAlias == "" {
-			fmt.Fprintf(os.Stderr, "%s错误: 未设置默认账号。%s\n", color.Red, color.NC)
-			fmt.Fprintln(os.Stderr, "请先使用 'campus-login add' 添加一个账号，然后使用 'campus-login default' 设置默认账号。")
+			fmt.Fprintf(os.Stderr, "%s错误: 未设置默认账号%s\n", color.Red, color.NC)
+			fmt.Fprintln(os.Stderr, "请先使用 'campus-login add' 添加一个账号，然后使用 'campus-login default' 设置默认账号")
 			os.Exit(1)
 		}
 		alias = defaultAlias
@@ -78,12 +80,12 @@ func handleLogin(alias string) {
 
 	account, password, err := config.GetCredentials(alias)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s错误: 账号别名 [%s%s%s] 未找到。%s\n", color.Red, color.Yellow, alias, color.Red, color.NC)
-		fmt.Fprintln(os.Stderr, "使用 'campus-login list' 查看所有已保存的账号。")
+		fmt.Fprintf(os.Stderr, "%s错误: 账号别名 [%s%s%s] 未找到%s\n", color.Red, color.Yellow, alias, color.Red, color.NC)
+		fmt.Fprintln(os.Stderr, "使用 'campus-login list' 查看所有已保存的账号")
 		os.Exit(1)
 	}
 
-	localIP := network.GetLocalIP()
+	localIP := network.GetLocalIPForHost(login.PortalHost)
 
 	success, msg, err := login.PerformLogin(account, password, localIP)
 	if err != nil {
@@ -95,7 +97,7 @@ func handleLogin(alias string) {
 		fmt.Printf("%s==> 登录成功! 服务器消息: %s%s\n", color.Green, msg, color.NC)
 	} else {
 		if msg == "" {
-			msg = "未知错误，可能是账号密码错误或已在别处登录。"
+			msg = "未知错误，可能是账号密码错误或已在别处登录"
 		}
 		fmt.Fprintf(os.Stderr, "%s==> 登录失败! 服务器消息: %s%s\n", color.Red, msg, color.NC)
 		os.Exit(1)
@@ -127,7 +129,7 @@ func cmdAdd(args []string) {
 	}
 
 	if password == "" {
-		fmt.Fprintf(os.Stderr, "%s错误: 密码不能为空。%s\n", color.Red, color.NC)
+		fmt.Fprintf(os.Stderr, "%s错误: 密码不能为空%s\n", color.Red, color.NC)
 		os.Exit(1)
 	}
 
@@ -136,7 +138,7 @@ func cmdAdd(args []string) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("账号 [%s%s%s] 已保存。\n", color.Yellow, alias, color.NC)
+	fmt.Printf("账号 [%s%s%s] 已保存\n", color.Yellow, alias, color.NC)
 }
 
 // cmdRemove handles the "remove"/"rm" subcommand.
@@ -152,7 +154,7 @@ func cmdRemove(args []string) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("账号 [%s%s%s] 已删除。\n", color.Yellow, alias, color.NC)
+	fmt.Printf("账号 [%s%s%s] 已删除\n", color.Yellow, alias, color.NC)
 }
 
 // cmdList handles the "list"/"ls" subcommand.
@@ -189,12 +191,12 @@ func cmdDefault(args []string) {
 
 	alias := args[0]
 	if err := config.SetDefault(alias); err != nil {
-		fmt.Fprintf(os.Stderr, "%s错误: 账号别名 [%s%s%s] 不存在，无法设为默认。%s\n",
+		fmt.Fprintf(os.Stderr, "%s错误: 账号别名 [%s%s%s] 不存在，无法设为默认%s\n",
 			color.Red, color.Yellow, alias, color.Red, color.NC)
 		os.Exit(1)
 	}
 
-	fmt.Printf("已将 [%s%s%s] 设置为默认登录账号。\n", color.Yellow, alias, color.NC)
+	fmt.Printf("已将 [%s%s%s] 设置为默认登录账号\n", color.Yellow, alias, color.NC)
 }
 
 // cmdStatus handles the "status" subcommand.
@@ -206,9 +208,9 @@ func cmdStatus() {
 	}
 
 	if connected {
-		fmt.Printf("%s==> 网络已连通，当前可以正常访问互联网。%s\n", color.Green, color.NC)
+		fmt.Printf("%s==> 网络已连通，当前可以正常访问互联网%s\n", color.Green, color.NC)
 	} else {
-		fmt.Printf("%s==> 检测到强制门户（未登录），请登录校园网。%s\n", color.Yellow, color.NC)
+		fmt.Printf("%s==> 检测到强制门户（未登录），请登录校园网%s\n", color.Yellow, color.NC)
 	}
 }
 
@@ -232,6 +234,7 @@ func showHelp() {
   %sset, def, default <别名>%s   设置一个默认登录账号
 
 %s其他:%s
+  %slogout [别名]%s            注销校园网登录
   %sstatus%s                   检测当前网络连通性
   %sdaemon [别名] [间隔]%s     守护进程模式，周期性检测并自动登录 (默认间隔 60s)
   %shelp, -h, --help%s         显示此帮助信息
@@ -263,6 +266,7 @@ func showHelp() {
 		color.Green, color.NC,
 		color.Green, color.NC,
 		color.Yellow, color.NC,
+		color.Green, color.NC,
 		color.Green, color.NC,
 		color.Green, color.NC,
 		color.Green, color.NC,
@@ -311,9 +315,9 @@ func cmdDaemon(args []string) {
 			os.Exit(1)
 		}
 		if defaultAlias == "" {
-			fmt.Fprintf(os.Stderr, "%s错误: 未设置默认账号。%s\n", color.Red, color.NC)
+			fmt.Fprintf(os.Stderr, "%s错误: 未设置默认账号%s\n", color.Red, color.NC)
 			fmt.Fprintln(os.Stderr, "请先使用 'campus-login add' 添加账号并用 'campus-login default' 设置默认账号，")
-			fmt.Fprintln(os.Stderr, "或使用 'campus-login daemon <别名>' 指定账号。")
+			fmt.Fprintln(os.Stderr, "或使用 'campus-login daemon <别名>' 指定账号")
 			os.Exit(1)
 		}
 		alias = defaultAlias
@@ -321,8 +325,8 @@ func cmdDaemon(args []string) {
 
 	account, password, err := config.GetCredentials(alias)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s错误: 账号别名 [%s%s%s] 未找到。%s\n", color.Red, color.Yellow, alias, color.Red, color.NC)
-		fmt.Fprintln(os.Stderr, "使用 'campus-login list' 查看所有已保存的账号。")
+		fmt.Fprintf(os.Stderr, "%s错误: 账号别名 [%s%s%s] 未找到%s\n", color.Red, color.Yellow, alias, color.Red, color.NC)
+		fmt.Fprintln(os.Stderr, "使用 'campus-login list' 查看所有已保存的账号")
 		os.Exit(1)
 	}
 
@@ -340,4 +344,51 @@ func cmdDaemon(args []string) {
 		fmt.Fprintf(os.Stderr, "%s错误: 守护进程异常退出: %s%s\n", color.Red, err, color.NC)
 		os.Exit(1)
 	}
+}
+
+// cmdLogout handles the "logout" subcommand.
+// Usage: campus-login logout [alias]
+// If no alias is given, the default account is used.
+func cmdLogout(args []string) {
+	if len(args) > 1 {
+		fmt.Fprintln(os.Stderr, "用法: campus-login logout [别名]")
+		os.Exit(1)
+	}
+
+	alias := ""
+	if len(args) == 1 {
+		alias = args[0]
+	}
+
+	if alias == "" {
+		defaultAlias, err := config.GetDefault()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s错误: 读取默认账号失败: %s%s\n", color.Red, err, color.NC)
+			os.Exit(1)
+		}
+		if defaultAlias == "" {
+			fmt.Fprintf(os.Stderr, "%s错误: 未设置默认账号%s\n", color.Red, color.NC)
+			fmt.Fprintln(os.Stderr, "请指定要注销的账号别名: campus-login logout <别名>")
+			os.Exit(1)
+		}
+		alias = defaultAlias
+	}
+
+	account, _, err := config.GetCredentials(alias)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s错误: 账号别名 [%s%s%s] 未找到%s\n", color.Red, color.Yellow, alias, color.Red, color.NC)
+		fmt.Fprintln(os.Stderr, "使用 'campus-login list' 查看所有已保存的账号")
+		os.Exit(1)
+	}
+
+	localIP := network.GetLocalIPForHost(login.PortalHost)
+
+	fmt.Printf("正在注销账号 [%s%s%s] (IP: %s)...\n", color.Yellow, alias, color.NC, localIP)
+
+	if err := login.PerformLogout(account, localIP); err != nil {
+		fmt.Fprintf(os.Stderr, "%s==> 注销失败: %s%s\n", color.Red, err, color.NC)
+		os.Exit(1)
+	}
+
+	fmt.Printf("%s==> 注销成功!%s\n", color.Green, color.NC)
 }

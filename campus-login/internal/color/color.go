@@ -11,8 +11,8 @@ var (
 	NC     string
 )
 
-// Init 检测 stdout 是否为 TTY，并相应设置颜色变量。
-// 等价于 shell 版的 [ -t 1 ] 条件判断。
+// Init 检测 stdout 是否为 TTY，并相应设置颜色变量
+// 等价于 shell 版的 [ -t 1 ] 条件判断
 func Init() {
 	fi, err := os.Stdout.Stat()
 	if err == nil && (fi.Mode()&os.ModeCharDevice != 0) {
@@ -30,7 +30,7 @@ func Init() {
 	}
 }
 
-// Colorize 返回带颜色包裹的文本，非 TTY 时退化为纯文本。
+// Colorize 返回带颜色包裹的文本，非 TTY 时退化为纯文本
 func Colorize(color, text string) string {
 	return color + text + NC
 }
