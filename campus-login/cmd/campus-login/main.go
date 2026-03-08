@@ -257,6 +257,12 @@ func showHelp() {
 
   # 启动守护进程，指定账号和检测间隔
   campus-login daemon myacc 5m
+
+  # 退出默认账号的登录
+  campus-login logout
+
+  # 退出 myacc 账号的登录
+  campus-login logout myacc
 `,
 		color.Yellow, color.NC,
 		color.Yellow, color.NC,
