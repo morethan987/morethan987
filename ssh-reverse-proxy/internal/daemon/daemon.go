@@ -108,6 +108,7 @@ func (d *Daemon) Start() error {
 			default:
 			}
 			if errors.Is(err, net.ErrClosed) {
+				<-d.done
 				return nil
 			}
 			return fmt.Errorf("accept connection: %w", err)

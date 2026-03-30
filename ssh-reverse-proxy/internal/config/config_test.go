@@ -93,8 +93,9 @@ func TestGetEffectivePort(t *testing.T) {
 	cfg := &Config{
 		Global: GlobalConfig{RemotePort: 7890, LocalPort: 7891},
 		Servers: map[string]ServerConfig{
-			"app": {RemotePort: 9000, LocalPort: 9001},
-			"bad": {RemotePort: 0, LocalPort: 9101},
+			"app":  {RemotePort: 9000, LocalPort: 9001},
+			"bad":  {RemotePort: 0, LocalPort: 9101},
+			"zero": {RemotePort: 9000, LocalPort: 0},
 		},
 	}
 
@@ -104,6 +105,11 @@ func TestGetEffectivePort(t *testing.T) {
 
 	rp, lp = cfg.GetEffectivePort("bad")
 	assert.Equal(t, 7890, rp)
+	assert.Equal(t, 9101, lp)
+
+	// LocalPort=0 should fall back to global default
+	rp, lp = cfg.GetEffectivePort("zero")
+	assert.Equal(t, 9000, rp)
 	assert.Equal(t, 7891, lp)
 
 	rp, lp = cfg.GetEffectivePort("missing")

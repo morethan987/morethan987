@@ -78,10 +78,17 @@ func (c *Config) GetEffectivePort(alias string) (int, int) {
 	if c == nil {
 		return 0, 0
 	}
-	if server, ok := c.Servers[alias]; ok && server.RemotePort > 0 {
-		return server.RemotePort, server.LocalPort
+	remotePort := c.Global.RemotePort
+	localPort := c.Global.LocalPort
+	if server, ok := c.Servers[alias]; ok {
+		if server.RemotePort > 0 {
+			remotePort = server.RemotePort
+		}
+		if server.LocalPort > 0 {
+			localPort = server.LocalPort
+		}
 	}
-	return c.Global.RemotePort, c.Global.LocalPort
+	return remotePort, localPort
 }
 
 type ServerInfo struct {
