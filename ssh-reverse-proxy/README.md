@@ -31,7 +31,7 @@ go install github.com/morethan987/ssh-reverse-proxy/cmd/srp@latest
 ```bash
 git clone https://github.com/morethan987/ssh-reverse-proxy.git
 cd ssh-reverse-proxy
-go build -o srp ./cmd/srp
+CGO_ENABLED=0 go build -o srp ./cmd/srp
 sudo mv srp /usr/local/bin/
 ```
 
