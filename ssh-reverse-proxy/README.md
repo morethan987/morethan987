@@ -63,8 +63,9 @@ srp
 
 # 查看状态
 srp status
-# 输出: my-server: {"PID":12345,"Alias":"my-server","RemotePort":7890,...,"Status":"running"}
-# 输出: Current default SRP target: my-server
+# ALIAS       STATUS   PID    REMOTE  LOCAL  RESTARTS  STARTED
+# my-server   running  12345  7890    7890   0         2026-03-30 10:00:00
+# Current default SRP target: my-server
 ```
 
 就这样。`srp` 会在后台启动一个守护进程来管理 SSH 隧道。如果 SSH 连接断开，守护进程会在 10 秒后自动重连。
@@ -116,10 +117,12 @@ srp status             # 列出所有运行中的隧道 + 显示默认目标
 srp status my-server   # 查看指定别名的详细状态
 ```
 
-无参数时会输出类似以下内容：
+无参数时会输出对齐的表格：
 
 ```
-my-server: {"PID":12345,"Alias":"my-server","RemotePort":7890,"LocalPort":7890,"Status":"running","RestartCount":0,"StartedAt":"2026-03-30T10:00:00Z"}
+ALIAS        STATUS   PID    REMOTE  LOCAL  RESTARTS  STARTED
+my-server    running  12345  7890    7890   0         2026-03-30 10:00:00
+jump-campus  stopped  0      7890    7890   2         2026-03-30 09:50:00
 Current default SRP target: my-server
 ```
 
@@ -182,7 +185,7 @@ srp kill
 
 停止守护进程及其管理的所有 SSH 隧道。执行流程：
 
-1. 读取 PID 文件（`~/.config/srp/srpd.pid`），找到守护进程
+1. 读取 PID 文件（`~/.config/srp/srp.pid`），找到守护进程
 2. 发送 `SIGTERM`，守护进程收到后会优雅停止所有 SSH 子进程并清理 socket 和 PID 文件
 3. 等待最多 5 秒，若进程已退出则输出 `Daemon stopped`
 4. 超时未退出则强制 `SIGKILL`，并手动清理残留文件
@@ -197,6 +200,24 @@ srp kill
 srp --help
 srp -h
 ```
+
+### Shell 补全
+
+`srp` 支持 bash、zsh、fish 的命令补全，包括子命令、已配置的 alias 和 `~/.ssh/config` 中的 Host。
+
+```bash
+# 安装补全（会提示确认，支持 bash/zsh/fish 自动检测）
+COMP_INSTALL=1 srp
+
+# 卸载补全
+COMP_UNINSTALL=1 srp
+```
+
+安装后重启 shell 即可生效。补全内容：
+
+- 子命令：`start`、`stop`、`status`、`set`、`current`、`add`、`remove`、`list`、`kill`
+- 已配置的 alias：`srp start <Tab>` 自动补全 `config.toml` 中的服务器别名
+- SSH Host：`srp add <Tab>` 自动补全 `~/.ssh/config` 中的 Host 名称
 
 ## 配置文件
 
@@ -340,7 +361,7 @@ srp -h
 |------|------|------|
 | 配置文件 | `~/.config/srp/config.toml` | TOML 格式的服务器配置和全局设置 |
 | IPC Socket | `~/.config/srp/srp.sock` | Unix Domain Socket，客户端与守护进程通信 |
-| PID 文件 | `~/.config/srp/srpd.pid` | 守护进程的进程 ID |
+| PID 文件 | `~/.config/srp/srp.pid` | 守护进程的进程 ID |
 | 日志文件 | `~/.config/srp/srp.log` | 守护进程运行日志 |
 
 可通过设置 `XDG_CONFIG_HOME` 环境变量改变根目录，例如：
@@ -389,7 +410,7 @@ srp kill
 或者手动发送 `SIGTERM`：
 
 ```bash
-kill $(cat ~/.config/srp/srpd.pid)
+kill $(cat ~/.config/srp/srp.pid)
 ```
 
 守护进程收到 `SIGTERM` 或 `SIGINT` 后会自动停止所有 SSH 子进程并清理 socket 和 PID 文件。下次执行任意 `srp` 命令时，守护进程会自动重新启动。
@@ -441,6 +462,8 @@ ssh-reverse-proxy/
 ├── internal/
 │   ├── client/
 │   │   └── client.go        # IPC 客户端，Unix Socket 通信
+│   ├── completion/
+│   │   └── completion.go    # Shell 补全定义（bash/zsh/fish）
 │   ├── config/
 │   │   └── config.go        # TOML 配置加载/保存/CRUD
 │   ├── daemon/
@@ -453,7 +476,6 @@ ssh-reverse-proxy/
 │   │   └── manager.go       # SSH 子进程管理，自动重启
 │   └── xdg/
 │       └── xdg.go           # XDG 路径解析
-├── old_sample/               # 原 Shell 版本参考
 ├── integration_test.go       # 集成测试
 └── README.md
 ```
@@ -463,7 +485,7 @@ ssh-reverse-proxy/
 ### 构建
 
 ```bash
-go build -o srp ./cmd/srp
+CGO_ENABLED=0 go build -o srp ./cmd/srp
 ```
 
 ### 测试
@@ -475,7 +497,30 @@ go test ./...
 ### 依赖
 
 - [BurntSushi/toml](https://github.com/BurntSushi/toml) — TOML 解析
+- [posener/complete/v2](https://github.com/posener/complete) — Shell 补全（bash/zsh/fish）
 - [stretchr/testify](https://github.com/stretchr/testify) — 测试断言（仅测试依赖）
+
+## Shell 补全
+
+`srp` 支持 bash、zsh 和 fish 的命令补全，包括：
+
+- 子命令补全（`start`、`stop`、`status` 等）
+- 动态 alias 补全（从配置文件读取已添加的服务器）
+- SSH Host 补全（`srp add` 时从 `~/.ssh/config` 读取）
+
+### 安装补全
+
+```bash
+COMP_INSTALL=1 srp
+```
+
+重启 shell 后生效。
+
+### 卸载补全
+
+```bash
+COMP_UNINSTALL=1 srp
+```
 
 ## License
 
