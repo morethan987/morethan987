@@ -10,9 +10,11 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"text/tabwriter"
 	"time"
 
 	"github.com/morethan987/ssh-reverse-proxy/internal/client"
+	"github.com/morethan987/ssh-reverse-proxy/internal/completion"
 	"github.com/morethan987/ssh-reverse-proxy/internal/config"
 	"github.com/morethan987/ssh-reverse-proxy/internal/daemon"
 	"github.com/morethan987/ssh-reverse-proxy/internal/ipc"
@@ -77,6 +79,8 @@ func runDaemon() {
 }
 
 func runClient() {
+	completion.SRPCommand().Complete("srp")
+
 	args := os.Args[1:]
 
 	if len(args) == 0 {
@@ -167,19 +171,35 @@ func runClient() {
 			fatal(errors.New(resp.Message))
 		}
 
-		statusMap := map[string]any{}
+		type statusEntry struct {
+			Alias        string `json:"Alias"`
+			PID          int    `json:"PID"`
+			RemotePort   int    `json:"RemotePort"`
+			LocalPort    int    `json:"LocalPort"`
+			Status       string `json:"Status"`
+			RestartCount int    `json:"RestartCount"`
+			StartedAt    string `json:"StartedAt"`
+		}
+		statusMap := map[string]statusEntry{}
 		if len(resp.Data) > 0 {
 			if err := json.Unmarshal(resp.Data, &statusMap); err != nil {
 				fatal(err)
 			}
 		}
 		if len(statusMap) == 0 {
-			fmt.Println("No running SRP targets")
+			fmt.Println("No SRP targets")
 		} else {
-			for alias, raw := range statusMap {
-				entry, _ := json.Marshal(raw)
-				fmt.Printf("%s: %s\n", alias, string(entry))
+			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+			fmt.Fprintf(w, "ALIAS\tSTATUS\tPID\tREMOTE\tLOCAL\tRESTARTS\tSTARTED\n")
+			for alias, entry := range statusMap {
+				started := entry.StartedAt
+				if t, err := time.Parse(time.RFC3339Nano, entry.StartedAt); err == nil {
+					started = t.Format("2006-01-02 15:04:05")
+				}
+				fmt.Fprintf(w, "%s\t%s\t%d\t%d\t%d\t%d\t%s\n",
+					alias, entry.Status, entry.PID, entry.RemotePort, entry.LocalPort, entry.RestartCount, started)
 			}
+			w.Flush()
 		}
 		cfg, err := loadOrCreateConfig()
 		if err != nil {
@@ -304,13 +324,15 @@ func runClient() {
 			fmt.Println("No configured SRP servers")
 			return
 		}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		for _, srv := range payload.Servers {
 			status := "stopped"
 			if _, ok := payload.Running[srv.Alias]; ok {
 				status = "running"
 			}
-			fmt.Printf("%s\tport=%d\tstatus=%s\n", srv.Alias, srv.RemotePort, status)
+			fmt.Fprintf(w, "%s\tport=%d\tstatus=%s\n", srv.Alias, srv.RemotePort, status)
 		}
+		w.Flush()
 
 	case "kill":
 		killDaemon()
@@ -494,6 +516,10 @@ Examples:
 
 Config: ~/.config/srp/config.toml
 Log:    ~/.config/srp/srp.log
+
+Shell Completion (bash/zsh/fish):
+  COMP_INSTALL=1 srp    Install shell completions
+  COMP_UNINSTALL=1 srp  Uninstall shell completions
 `
 	fmt.Print(help)
 }
