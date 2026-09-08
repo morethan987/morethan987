@@ -79,7 +79,7 @@ cauth daemon myacc 2m       # 指定账号 + 2 分钟间隔
 守护进程会周期性检测外网连通性，断线时自动重连。连续失败时采用指数退避策略（最长 30 分钟）。
 支持 `Ctrl-C` / `SIGTERM` 优雅退出。
 
-> 如果运行在服务器上推荐使用 systemd 进行开机自启动管理
+> daemon 前台阻塞运行。长期运行建议交给 systemd 托管，见下文「开机自启（systemd）」。
 
 ### 其他
 
@@ -105,6 +105,85 @@ cauth -i enp2s0 daemon 5m    # 守护进程走指定网口
 设置默认网口后，登录、注销、状态检测、守护进程都会走该网口：登录请求、
 上报给门户的 IP、连通性检测全部绑定（Linux 下使用 `SO_BINDTODEVICE`）。
 `-i` 参数只影响当次运行，不会修改配置。
+
+## 开机自启（systemd）
+
+`cauth daemon` 阻塞前台运行，生产环境交给 systemd 托管。两种方式的核心差异：
+
+| | 用户服务（`--user`） | 系统服务 |
+|---|---|---|
+| 单元文件位置 | `~/.config/systemd/user/cauth.service` | `/etc/systemd/system/cauth.service` |
+| 运行身份 | 当前用户，无需 root | 默认 root，可用 `User=` 指定普通用户 |
+| 开机自启 | 需 `loginctl enable-linger`，否则随登录会话退出而停止 | 天然支持，无需任何人登录 |
+| 适用场景 | 桌面机、单人使用的机器 | 服务器（推荐） |
+
+两种方式读取的都是运行账号的 `~/.config/cauth/config`，配置完全共用。
+
+### 方式一：用户服务
+
+```ini
+# ~/.config/systemd/user/cauth.service
+[Unit]
+Description=cauth campus network daemon
+
+[Service]
+ExecStart=/usr/local/bin/cauth daemon
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target
+```
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now cauth.service
+sudo loginctl enable-linger $USER    # 关键：注销后继续运行，装好后执行一次
+journalctl --user -u cauth -f        # 查看日志
+```
+
+两个易踩的坑：
+
+- **不开启 linger，用户服务会随最后一次登录会话一起被停止**——SSH 登出 daemon 就退了，
+  这是用户服务最常见的问题。`enable-linger` 需要 sudo 执行一次，之后重启也不需要登录。
+- **`ExecStart` 必须写绝对路径**。systemd 用户管理器的 PATH 通常不包含 `~/.local/bin`，
+  装在那里的写 `/home/<用户名>/.local/bin/cauth`。
+
+### 方式二：系统服务（服务器推荐）
+
+```ini
+# /etc/systemd/system/cauth.service
+[Unit]
+Description=cauth campus network daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# 必须指定 User，否则以 root 运行，读取的是 /root/.config/cauth/config（通常没有账号）
+User=<用户名>
+ExecStart=/usr/local/bin/cauth daemon
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now cauth.service
+journalctl -u cauth -f
+```
+
+说明：
+
+- `User=` 填实际运行账号。该账号需先在交互终端完成 `cauth add` / `cauth set`
+  （密码安全输入需要 TTY，无法在 systemd 里完成）。
+- 需要指定账号或间隔时直接追加参数：`ExecStart=/usr/local/bin/cauth daemon myacc 2m`。
+- 多网卡环境先用 `cauth iface <网口>` 写入默认网口，daemon 启动时自动绑定，
+  效果等同 `-i`。
+- `network-online.target` 等网络就绪后再启动，避免开机首轮探测全部超时；
+  即便如此，daemon 自身的退避重试也能容忍网络晚就绪。
 
 ## 配置文件
 
