@@ -13,7 +13,7 @@ func setupTestEnv(t *testing.T) {
 	t.Helper()
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)
-	// Clear XDG_CONFIG_HOME so configDir() falls back to $HOME/.config/campus-login
+	// Clear XDG_CONFIG_HOME so configDir() falls back to $HOME/.config/cauth
 	t.Setenv("XDG_CONFIG_HOME", "")
 
 	if err := Setup(); err != nil {
@@ -199,7 +199,7 @@ func TestXDGConfigHome(t *testing.T) {
 		t.Fatalf("Setup() with XDG_CONFIG_HOME failed: %v", err)
 	}
 
-	expectedDir := filepath.Join(xdgDir, "campus-login")
+	expectedDir := filepath.Join(xdgDir, "cauth")
 	expectedFile := filepath.Join(expectedDir, "config")
 	if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 		t.Errorf("config file not created at XDG path: %s", expectedFile)

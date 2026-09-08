@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/morethan987/campus-login/internal/color"
-	"github.com/morethan987/campus-login/internal/login"
-	"github.com/morethan987/campus-login/internal/network"
+	"github.com/morethan987/cauth/internal/color"
+	"github.com/morethan987/cauth/internal/login"
+	"github.com/morethan987/cauth/internal/network"
 )
 
 // Config holds the daemon runtime configuration.

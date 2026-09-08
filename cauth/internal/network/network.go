@@ -27,6 +27,7 @@ func GetLocalIP() string {
 
 	return localAddr.IP.String()
 }
+
 // GetLocalIPForHost returns the local IP address that should be used when
 // communicating with the given host:port.
 //

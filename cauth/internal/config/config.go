@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// Account represents a saved campus-login account.
+// Account represents a saved cauth account.
 type Account struct {
 	Alias     string
 	AccountID string
@@ -16,13 +16,13 @@ type Account struct {
 }
 
 // configDir returns the configuration directory path.
-// Priority: $XDG_CONFIG_HOME/campus-login/ > $HOME/.config/campus-login/
+// Priority: $XDG_CONFIG_HOME/cauth/ > $HOME/.config/cauth/
 func configDir() string {
 	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
-		return filepath.Join(xdg, "campus-login")
+		return filepath.Join(xdg, "cauth")
 	}
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".config", "campus-login")
+	return filepath.Join(home, ".config", "cauth")
 }
 
 // configFile returns the full path to the config file.

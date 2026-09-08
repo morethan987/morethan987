@@ -1,16 +1,16 @@
-# AGENTS.md — campus-login
+# AGENTS.md — cauth
 
 Campus network CLI login tool for Chongqing University (`login.cqu.edu.cn`).
-Go 1.25+, pure stdlib + `golang.org/x/term`. Single static binary, zero config.
+Go 1.27+, pure stdlib + `golang.org/x/term`. Single static binary, zero config.
 
 ## Build / Test / Lint
 
 ```bash
 # Build
-go build -o output/campus-login ./cmd/campus-login
+go build -o output/cauth ./cmd/cauth
 
 # Static build (cross-compile friendly)
-CGO_ENABLED=0 go build -o output/campus-login ./cmd/campus-login
+CGO_ENABLED=0 go build -o output/cauth ./cmd/cauth
 
 # Vet (lint — the ONLY linter used)
 go vet ./...
@@ -40,7 +40,7 @@ The only CI-equivalent check is: `go vet ./... && go test ./...`
 ## Project Structure
 
 ```
-cmd/campus-login/main.go     # CLI entry point — command dispatch via os.Args + switch/case
+cmd/cauth/main.go     # CLI entry point — command dispatch via os.Args + switch/case
 internal/
   color/color.go             # TTY detection + ANSI color variables (no tests)
   config/config.go           # Config file CRUD (atomic write-to-temp-then-rename)
@@ -75,8 +75,8 @@ import (
 
     "golang.org/x/term"  // external (x/ packages)
 
-    "github.com/morethan987/campus-login/internal/color"   // internal
-    "github.com/morethan987/campus-login/internal/config"
+    "github.com/morethan987/cauth/internal/color"   // internal
+    "github.com/morethan987/cauth/internal/config"
 )
 ```
 
@@ -146,7 +146,7 @@ defer func() { portalBaseURL = original }()
 ### File I/O
 
 - Config writes use atomic write-to-temp-then-rename pattern (not direct file writes)
-- Config directory: `$XDG_CONFIG_HOME/campus-login/` or `$HOME/.config/campus-login/`
+- Config directory: `$XDG_CONFIG_HOME/cauth/` or `$HOME/.config/cauth/`
 - Config format: plain text, `alias=account:password` per line, `default_account=alias` special line
 - Password parsing: `strings.SplitN(creds, ":", 2)` — only split on first colon
 

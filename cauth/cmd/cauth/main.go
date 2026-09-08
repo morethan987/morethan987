@@ -11,11 +11,11 @@ import (
 
 	"golang.org/x/term"
 
-	"github.com/morethan987/campus-login/internal/color"
-	"github.com/morethan987/campus-login/internal/config"
-	"github.com/morethan987/campus-login/internal/daemon"
-	"github.com/morethan987/campus-login/internal/login"
-	"github.com/morethan987/campus-login/internal/network"
+	"github.com/morethan987/cauth/internal/color"
+	"github.com/morethan987/cauth/internal/config"
+	"github.com/morethan987/cauth/internal/daemon"
+	"github.com/morethan987/cauth/internal/login"
+	"github.com/morethan987/cauth/internal/network"
 )
 
 func main() {
@@ -55,7 +55,7 @@ func main() {
 	default:
 		if strings.HasPrefix(command, "-") {
 			fmt.Fprintf(os.Stderr, "%s错误: 未知选项 '%s'%s\n", color.Red, command, color.NC)
-			fmt.Fprintf(os.Stderr, "使用 'campus-login help' 查看可用命令\n")
+			fmt.Fprintf(os.Stderr, "使用 'cauth help' 查看可用命令\n")
 			os.Exit(1)
 		}
 		handleLogin(command)
@@ -72,7 +72,7 @@ func handleLogin(alias string) {
 		}
 		if defaultAlias == "" {
 			fmt.Fprintf(os.Stderr, "%s错误: 未设置默认账号%s\n", color.Red, color.NC)
-			fmt.Fprintln(os.Stderr, "请先使用 'campus-login add' 添加一个账号，然后使用 'campus-login default' 设置默认账号")
+			fmt.Fprintln(os.Stderr, "请先使用 'cauth add' 添加一个账号，然后使用 'cauth default' 设置默认账号")
 			os.Exit(1)
 		}
 		alias = defaultAlias
@@ -81,7 +81,7 @@ func handleLogin(alias string) {
 	account, password, err := config.GetCredentials(alias)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s错误: 账号别名 [%s%s%s] 未找到%s\n", color.Red, color.Yellow, alias, color.Red, color.NC)
-		fmt.Fprintln(os.Stderr, "使用 'campus-login list' 查看所有已保存的账号")
+		fmt.Fprintln(os.Stderr, "使用 'cauth list' 查看所有已保存的账号")
 		os.Exit(1)
 	}
 
@@ -107,7 +107,7 @@ func handleLogin(alias string) {
 // cmdAdd handles the "add" subcommand.
 func cmdAdd(args []string) {
 	if len(args) < 2 || len(args) > 3 {
-		fmt.Fprintln(os.Stderr, "用法: campus-login add <别名> <账号> [密码]")
+		fmt.Fprintln(os.Stderr, "用法: cauth add <别名> <账号> [密码]")
 		os.Exit(1)
 	}
 
@@ -144,7 +144,7 @@ func cmdAdd(args []string) {
 // cmdRemove handles the "remove"/"rm" subcommand.
 func cmdRemove(args []string) {
 	if len(args) != 1 {
-		fmt.Fprintln(os.Stderr, "用法: campus-login remove <别名>")
+		fmt.Fprintln(os.Stderr, "用法: cauth remove <别名>")
 		os.Exit(1)
 	}
 
@@ -185,7 +185,7 @@ func cmdList() {
 // cmdDefault handles the "default" subcommand.
 func cmdDefault(args []string) {
 	if len(args) != 1 {
-		fmt.Fprintln(os.Stderr, "用法: campus-login default <别名>")
+		fmt.Fprintln(os.Stderr, "用法: cauth default <别名>")
 		os.Exit(1)
 	}
 
@@ -216,16 +216,16 @@ func cmdStatus() {
 
 // showHelp prints the usage information.
 func showHelp() {
-	fmt.Printf(`campus-login - 校园网命令行登录工具
+	fmt.Printf(`cauth - 校园网命令行登录工具
 
 一个用于快速登录校园网、管理多个登录账号的命令行工具
 
 %s用法:%s
-  campus-login [命令] [参数...]
+  cauth [命令] [参数...]
 
 %s登录操作 (默认):%s
-  campus-login              使用默认账号进行登录
-  campus-login <别名>       使用指定别名的账号进行登录
+  cauth              使用默认账号进行登录
+  cauth <别名>       使用指定别名的账号进行登录
 
 %s账号管理:%s
   %sadd <别名> <账号> [密码]%s   添加或更新账号, 若不提供密码, 将提示安全输入
@@ -241,28 +241,28 @@ func showHelp() {
 
 %s示例:%s
   # 添加一个名为 myacc 的账号，并安全地输入密码
-  campus-login add myacc 20230001
+  cauth add myacc 20230001
 
   # 将 myacc 设置为默认账号
-  campus-login set myacc
+  cauth set myacc
 
   # 使用默认账号登录
-  campus-login
+  cauth
 
   # 使用另一个名为 otheracc 的账号登录（不改变默认设置）
-  campus-login otheracc
+  cauth otheracc
 
   # 启动守护进程，使用默认账号，每 60 秒检测一次
-  campus-login daemon
+  cauth daemon
 
   # 启动守护进程，指定账号和检测间隔
-  campus-login daemon myacc 5m
+  cauth daemon myacc 5m
 
   # 退出默认账号的登录
-  campus-login logout
+  cauth logout
 
   # 退出 myacc 账号的登录
-  campus-login logout myacc
+  cauth logout myacc
 `,
 		color.Yellow, color.NC,
 		color.Yellow, color.NC,
@@ -281,7 +281,7 @@ func showHelp() {
 }
 
 // cmdDaemon handles the "daemon" subcommand.
-// Usage: campus-login daemon [alias] [interval]
+// Usage: cauth daemon [alias] [interval]
 // Default interval is 60s. The alias defaults to the configured default account.
 func cmdDaemon(args []string) {
 	alias := ""
@@ -309,7 +309,7 @@ func cmdDaemon(args []string) {
 		}
 		interval = d
 	default:
-		fmt.Fprintln(os.Stderr, "用法: campus-login daemon [别名] [间隔]")
+		fmt.Fprintln(os.Stderr, "用法: cauth daemon [别名] [间隔]")
 		os.Exit(1)
 	}
 
@@ -322,8 +322,8 @@ func cmdDaemon(args []string) {
 		}
 		if defaultAlias == "" {
 			fmt.Fprintf(os.Stderr, "%s错误: 未设置默认账号%s\n", color.Red, color.NC)
-			fmt.Fprintln(os.Stderr, "请先使用 'campus-login add' 添加账号并用 'campus-login default' 设置默认账号，")
-			fmt.Fprintln(os.Stderr, "或使用 'campus-login daemon <别名>' 指定账号")
+			fmt.Fprintln(os.Stderr, "请先使用 'cauth add' 添加账号并用 'cauth default' 设置默认账号，")
+			fmt.Fprintln(os.Stderr, "或使用 'cauth daemon <别名>' 指定账号")
 			os.Exit(1)
 		}
 		alias = defaultAlias
@@ -332,7 +332,7 @@ func cmdDaemon(args []string) {
 	account, password, err := config.GetCredentials(alias)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s错误: 账号别名 [%s%s%s] 未找到%s\n", color.Red, color.Yellow, alias, color.Red, color.NC)
-		fmt.Fprintln(os.Stderr, "使用 'campus-login list' 查看所有已保存的账号")
+		fmt.Fprintln(os.Stderr, "使用 'cauth list' 查看所有已保存的账号")
 		os.Exit(1)
 	}
 
@@ -353,11 +353,11 @@ func cmdDaemon(args []string) {
 }
 
 // cmdLogout handles the "logout" subcommand.
-// Usage: campus-login logout [alias]
+// Usage: cauth logout [alias]
 // If no alias is given, the default account is used.
 func cmdLogout(args []string) {
 	if len(args) > 1 {
-		fmt.Fprintln(os.Stderr, "用法: campus-login logout [别名]")
+		fmt.Fprintln(os.Stderr, "用法: cauth logout [别名]")
 		os.Exit(1)
 	}
 
@@ -374,7 +374,7 @@ func cmdLogout(args []string) {
 		}
 		if defaultAlias == "" {
 			fmt.Fprintf(os.Stderr, "%s错误: 未设置默认账号%s\n", color.Red, color.NC)
-			fmt.Fprintln(os.Stderr, "请指定要注销的账号别名: campus-login logout <别名>")
+			fmt.Fprintln(os.Stderr, "请指定要注销的账号别名: cauth logout <别名>")
 			os.Exit(1)
 		}
 		alias = defaultAlias
@@ -383,7 +383,7 @@ func cmdLogout(args []string) {
 	account, _, err := config.GetCredentials(alias)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s错误: 账号别名 [%s%s%s] 未找到%s\n", color.Red, color.Yellow, alias, color.Red, color.NC)
-		fmt.Fprintln(os.Stderr, "使用 'campus-login list' 查看所有已保存的账号")
+		fmt.Fprintln(os.Stderr, "使用 'cauth list' 查看所有已保存的账号")
 		os.Exit(1)
 	}
 
