@@ -258,3 +258,20 @@ func TestPerformLogoutUnbindParams(t *testing.T) {
 		t.Errorf("expected wlan_user_mac %q, got %q", "000000000000", got)
 	}
 }
+
+func TestAlreadyOnline(t *testing.T) {
+	tests := []struct {
+		msg  string
+		want bool
+	}{
+		{"IP: 10.244.11.55 已经在线！", true},
+		{"IP: 10.244.11.55已经在线", true},
+		{"账号或密码错误", false},
+		{"", false},
+	}
+	for _, tt := range tests {
+		if got := AlreadyOnline(tt.msg); got != tt.want {
+			t.Errorf("AlreadyOnline(%q) = %v, want %v", tt.msg, got, tt.want)
+		}
+	}
+}

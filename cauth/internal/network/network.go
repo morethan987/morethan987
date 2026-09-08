@@ -7,9 +7,17 @@ import (
 	"time"
 )
 
-// connectivityURL is the URL used to check internet connectivity.
-// It can be overridden in tests to point to a local httptest server.
-var connectivityURL = "http://connectivitycheck.gstatic.com/generate_204"
+// connectivityURLs are the endpoints used to check internet connectivity,
+// tried in order; the first one to return HTTP 204 wins. All are domestic
+// (mainland-China reachable) generate_204 endpoints — Google's
+// connectivitycheck.gstatic.com is blackholed from Chinese campus networks
+// and would report "offline" forever.
+// The list can be overridden in tests to point to local httptest servers.
+var connectivityURLs = []string{
+	"http://connect.rom.miui.com/generate_204",
+	"http://wifi.vivo.com.cn/generate_204",
+	"http://www.qualcomm.cn/generate_204",
+}
 
 var (
 	// SourceIface optionally binds outbound sockets directly to this network
@@ -211,14 +219,16 @@ func getPrivateIPFromInterfaces() string {
 	return ""
 }
 
-// CheckConnectivity checks whether the machine has internet access by
-// making an HTTP GET request to a known connectivity check endpoint.
+// CheckConnectivity checks whether the machine has internet access by probing
+// known generate_204 endpoints in order. The first endpoint to return 204
+// means connected, so a single broken endpoint cannot cause a false "offline".
 //
 // Returns:
-//   - (true, nil)  if the endpoint returns HTTP 204 (connected to internet)
-//   - (false, nil)  if the endpoint returns any other status (e.g. 302 redirect
-//     from a captive portal)
-//   - (false, err) if the request fails (network unreachable, timeout, etc.)
+//   - (true, nil)  if any endpoint returns HTTP 204 (connected to internet)
+//   - (false, nil) if some endpoint responded but none returned 204 (e.g. a
+//     302 redirect from a captive portal)
+//   - (false, err) if every endpoint request failed (network unreachable,
+//     timeout, etc.); err is the last error seen
 func CheckConnectivity() (bool, error) {
 	transport := &http.Transport{
 		DialContext: NewDialer(5 * time.Second).DialContext,
@@ -232,11 +242,17 @@ func CheckConnectivity() (bool, error) {
 		},
 	}
 
-	resp, err := client.Get(connectivityURL)
-	if err != nil {
-		return false, err
+	var lastErr error
+	for _, u := range connectivityURLs {
+		resp, err := client.Get(u)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		resp.Body.Close()
+		if resp.StatusCode == http.StatusNoContent {
+			return true, nil
+		}
 	}
-	defer resp.Body.Close()
-
-	return resp.StatusCode == http.StatusNoContent, nil
+	return false, lastErr
 }

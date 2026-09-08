@@ -13,10 +13,10 @@ func TestCheckConnectivity204(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Override the package-level URL to point to our test server
-	original := connectivityURL
-	connectivityURL = server.URL
-	defer func() { connectivityURL = original }()
+	// Override the package-level URL list to point to our test server
+	original := connectivityURLs
+	connectivityURLs = []string{server.URL}
+	defer func() { connectivityURLs = original }()
 
 	connected, err := CheckConnectivity()
 	if err != nil {
@@ -33,9 +33,9 @@ func TestCheckConnectivity302(t *testing.T) {
 	}))
 	defer server.Close()
 
-	original := connectivityURL
-	connectivityURL = server.URL
-	defer func() { connectivityURL = original }()
+	original := connectivityURLs
+	connectivityURLs = []string{server.URL}
+	defer func() { connectivityURLs = original }()
 
 	connected, err := CheckConnectivity()
 	if err != nil {
@@ -53,9 +53,9 @@ func TestCheckConnectivityError(t *testing.T) {
 	// Close immediately to cause a connection error
 	server.Close()
 
-	original := connectivityURL
-	connectivityURL = server.URL
-	defer func() { connectivityURL = original }()
+	original := connectivityURLs
+	connectivityURLs = []string{server.URL}
+	defer func() { connectivityURLs = original }()
 
 	connected, err := CheckConnectivity()
 	if err == nil {
@@ -172,12 +172,12 @@ func TestCheckConnectivityBoundToLoopback(t *testing.T) {
 	}))
 	defer server.Close()
 
-	origURL, origIface, origIP := connectivityURL, SourceIface, SourceIP
-	connectivityURL = server.URL
+	origURLs, origIface, origIP := connectivityURLs, SourceIface, SourceIP
+	connectivityURLs = []string{server.URL}
 	SourceIface = "lo"
 	SourceIP = "127.0.0.1"
 	defer func() {
-		connectivityURL = origURL
+		connectivityURLs = origURLs
 		SourceIface = origIface
 		SourceIP = origIP
 	}()
@@ -197,5 +197,73 @@ func TestInterfaceExists(t *testing.T) {
 	}
 	if InterfaceExists("nonexistent-iface-xyz") {
 		t.Fatal("expected nonexistent interface to not exist")
+	}
+}
+
+func TestCheckConnectivityFallsBackToNextEndpoint(t *testing.T) {
+	dead := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	dead.Close() // closed server → connection error
+
+	live := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer live.Close()
+
+	original := connectivityURLs
+	connectivityURLs = []string{dead.URL, live.URL}
+	defer func() { connectivityURLs = original }()
+
+	connected, err := CheckConnectivity()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !connected {
+		t.Fatal("expected connected=true when the second endpoint returns 204")
+	}
+}
+
+func TestCheckConnectivityAllEndpointsFail(t *testing.T) {
+	dead1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	dead1.Close()
+	dead2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	dead2.Close()
+
+	original := connectivityURLs
+	connectivityURLs = []string{dead1.URL, dead2.URL}
+	defer func() { connectivityURLs = original }()
+
+	connected, err := CheckConnectivity()
+	if err == nil {
+		t.Fatal("expected error when every endpoint fails, got nil")
+	}
+	if connected {
+		t.Fatal("expected connected=false when every endpoint fails")
+	}
+}
+
+func TestCheckConnectivityNon204Then204(t *testing.T) {
+	// A broken endpoint (503) must not mask a working one (204).
+	broken := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer broken.Close()
+
+	live := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer live.Close()
+
+	original := connectivityURLs
+	connectivityURLs = []string{broken.URL, live.URL}
+	defer func() { connectivityURLs = original }()
+
+	connected, err := CheckConnectivity()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !connected {
+		t.Fatal("expected connected=true despite a 503 from the first endpoint")
 	}
 }

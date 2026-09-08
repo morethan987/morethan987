@@ -79,6 +79,14 @@ func ParseJSONP(body string) (result, msg string, err error) {
 	return resultStr, resp.Msg, nil
 }
 
+// AlreadyOnline reports whether a portal response message means the host is
+// already online (e.g. "IP: 10.244.11.55 已经在线！"). The portal sends such
+// messages with a non-"1" result even though the session is alive, so callers
+// must treat them as connected, not as a login failure.
+func AlreadyOnline(msg string) bool {
+	return strings.Contains(msg, "已经在线")
+}
+
 // PerformLogin sends a login request to the campus portal and returns the result.
 //
 // The account is prefixed with ",0," before URL encoding, matching the shell

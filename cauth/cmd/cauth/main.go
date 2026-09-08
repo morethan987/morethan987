@@ -146,6 +146,8 @@ func handleLogin(alias string) {
 
 	if success {
 		fmt.Printf("%s==> 登录成功! 服务器消息: %s%s\n", color.Green, msg, color.NC)
+	} else if login.AlreadyOnline(msg) {
+		fmt.Printf("%s==> 已在线! 服务器消息: %s%s\n", color.Green, msg, color.NC)
 	} else {
 		if msg == "" {
 			msg = "未知错误，可能是账号密码错误或已在别处登录"
@@ -430,6 +432,12 @@ func cmdDaemon(args []string) {
 		interval = d
 	default:
 		fmt.Fprintln(os.Stderr, "用法: cauth daemon [别名] [间隔]")
+		os.Exit(1)
+	}
+
+	if interval <= 0 {
+		fmt.Fprintf(os.Stderr, "%s错误: 间隔必须为正时长%s\n", color.Red, color.NC)
+		fmt.Fprintln(os.Stderr, "示例: 30s, 1m, 5m")
 		os.Exit(1)
 	}
 

@@ -34,31 +34,25 @@ func Run(ctx context.Context, cfg Config) error {
 	// Run first check immediately.
 	consecutiveFailures = check(cfg, consecutiveFailures)
 
-	ticker := time.NewTicker(cfg.Interval)
+	ticker := time.NewTicker(nextWait(cfg.Interval, consecutiveFailures))
 	defer ticker.Stop()
 
 	for {
-		wait := nextWait(cfg.Interval, consecutiveFailures)
-
 		select {
 		case <-ctx.Done():
 			logf("收到退出信号，守护进程停止")
 			return nil
 		case <-ticker.C:
-			// If we're in backoff, skip this tick and wait longer.
-			if wait > cfg.Interval {
-				ticker.Reset(wait)
-			}
 			consecutiveFailures = check(cfg, consecutiveFailures)
-			// Reset ticker to normal interval after check (backoff is
-			// recalculated each iteration).
-			ticker.Reset(cfg.Interval)
+			// Log message and actual schedule share one wait calculation.
+			ticker.Reset(nextWait(cfg.Interval, consecutiveFailures))
 		}
 	}
 }
 
 // check performs one connectivity check + login attempt cycle.
-// Returns the updated consecutive failure count.
+// A successful check or an "already online" portal response counts as
+// connected and resets the failure count. Returns the updated count.
 func check(cfg Config, failures int) int {
 	connected, err := network.CheckConnectivity()
 	if err == nil && connected {
@@ -89,9 +83,14 @@ func check(cfg Config, failures int) int {
 		return 0
 	}
 
+	if login.AlreadyOnline(msg) {
+		logf("%s[会话] 已在线，无需登录 (服务器消息: %s)%s", color.Green, msg, color.NC)
+		return 0
+	}
+
 	logf("%s[登录] 失败! 服务器消息: %s%s", color.Red, msg, color.NC)
 	newFailures := failures + 1
-	next := nextWait(0, newFailures)
+	next := nextWait(cfg.Interval, newFailures)
 	logf("[退避] 连续失败 %d 次，下次探查将在 %s 后", newFailures, next)
 	return newFailures
 }

@@ -43,7 +43,7 @@ func TestNextWaitCapsAtMax(t *testing.T) {
 }
 
 func TestNextWaitZeroBase(t *testing.T) {
-	// When base is 0 (used by check() for backoff display), should use 30s fallback.
+	// When base is 0 (unset), should use the 30s fallback.
 	got := nextWait(0, 1)
 	if got != 30*time.Second {
 		t.Errorf("nextWait(0, 1) = %v, want 30s", got)
