@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/morethan987/cauth/internal/network"
 )
 
 // PortalHost is the hostname and port of the campus login portal.
@@ -114,15 +116,7 @@ func PerformLogin(account, password, localIP string) (success bool, msg string, 
 	req.Header.Set("Referer", "http://login.cqu.edu.cn/")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36")
 
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
+	client := newPortalClient()
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -144,12 +138,17 @@ func PerformLogin(account, password, localIP string) (success bool, msg string, 
 }
 
 // newPortalClient returns an http.Client configured for the campus portal.
+// When an interface is selected (network.SourceIface/SourceIP), outgoing
+// connections leave through it.
 func newPortalClient() *http.Client {
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		DialContext:     network.NewDialer(10 * time.Second).DialContext,
+	}
+
 	return &http.Client{
-		Timeout: 10 * time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
+		Timeout:   10 * time.Second,
+		Transport: transport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},

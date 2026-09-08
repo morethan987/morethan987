@@ -152,7 +152,8 @@ func ListAccounts() ([]Account, error) {
 
 	var accounts []Account
 	for _, line := range lines {
-		if strings.HasPrefix(line, "default_account=") {
+		if strings.HasPrefix(line, "default_account=") ||
+			strings.HasPrefix(line, "default_iface=") {
 			continue
 		}
 		parts := strings.SplitN(line, "=", 2)
@@ -224,6 +225,44 @@ func SetDefault(alias string) error {
 		}
 	}
 	filtered = append(filtered, "default_account="+alias)
+	return writeLines(filtered)
+}
+
+// GetDefaultIface returns the default network interface name.
+// Returns empty string if not set (no error).
+func GetDefaultIface() (string, error) {
+	lines, err := readLines()
+	if err != nil {
+		return "", err
+	}
+	for _, line := range lines {
+		if after, ok := strings.CutPrefix(line, "default_iface="); ok {
+			if after != "" {
+				return after, nil
+			}
+		}
+	}
+	return "", nil
+}
+
+// SetDefaultIface sets the default network interface. An empty name clears
+// the setting (back to automatic OS routing).
+func SetDefaultIface(name string) error {
+	lines, err := readLines()
+	if err != nil {
+		return err
+	}
+
+	// Remove existing default_iface line(s); append the new one only if non-empty.
+	var filtered []string
+	for _, line := range lines {
+		if !strings.HasPrefix(line, "default_iface=") {
+			filtered = append(filtered, line)
+		}
+	}
+	if name != "" {
+		filtered = append(filtered, "default_iface="+name)
+	}
 	return writeLines(filtered)
 }
 

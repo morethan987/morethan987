@@ -205,3 +205,77 @@ func TestXDGConfigHome(t *testing.T) {
 		t.Errorf("config file not created at XDG path: %s", expectedFile)
 	}
 }
+
+func TestDefaultIface(t *testing.T) {
+	setupTestEnv(t)
+
+	if iface, err := GetDefaultIface(); err != nil || iface != "" {
+		t.Fatalf("expected empty default iface on fresh config, got %q (err %v)", iface, err)
+	}
+
+	if err := AddAccount("myacc", "20230001", "secret"); err != nil {
+		t.Fatalf("AddAccount() error: %v", err)
+	}
+	if err := SetDefault("myacc"); err != nil {
+		t.Fatalf("SetDefault() error: %v", err)
+	}
+
+	if err := SetDefaultIface("enp2s0"); err != nil {
+		t.Fatalf("SetDefaultIface() error: %v", err)
+	}
+	iface, err := GetDefaultIface()
+	if err != nil || iface != "enp2s0" {
+		t.Fatalf("expected enp2s0, got %q (err %v)", iface, err)
+	}
+
+	// The default_iface line must not show up as an account.
+	accounts, err := ListAccounts()
+	if err != nil {
+		t.Fatalf("ListAccounts() error: %v", err)
+	}
+	if len(accounts) != 1 || accounts[0].Alias != "myacc" || !accounts[0].IsDefault {
+		t.Fatalf("unexpected accounts: %+v", accounts)
+	}
+
+	// Rewriting the default account must preserve default_iface.
+	if err := AddAccount("other", "20230002", "pw2"); err != nil {
+		t.Fatalf("AddAccount() error: %v", err)
+	}
+	if err := SetDefault("other"); err != nil {
+		t.Fatalf("SetDefault() error: %v", err)
+	}
+	if iface, _ := GetDefaultIface(); iface != "enp2s0" {
+		t.Fatalf("SetDefault clobbered default_iface: %q", iface)
+	}
+
+	// Clearing the default iface must preserve accounts and default_account.
+	if err := SetDefaultIface(""); err != nil {
+		t.Fatalf(`SetDefaultIface("") error: %v`, err)
+	}
+	if iface, err := GetDefaultIface(); err != nil || iface != "" {
+		t.Fatalf("expected empty default iface after clear, got %q (err %v)", iface, err)
+	}
+	accounts, err = ListAccounts()
+	if err != nil || len(accounts) != 2 {
+		t.Fatalf("unexpected accounts after clear: %+v (err %v)", accounts, err)
+	}
+}
+
+func TestSetDefaultIfaceOverwrite(t *testing.T) {
+	setupTestEnv(t)
+
+	if err := SetDefaultIface("enp2s0"); err != nil {
+		t.Fatalf("SetDefaultIface() error: %v", err)
+	}
+	if err := SetDefaultIface("wlp1s0"); err != nil {
+		t.Fatalf("SetDefaultIface() error: %v", err)
+	}
+
+	content := readConfigFile(t)
+	if strings.Contains(content, "enp2s0") {
+		t.Errorf("old default_iface line should be replaced, got:\n%s", content)
+	}
+	if !strings.Contains(content, "default_iface=wlp1s0") {
+		t.Errorf("config should contain default_iface=wlp1s0, got:\n%s", content)
+	}
+}

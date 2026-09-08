@@ -147,7 +147,7 @@ defer func() { portalBaseURL = original }()
 
 - Config writes use atomic write-to-temp-then-rename pattern (not direct file writes)
 - Config directory: `$XDG_CONFIG_HOME/cauth/` or `$HOME/.config/cauth/`
-- Config format: plain text, `alias=account:password` per line, `default_account=alias` special line
+- Config format: plain text, `alias=account:password` per line, `default_account=alias` and `default_iface=name` special lines
 - Password parsing: `strings.SplitN(creds, ":", 2)` — only split on first colon
 
 ### HTTP

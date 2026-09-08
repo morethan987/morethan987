@@ -28,6 +28,29 @@ func main() {
 
 	args := os.Args[1:]
 
+	// Global flag: -i/--interface <name> selects the outbound network interface.
+	ifaceName := ""
+	if len(args) > 0 && (args[0] == "-i" || args[0] == "--interface") {
+		if len(args) < 2 {
+			fmt.Fprintf(os.Stderr, "%s错误: '-i' 需要一个网口名参数%s\n", color.Red, color.NC)
+			fmt.Fprintln(os.Stderr, "用法: cauth -i <网口名> [命令] [参数...]  (使用 'cauth iface' 查看网口列表)")
+			os.Exit(1)
+		}
+		ifaceName = args[1]
+		args = args[2:]
+	}
+
+	// Fall back to the saved default interface (set via "cauth iface <name>").
+	if ifaceName == "" {
+		saved, err := config.GetDefaultIface()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s错误: 读取默认网口配置失败: %s%s\n", color.Red, err, color.NC)
+			os.Exit(1)
+		}
+		ifaceName = saved
+	}
+	pendingIface = ifaceName
+
 	if len(args) == 0 {
 		handleLogin("")
 		return
@@ -50,6 +73,8 @@ func main() {
 		cmdDaemon(args[1:])
 	case "logout":
 		cmdLogout(args[1:])
+	case "iface", "ifaces", "interfaces":
+		cmdIface(args[1:])
 	case "help", "--help", "-h":
 		showHelp()
 	default:
@@ -62,8 +87,34 @@ func main() {
 	}
 }
 
+// pendingIface holds the interface selected via -i or the saved default
+// (empty = automatic OS routing).
+var pendingIface string
+
+// applyIface binds the pending interface for all outgoing traffic. It is
+// called by commands that touch the network; management commands (list, add,
+// iface, ...) run without it so a broken interface never blocks fixing the
+// configuration.
+func applyIface() {
+	if pendingIface == "" {
+		return
+	}
+
+	ip, err := network.GetInterfaceIP(pendingIface)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s错误: %s%s\n", color.Red, err, color.NC)
+		fmt.Fprintln(os.Stderr, "使用 'cauth iface' 查看可用网口, 或 'cauth iface auto' 恢复自动选择")
+		os.Exit(1)
+	}
+	network.SourceIface = pendingIface
+	network.SourceIP = ip
+	fmt.Printf("==> 使用网口 [%s%s%s] (%s)\n", color.Yellow, pendingIface, color.NC, ip)
+}
+
 // handleLogin performs a login using the given alias, or the default account if alias is empty.
 func handleLogin(alias string) {
+	applyIface()
+
 	if alias == "" {
 		defaultAlias, err := config.GetDefault()
 		if err != nil {
@@ -201,6 +252,8 @@ func cmdDefault(args []string) {
 
 // cmdStatus handles the "status" subcommand.
 func cmdStatus() {
+	applyIface()
+
 	connected, err := network.CheckConnectivity()
 	if err != nil {
 		fmt.Printf("%s==> 网络不可达: %s%s\n", color.Red, err, color.NC)
@@ -214,6 +267,62 @@ func cmdStatus() {
 	}
 }
 
+// cmdIface handles the "iface" subcommand.
+// Without arguments it lists network interfaces. With a name it sets the
+// default interface; "auto" restores automatic (OS routing) selection.
+func cmdIface(args []string) {
+	if len(args) > 1 {
+		fmt.Fprintln(os.Stderr, "用法: cauth iface [网口名|auto]")
+		os.Exit(1)
+	}
+
+	if len(args) == 1 {
+		name := args[0]
+		if name == "auto" {
+			if err := config.SetDefaultIface(""); err != nil {
+				fmt.Fprintf(os.Stderr, "%s错误: 清除默认网口失败: %s%s\n", color.Red, err, color.NC)
+				os.Exit(1)
+			}
+			fmt.Printf("%s==> 已恢复自动选择网口（由系统路由决定）%s\n", color.Green, color.NC)
+			return
+		}
+		if !network.InterfaceExists(name) {
+			fmt.Fprintf(os.Stderr, "%s错误: 网口 [%s%s%s] 不存在%s\n", color.Red, color.Yellow, name, color.Red, color.NC)
+			fmt.Fprintln(os.Stderr, "使用 'cauth iface' 查看可用网口")
+			os.Exit(1)
+		}
+		if err := config.SetDefaultIface(name); err != nil {
+			fmt.Fprintf(os.Stderr, "%s错误: 保存默认网口失败: %s%s\n", color.Red, err, color.NC)
+			os.Exit(1)
+		}
+		fmt.Printf("%s==> 默认网口已设置为 [%s%s%s]%s\n", color.Green, color.Yellow, name, color.Green, color.NC)
+		return
+	}
+
+	defIface, err := config.GetDefaultIface()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s错误: 读取默认网口失败: %s%s\n", color.Red, err, color.NC)
+		os.Exit(1)
+	}
+
+	ifaces, err := network.ListInterfaces()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s错误: 获取网络接口失败: %s%s\n", color.Red, err, color.NC)
+		os.Exit(1)
+	}
+
+	fmt.Printf("%s可用的网络接口:%s\n", color.Yellow, color.NC)
+	for _, iface := range ifaces {
+		marker := ""
+		if iface.Name == defIface {
+			marker = "  <- 默认"
+		}
+		fmt.Printf("  %-16s %s%s\n", iface.Name, strings.Join(iface.Addrs, ", "), marker)
+	}
+	fmt.Printf("\n使用 %scauth iface <网口名>%s 设为默认, %scauth iface auto%s 恢复自动\n", color.Yellow, color.NC, color.Yellow, color.NC)
+	fmt.Printf("使用 %scauth -i <网口名> [命令]%s 临时指定出网网口\n", color.Yellow, color.NC)
+}
+
 // showHelp prints the usage information.
 func showHelp() {
 	fmt.Printf(`cauth - 校园网命令行登录工具
@@ -222,6 +331,7 @@ func showHelp() {
 
 %s用法:%s
   cauth [命令] [参数...]
+  cauth -i <网口> [命令] [参数...]   临时指定出网网口，覆盖默认设置
 
 %s登录操作 (默认):%s
   cauth              使用默认账号进行登录
@@ -238,6 +348,7 @@ func showHelp() {
   %sstatus%s                   检测当前网络连通性
   %sdaemon [别名] [间隔]%s     守护进程模式，周期性检测并自动登录 (默认间隔 60s)
   %shelp, -h, --help%s         显示此帮助信息
+  %siface [网口名|auto]%s      列出网络接口; 设为默认网口; auto 恢复自动选择
 
 %s示例:%s
   # 添加一个名为 myacc 的账号，并安全地输入密码
@@ -263,6 +374,12 @@ func showHelp() {
 
   # 退出 myacc 账号的登录
   cauth logout myacc
+
+  # 将 enp2s0 设为默认网口（写入配置，之后所有联网命令生效）
+  cauth iface enp2s0
+
+  # 恢复由系统路由自动选择网口
+  cauth iface auto
 `,
 		color.Yellow, color.NC,
 		color.Yellow, color.NC,
@@ -276,6 +393,7 @@ func showHelp() {
 		color.Green, color.NC,
 		color.Green, color.NC,
 		color.Green, color.NC,
+		color.Green, color.NC,
 		color.Yellow, color.NC,
 	)
 }
@@ -284,6 +402,8 @@ func showHelp() {
 // Usage: cauth daemon [alias] [interval]
 // Default interval is 60s. The alias defaults to the configured default account.
 func cmdDaemon(args []string) {
+	applyIface()
+
 	alias := ""
 	interval := 60 * time.Second
 
@@ -356,6 +476,8 @@ func cmdDaemon(args []string) {
 // Usage: cauth logout [alias]
 // If no alias is given, the default account is used.
 func cmdLogout(args []string) {
+	applyIface()
+
 	if len(args) > 1 {
 		fmt.Fprintln(os.Stderr, "用法: cauth logout [别名]")
 		os.Exit(1)

@@ -46,6 +46,7 @@ cauth
 
 ```
 cauth [命令] [参数...]
+cauth -i <网口> [命令] [参数...]   # 指定出网网口
 ```
 
 ### 登录
@@ -84,8 +85,26 @@ cauth daemon myacc 2m       # 指定账号 + 2 分钟间隔
 
 ```bash
 cauth status       # 检测当前外网连通性
+cauth iface        # 列出可用网络接口
 cauth help         # 显示帮助信息
 ```
+
+### 指定网口（多网卡环境）
+
+当机器上有多个网络接口时，默认由系统路由选择出口。两种指定方式：
+
+```bash
+cauth iface                  # 查看可用网口和 IP
+cauth iface enp2s0           # 将 enp2s0 设为默认网口（写入配置文件）
+cauth iface auto             # 清除默认网口，恢复系统路由自动选择
+
+cauth -i enp2s0 status       # -i 临时指定，仅本次生效（优先级高于默认网口）
+cauth -i enp2s0 daemon 5m    # 守护进程走指定网口
+```
+
+设置默认网口后，登录、注销、状态检测、守护进程都会走该网口：登录请求、
+上报给门户的 IP、连通性检测全部绑定（Linux 下使用 `SO_BINDTODEVICE`）。
+`-i` 参数只影响当次运行，不会修改配置。
 
 ## 配置文件
 
